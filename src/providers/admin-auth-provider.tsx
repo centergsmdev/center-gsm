@@ -10,11 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  authApi,
-  type AuthError,
-  type AuthUser,
-} from "@/lib/supabase/auth-api";
+import { authApi, type AuthUser } from "@/lib/supabase/auth-api";
 import { createAuditLog } from "@/lib/audit";
 
 type AdminUser = { name: string; email: string; initials: string };
@@ -31,20 +27,6 @@ type Context = {
 };
 const AdminAuthContext = createContext<Context | null>(null);
 const isAdmin = (user: AuthUser | null) => user?.app_metadata.role === "admin";
-const authErrorMessage = (error: NonNullable<AuthError>) => {
-  switch (error.code) {
-    case "invalid_credentials":
-      return "E-posta veya şifre hatalı.";
-    case "email_not_confirmed":
-      return "E-posta adresi henüz doğrulanmamış.";
-    case "over_request_rate_limit":
-    case "over_email_send_rate_limit":
-      return "Çok fazla giriş denemesi yapıldı. Lütfen kısa bir süre sonra tekrar deneyin.";
-  }
-  if (error.status === 429)
-    return "Çok fazla giriş denemesi yapıldı. Lütfen kısa bir süre sonra tekrar deneyin.";
-  return "Kimlik doğrulama servisine ulaşılamadı. Lütfen tekrar deneyin.";
-};
 const mapUser = (user: AuthUser): AdminUser => ({
   name: String(
     user.user_metadata.name ??
@@ -94,7 +76,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           password,
         });
         if (result.error)
-          return { success: false, error: authErrorMessage(result.error) };
+          return { success: false, error: result.error.message };
         if (!result.data.user)
           return { success: false, error: "Giriş oturumu oluşturulamadı." };
 
@@ -104,7 +86,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           return {
             success: false,
             error: verified.error
-              ? authErrorMessage(verified.error)
+              ? verified.error.message
               : "Giriş oturumu doğrulanamadı.",
           };
         }
@@ -123,11 +105,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           entityName: verified.data.user.email ?? "Admin",
         });
         return { success: true };
-      } catch {
+      } catch (error) {
         await auth.signOut();
         return {
           success: false,
-          error: "Kimlik doğrulama servisine ulaşılamadı. Lütfen tekrar deneyin.",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Kimlik doğrulama servisine ulaşılamadı. Lütfen tekrar deneyin.",
         };
       }
     },
