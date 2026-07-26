@@ -10,7 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authApi, type AuthUser } from "@/lib/supabase/auth-api";
+import {
+  authApi,
+  type AuthError,
+  type AuthUser,
+} from "@/lib/supabase/auth-api";
 import { createAuditLog } from "@/lib/audit";
 
 type AdminUser = { name: string; email: string; initials: string };
@@ -27,6 +31,20 @@ type Context = {
 };
 const AdminAuthContext = createContext<Context | null>(null);
 const isAdmin = (user: AuthUser | null) => user?.app_metadata.role === "admin";
+const authErrorMessage = (error: NonNullable<AuthError>) => {
+  switch (error.code) {
+    case "invalid_credentials":
+      return "E-posta veya şifre hatalı.";
+    case "email_not_confirmed":
+      return "E-posta adresi henüz doğrulanmamış.";
+    case "over_request_rate_limit":
+    case "over_email_send_rate_limit":
+      return "Çok fazla giriş denemesi yapıldı. Lütfen kısa bir süre sonra tekrar deneyin.";
+  }
+  if (error.status === 429)
+    return "Çok fazla giriş denemesi yapıldı. Lütfen kısa bir süre sonra tekrar deneyin.";
+  return "Kimlik doğrulama servisine ulaşılamadı. Lütfen tekrar deneyin.";
+};
 const mapUser = (user: AuthUser): AdminUser => ({
   name: String(
     user.user_metadata.name ??
@@ -70,27 +88,48 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       if (!client)
         return { success: false, error: "Supabase Auth yapılandırılmamış." };
       const auth = authApi(client);
-      const result = await auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (result.error || !result.data.user)
-        return { success: false, error: "E-posta veya şifre hatalı." };
-      if (!isAdmin(result.data.user)) {
+      try {
+        const result = await auth.signInWithPassword({
+          email: email.trim().toLocaleLowerCase("tr-TR"),
+          password,
+        });
+        if (result.error)
+          return { success: false, error: authErrorMessage(result.error) };
+        if (!result.data.user)
+          return { success: false, error: "Giriş oturumu oluşturulamadı." };
+
+        const verified = await auth.getUser();
+        if (verified.error || !verified.data.user) {
+          await auth.signOut();
+          return {
+            success: false,
+            error: verified.error
+              ? authErrorMessage(verified.error)
+              : "Giriş oturumu doğrulanamadı.",
+          };
+        }
+        if (!isAdmin(verified.data.user)) {
+          await auth.signOut();
+          return {
+            success: false,
+            error: "Bu hesabın yönetim paneli yetkisi bulunmuyor.",
+          };
+        }
+        setUser(mapUser(verified.data.user));
+        await createAuditLog({
+          action: "admin_login",
+          entityType: "system",
+          entityId: verified.data.user.id,
+          entityName: verified.data.user.email ?? "Admin",
+        });
+        return { success: true };
+      } catch {
         await auth.signOut();
         return {
           success: false,
-          error: "Bu hesabın yönetim paneli yetkisi bulunmuyor.",
+          error: "Kimlik doğrulama servisine ulaşılamadı. Lütfen tekrar deneyin.",
         };
       }
-      setUser(mapUser(result.data.user));
-      await createAuditLog({
-        action: "admin_login",
-        entityType: "system",
-        entityId: result.data.user.id,
-        entityName: result.data.user.email ?? "Admin",
-      });
-      return { success: true };
     },
     [],
   );

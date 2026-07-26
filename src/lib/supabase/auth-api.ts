@@ -5,7 +5,11 @@ export type AuthUser = {
   user_metadata: Record<string, unknown>;
 };
 export type AuthSession = { user: AuthUser } | null;
-export type AuthError = { message: string } | null;
+export type AuthError = {
+  message: string;
+  code?: string;
+  status?: number;
+} | null;
 export type BrowserAuthApi = {
   getSession: () => Promise<{ data: { session: AuthSession } }>;
   getUser: () => Promise<{ data: { user: AuthUser | null }; error: AuthError }>;
