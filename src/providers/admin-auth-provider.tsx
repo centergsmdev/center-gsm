@@ -71,10 +71,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: "Supabase Auth yapılandırılmamış." };
       const auth = authApi(client);
       try {
+        const normalizedEmail = email.trim().toLocaleLowerCase("tr-TR");
+        console.log("[AdminAuthProvider] signInWithPassword() email", normalizedEmail);
         const result = await auth.signInWithPassword({
-          email: email.trim().toLocaleLowerCase("tr-TR"),
+          email: normalizedEmail,
           password,
         });
+        if (result.error)
+          console.error("[AdminAuthProvider] signInWithPassword() error", result.error);
         if (result.error)
           return { success: false, error: result.error.message };
         if (!result.data.user)
