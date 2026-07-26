@@ -48,11 +48,9 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const auth = authApi(client);
-    void auth.getSession().then(({ data }) => {
+    void auth.getUser().then(({ data }) => {
       setUser(
-        data.session?.user && isAdmin(data.session.user)
-          ? mapUser(data.session.user)
-          : null,
+        data.user && isAdmin(data.user) ? mapUser(data.user) : null,
       );
       setIsReady(true);
     });
@@ -102,12 +100,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           };
         }
         setUser(mapUser(verified.data.user));
-        await createAuditLog({
+        void createAuditLog({
           action: "admin_login",
           entityType: "system",
           entityId: verified.data.user.id,
           entityName: verified.data.user.email ?? "Admin",
-        });
+        }).catch(() => undefined);
         return { success: true };
       } catch (error) {
         await auth.signOut();
