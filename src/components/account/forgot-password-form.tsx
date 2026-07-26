@@ -23,7 +23,7 @@ export function ForgotPasswordForm() {
       return;
     }
     const result = await authApi(client).resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/sifre-yenile`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/sifre-yenile`,
     });
     setLoading(false);
     if (result.error) {
