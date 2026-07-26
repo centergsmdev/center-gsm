@@ -20,7 +20,6 @@ export function AdminLoginForm() {
   }, [isReady, router, user]);
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError(""); setLoading(true);
-    console.log("[AdminLoginForm] login() input", { email, password });
     const result = await login(email, password, remember);
     if (result.success) {
       router.replace("/admin");

@@ -70,13 +70,10 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       const auth = authApi(client);
       try {
         const normalizedEmail = email.trim().toLocaleLowerCase("tr-TR");
-        console.log("[AdminAuthProvider] signInWithPassword() email", normalizedEmail);
         const result = await auth.signInWithPassword({
           email: normalizedEmail,
           password,
         });
-        if (result.error)
-          console.error("[AdminAuthProvider] signInWithPassword() error", result.error);
         if (result.error)
           return { success: false, error: result.error.message };
         if (!result.data.user)

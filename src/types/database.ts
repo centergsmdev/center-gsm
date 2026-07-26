@@ -1126,6 +1126,7 @@ export type Database = {
       };
     };
     Functions: {
+      admin_dashboard_metrics: { Args: Record<PropertyKey, never>; Returns: Json };
       earn_loyalty_points: {
         Args: {
           p_user_id: string;
