@@ -1,0 +1,29 @@
+import { Benefits } from "@/components/home/benefits";
+import { Brands } from "@/components/home/brands";
+import { Categories } from "@/components/home/categories";
+import { Deals } from "@/components/home/deals";
+import { Footer } from "@/components/layout/footer";
+import { Header } from "@/components/layout/header";
+import { Hero } from "@/components/home/hero";
+import { getFeaturedProducts } from "@/lib/catalog/data";
+import { JsonLd, createOrganizationSchema, createWebsiteSchema } from "@/lib/seo/schema";
+export const revalidate = 300;
+
+export default async function HomePage() {
+  const featured = await getFeaturedProducts(5);
+  return (
+    <div className="min-h-screen tech-atmosphere text-zinc-950">
+      <JsonLd id="organization-schema" data={createOrganizationSchema()} />
+      <JsonLd id="website-schema" data={createWebsiteSchema()} />
+      <Header />
+      <main>
+        <Hero />
+        <Categories />
+        <Deals products={featured.error ? [] : featured.data} />
+        <Brands />
+        <Benefits />
+      </main>
+      <Footer />
+    </div>
+  );
+}

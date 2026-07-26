@@ -1,0 +1,1 @@
+import{SEO_CONFIG}from"./constants";export function normalizePath(path="/"){const clean=`/${path}`.replace(/\/{2,}/g,"/").replace(/\/$/,"");return clean||"/"}export function canonicalUrl(path="/"){return new URL(normalizePath(path),`${SEO_CONFIG.siteUrl}/`).toString().replace(/\/$/,path==="/"?"/":"")}

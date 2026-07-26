@@ -1,0 +1,1 @@
+import type{MetadataRoute}from"next";import{canonicalUrl}from"@/lib/seo/canonical";export default function robots():MetadataRoute.Robots{return{rules:{userAgent:"*",allow:"/",disallow:["/admin","/hesabim","/odeme","/sepet","/siparis-takip","/giris","/kayit"]},sitemap:canonicalUrl("/sitemap.xml")}}

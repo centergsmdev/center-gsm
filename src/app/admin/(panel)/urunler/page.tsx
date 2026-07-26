@@ -1,0 +1,1 @@
+import dynamic from"next/dynamic";import{AdminLoadingState}from"@/components/admin/admin-states";const AdminProducts=dynamic(()=>import("@/components/admin/admin-products").then(x=>x.AdminProducts),{loading:()=> <AdminLoadingState/>});export default function Page(){return <AdminProducts/>}

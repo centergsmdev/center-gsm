@@ -1,0 +1,1 @@
+import{canonicalUrl}from"@/lib/seo/canonical";import type{BreadcrumbItem,JsonLdObject}from"./types";export function createBreadcrumbSchema(items:BreadcrumbItem[]):JsonLdObject{return{"@context":"https://schema.org","@type":"BreadcrumbList",itemListElement:items.map((item,index)=>({"@type":"ListItem",position:index+1,name:item.name,item:canonicalUrl(item.path)}))}}

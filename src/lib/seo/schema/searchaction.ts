@@ -1,0 +1,1 @@
+import{canonicalUrl}from"@/lib/seo/canonical";import type{JsonLdObject}from"./types";export function createSearchActionSchema():JsonLdObject{return{"@type":"SearchAction",target:{"@type":"EntryPoint",urlTemplate:`${canonicalUrl("/arama")}?q={search_term_string}`},"query-input":"required name=search_term_string"}}

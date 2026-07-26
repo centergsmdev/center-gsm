@@ -1,0 +1,1 @@
+export{getPageSitemap}from"./pages";export{getProductSitemap}from"./products";export{getCategorySitemap}from"./categories";export{getBrandSitemap}from"./brands";export{sitemapIndexXml,sitemapXml,xmlResponse}from"./helpers";export const SITEMAP_PATHS=["/sitemap-pages.xml","/sitemap-products.xml","/sitemap-categories.xml","/sitemap-brands.xml"]as const;
