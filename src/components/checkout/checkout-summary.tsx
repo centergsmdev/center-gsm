@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { PackageCheck, RefreshCcw, ShieldCheck } from "lucide-react";
 
 import { ProductVisual } from "@/components/catalog/product-visual";
 import { Card } from "@/components/ui/card";
@@ -37,7 +37,7 @@ export function CheckoutSummary({
       className="lg:sticky lg:top-36"
       aria-labelledby="checkout-summary-title"
     >
-      <Card className="border-white/80 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.1)] backdrop-blur sm:p-5">
+      <Card className="home-premium-surface rounded-2xl border-white/80 bg-white/95 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 id="checkout-summary-title" className="text-lg font-black">
@@ -55,7 +55,7 @@ export function CheckoutSummary({
         <ul className="mt-4 max-h-64 space-y-3 overflow-y-auto pr-1">
           {lines.map((line) => (
             <li key={line.product.id} className="flex gap-3">
-              <div className="size-16 shrink-0 overflow-hidden rounded-md bg-surface-subtle">
+              <div className="size-16 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-white [&_span]:hidden">
                 <ProductVisual product={line.product} />
               </div>
               <div className="min-w-0 flex-1">
@@ -123,14 +123,47 @@ export function CheckoutSummary({
             {formatCurrency(total)}
           </p>
         </div>
-        <div className="mt-5 flex gap-3 rounded-md bg-emerald-50 p-3 text-emerald-800">
-          <ShieldCheck className="size-5 shrink-0" aria-hidden="true" />
-          <p className="text-xs font-semibold leading-5">
-            Bu aşama demo sipariş oluşturur. Gerçek ödeme alınmaz.
-          </p>
+        <div className="mt-5 grid gap-2">
+          <TrustRow
+            icon={ShieldCheck}
+            title="Güvenli ödeme"
+            description="Hassas ödeme bilgileri bu sitede saklanmaz."
+          />
+          <TrustRow
+            icon={PackageCheck}
+            title="Orijinal ürün garantisi"
+            description="Ürünler faturalı ve garanti kapsamındadır."
+          />
+          <TrustRow
+            icon={RefreshCcw}
+            title="Kolay iade talebi"
+            description="Hesabınızdan iade talebi oluşturabilirsiniz."
+          />
         </div>
       </Card>
     </aside>
+  );
+}
+
+function TrustRow({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof ShieldCheck;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white text-emerald-700 shadow-sm">
+        <Icon className="size-4" aria-hidden="true" />
+      </span>
+      <div>
+        <p className="text-xs font-black text-zinc-900">{title}</p>
+        <p className="mt-0.5 text-[10px] leading-4 text-muted">{description}</p>
+      </div>
+    </div>
   );
 }
 

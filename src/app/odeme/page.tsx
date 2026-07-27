@@ -4,7 +4,7 @@ import { Container } from "@/components/ui/container";
 
 export default function CheckoutPage() {
   return (
-    <main className="min-h-screen tech-atmosphere pb-12 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen pb-32 pt-5 sm:pb-16 sm:pt-7">
       <Container>
         <CheckoutBreadcrumb />
         <div className="mb-8 mt-6">
@@ -15,8 +15,8 @@ export default function CheckoutPage() {
             Teslimat ve Ödeme
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-            Teslimat tercihlerinizi tamamlayın. Bu demo akışında gerçek ödeme
-            alınmaz.
+            Teslimat, fatura ve ödeme tercihlerinizi güvenli adımlarla
+            tamamlayın.
           </p>
         </div>
         <CheckoutForm />

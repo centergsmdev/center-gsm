@@ -55,7 +55,7 @@ export function ShippingCarrierSelection({
             return (
               <label
                 key={item.providerKey}
-                className={`relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors ${selected ? "border-red-600 bg-red-50/50" : "border-border hover:border-zinc-400"}`}
+                className={`relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-all duration-200 ${selected ? "border-primary bg-red-50/60 shadow-md ring-1 ring-primary" : "border-border bg-white hover:-translate-y-0.5 hover:border-zinc-400 hover:shadow-sm"}`}
               >
                 <input
                   type="radio"
@@ -99,7 +99,7 @@ export function ShippingCarrierSelection({
           name="shippingNote"
           maxLength={240}
           placeholder="Teslimat için kısa notunuz"
-          className="mt-2 min-h-20 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+          className="mt-2 min-h-24 w-full rounded-xl border border-border bg-white px-4 py-3 text-base font-normal shadow-sm outline-none transition-all focus:border-primary focus:shadow-focus sm:text-sm"
         />
       </label>
     </fieldset>

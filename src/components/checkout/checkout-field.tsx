@@ -43,6 +43,7 @@ export function CheckoutField({
         required={required}
         invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
+        className="h-12 rounded-xl bg-white text-base shadow-sm focus:shadow-focus sm:text-sm"
         {...props}
       />
       {error ? (
@@ -84,7 +85,7 @@ export function CheckoutSelect({
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
         className={cn(
-          "h-11 w-full rounded-md border border-border bg-white px-4 text-sm shadow-xs outline-none transition-all duration-200 hover:border-border-strong focus:border-primary focus:shadow-focus",
+          "h-12 w-full rounded-xl border border-border bg-white px-4 text-base shadow-sm outline-none transition-all duration-200 hover:border-border-strong focus:border-primary focus:shadow-focus sm:text-sm",
           error && "border-danger",
         )}
         {...props}
@@ -129,7 +130,7 @@ export function CheckoutTextarea({
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
         className={cn(
-          "min-h-24 w-full resize-y rounded-md border border-border bg-white px-4 py-3 text-sm shadow-xs outline-none transition-all duration-200 hover:border-border-strong focus:border-primary focus:shadow-focus",
+          "min-h-28 w-full resize-y rounded-xl border border-border bg-white px-4 py-3 text-base shadow-sm outline-none transition-all duration-200 hover:border-border-strong focus:border-primary focus:shadow-focus sm:text-sm",
           error && "border-danger",
         )}
         {...props}

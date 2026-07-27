@@ -58,6 +58,7 @@ export function InvoiceForm({
             label="T.C. kimlik numarası"
             name="identityNumber"
             inputMode="numeric"
+            autoComplete="off"
             maxLength={11}
             required
             error={errors.identityNumber}
@@ -66,12 +67,14 @@ export function InvoiceForm({
           <CheckoutField
             label="Fatura adı"
             name="invoiceFirstName"
+            autoComplete="billing given-name"
             required
             error={errors.invoiceFirstName}
           />
           <CheckoutField
             label="Fatura soyadı"
             name="invoiceLastName"
+            autoComplete="billing family-name"
             required
             error={errors.invoiceLastName}
           />
@@ -81,6 +84,7 @@ export function InvoiceForm({
           <CheckoutField
             label="Firma unvanı"
             name="companyName"
+            autoComplete="organization"
             required
             error={errors.companyName}
             className="sm:col-span-2"
@@ -88,6 +92,7 @@ export function InvoiceForm({
           <CheckoutField
             label="Vergi dairesi"
             name="taxOffice"
+            autoComplete="off"
             required
             error={errors.taxOffice}
           />
@@ -95,6 +100,7 @@ export function InvoiceForm({
             label="Vergi numarası"
             name="taxNumber"
             inputMode="numeric"
+            autoComplete="off"
             maxLength={10}
             required
             error={errors.taxNumber}
@@ -102,6 +108,7 @@ export function InvoiceForm({
           <CheckoutTextarea
             label="Firma adresi"
             name="companyAddress"
+            autoComplete="billing street-address"
             required
             error={errors.companyAddress}
             className="sm:col-span-2"

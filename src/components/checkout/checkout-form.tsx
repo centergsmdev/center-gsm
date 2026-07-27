@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/providers/cart-provider";
 import { createOrder } from "@/lib/orders/client";
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
+import { formatCurrency } from "@/lib/format";
 import { getActiveShippingCarriers } from "@/shipping/repository/shipping-repository";
 import type {
   DeliveryMethod,
@@ -143,6 +144,70 @@ export function CheckoutForm() {
     return next;
   }
 
+  function validateField(name: string, value: string) {
+    let message = "";
+    if (requiredFields[name] && !value.trim()) message = requiredFields[name];
+    else if (name === "email" && !/^\S+@\S+\.\S+$/.test(value))
+      message = "Geçerli bir e-posta adresi girin.";
+    else if (name === "phone" && value.replace(/\D/g, "").length < 10)
+      message = "Telefon numarası en az 10 rakam olmalıdır.";
+    else if (name === "postalCode" && !/^\d{5}$/.test(value))
+      message = "Posta kodu 5 rakam olmalıdır.";
+    else if (name === "identityNumber" && !/^\d{11}$/.test(value))
+      message = "T.C. kimlik numarası 11 rakam olmalıdır.";
+    else if (
+      invoiceType === "individual" &&
+      name === "invoiceFirstName" &&
+      !value.trim()
+    )
+      message = "Fatura adını girin.";
+    else if (
+      invoiceType === "individual" &&
+      name === "invoiceLastName" &&
+      !value.trim()
+    )
+      message = "Fatura soyadını girin.";
+    else if (
+      invoiceType === "corporate" &&
+      name === "companyName" &&
+      !value.trim()
+    )
+      message = "Firma unvanını girin.";
+    else if (
+      invoiceType === "corporate" &&
+      name === "taxOffice" &&
+      !value.trim()
+    )
+      message = "Vergi dairesini girin.";
+    else if (name === "taxNumber" && !/^\d{10}$/.test(value))
+      message = "Vergi numarası 10 rakam olmalıdır.";
+    else if (
+      invoiceType === "corporate" &&
+      name === "companyAddress" &&
+      !value.trim()
+    )
+      message = "Firma adresini girin.";
+
+    setErrors((current) => {
+      if (current[name] === message || (!current[name] && !message))
+        return current;
+      const next = { ...current };
+      if (message) next[name] = message;
+      else delete next[name];
+      return next;
+    });
+  }
+
+  function handleFieldBlur(event: React.FocusEvent<HTMLFormElement>) {
+    const target = event.target;
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement
+    )
+      validateField(target.name, target.value);
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -255,8 +320,16 @@ export function CheckoutForm() {
   }
 
   const deliveryCost = deliveryOptions[deliveryMethod].cost;
+  const checkoutTotal = Math.max(
+    0,
+    totals.total +
+      deliveryCost -
+      loyaltyDiscount -
+      credits.giftAmount -
+      credits.storeCreditAmount,
+  );
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} onBlur={handleFieldBlur} noValidate>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-5">
           <CheckoutSection
@@ -366,7 +439,7 @@ export function CheckoutForm() {
             <Button
               type="submit"
               size="lg"
-              className="mt-6 w-full"
+              className="mt-6 hidden w-full lg:inline-flex"
               disabled={processing}
             >
               {processing ? (
@@ -398,6 +471,34 @@ export function CheckoutForm() {
           giftCardAmount={credits.giftAmount}
           storeCreditAmount={credits.storeCreditAmount}
         />
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-sticky border-t border-zinc-200 bg-white/95 p-3 shadow-[0_-14px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              Genel toplam
+            </p>
+            <p className="truncate text-xl font-black tracking-[-0.04em]">
+              {formatCurrency(checkoutTotal)}
+            </p>
+          </div>
+          <Button
+            type="submit"
+            size="lg"
+            className="shrink-0 shadow-lg"
+            disabled={processing}
+          >
+            {processing ? (
+              <LoaderCircle
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
+            ) : (
+              <LockKeyhole className="size-4" aria-hidden="true" />
+            )}
+            {processing ? "İşleniyor…" : "Siparişi Tamamla"}
+          </Button>
+        </div>
       </div>
     </form>
   );

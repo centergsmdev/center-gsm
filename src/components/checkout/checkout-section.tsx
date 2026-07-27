@@ -14,9 +14,9 @@ export function CheckoutSection({
   children: ReactNode;
 }) {
   return (
-    <Card className="border-white/80 bg-white/90 p-4 shadow-sm backdrop-blur sm:p-6">
+    <Card className="home-premium-surface rounded-2xl border-white/80 bg-white/95 p-4 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-6">
       <div className="flex gap-4">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-zinc-950 text-xs font-black text-white">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-xs font-black text-white shadow-lg">
           {number}
         </span>
         <div>
