@@ -29,6 +29,15 @@ export function PaymentMethods({
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading && !account && value === "transfer") {
+      onChange("phone_approval");
+    }
+  }, [account, loading, onChange, value]);
+
+  const transferUnavailable = !loading && !account;
+
   return (
     <div>
       <fieldset>
@@ -39,8 +48,13 @@ export function PaymentMethods({
             value="transfer"
             checked={value === "transfer"}
             onChange={() => onChange("transfer")}
+            disabled={transferUnavailable}
             title="Havale / EFT"
-            description="Sipariş numaranızla banka hesabımıza güvenli transfer"
+            description={
+              transferUnavailable
+                ? "Aktif banka hesabı tanımlanana kadar kullanılamaz"
+                : "Sipariş numaranızla banka hesabımıza güvenli transfer"
+            }
             icon={<Landmark className="size-5" aria-hidden="true" />}
           />
           <ChoiceCard

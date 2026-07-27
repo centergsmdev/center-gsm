@@ -23,13 +23,19 @@ export async function createOrder(
   const result = await client.rpc("create_order", {
     p_payload: payload as unknown as Json,
   });
-  if (result.error)
+  if (result.error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[orders/createOrder] Supabase RPC error", result.error);
+    }
     return {
       data: null,
       error: result.error.message.includes("insufficient_inventory")
         ? "Seçtiğiniz ürünlerden biri için yeterli kullanılabilir stok kalmadı. Sepetinizi güncelleyip tekrar deneyin."
-        : SAFE_ERROR,
+        : result.error.message.includes("bank_account_unavailable")
+          ? "Havale/EFT şu anda kullanılamıyor. Lütfen telefon ile onay yöntemini seçin."
+          : SAFE_ERROR,
     };
+  }
   if (!object(result.data)) return { data: null, error: SAFE_ERROR };
   const id = result.data.id;
   const orderNumber = result.data.order_number;
