@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
 
   return (
     <Card className="home-premium-interactive home-premium-surface group relative flex h-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
-      <div className="relative aspect-[3/2] overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 [&_span]:hidden">
+      <div className="relative aspect-square overflow-hidden bg-white [&_span]:hidden">
         <ProductVisual product={product} />
         {product.discountRate ? (
           <Badge

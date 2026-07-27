@@ -66,7 +66,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
         id="product-main-image"
         type="button"
         onClick={() => setIsLightboxOpen(true)}
-        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-border bg-surface-subtle shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-border bg-white shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label={`${selectedItem?.label} görselini tam ekran aç`}
         aria-haspopup="dialog"
       >
@@ -97,7 +97,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
             aria-controls="product-main-image"
             onClick={() => setSelectedView(index)}
             className={cn(
-              "relative aspect-square min-w-20 snap-start overflow-hidden rounded-md border bg-surface-subtle transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-w-0",
+              "relative aspect-square min-w-20 snap-start overflow-hidden rounded-md border bg-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-w-0",
               selectedView === index
                 ? "border-zinc-950 shadow-sm"
                 : "border-border hover:border-border-strong",

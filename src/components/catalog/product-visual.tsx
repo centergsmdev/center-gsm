@@ -2,15 +2,18 @@ import { Headphones, Laptop, Smartphone, Tablet, Watch } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
-import { imagePerformanceProps, type ImagePerformancePreset } from "@/lib/performance/helpers";
+import {
+  imagePerformanceProps,
+  type ImagePerformancePreset,
+} from "@/lib/performance/helpers";
 
 const accents = {
-  graphite: "from-zinc-300 via-zinc-100 to-white text-zinc-800",
-  silver: "from-slate-200 via-white to-zinc-100 text-slate-700",
-  red: "from-red-100 via-white to-zinc-100 text-red-700",
-  blue: "from-blue-100 via-white to-zinc-100 text-blue-700",
-  cream: "from-amber-100 via-white to-zinc-100 text-amber-800",
-  black: "from-zinc-300 via-zinc-100 to-white text-zinc-950",
+  graphite: "text-zinc-800",
+  silver: "text-slate-700",
+  red: "text-red-700",
+  blue: "text-blue-700",
+  cream: "text-amber-800",
+  black: "text-zinc-950",
 };
 
 const icons = {
@@ -37,7 +40,7 @@ export function ProductVisual({
   return (
     <div
       className={cn(
-        "relative grid size-full place-items-center overflow-hidden bg-gradient-to-br",
+        "relative grid size-full place-items-center overflow-hidden bg-white",
         accents[product.accent],
       )}
       aria-label={`${product.brand} ${product.model} ürün görseli alanı`}
@@ -54,7 +57,7 @@ export function ProductVisual({
           loading={imageProps.loading}
           decoding={imageProps.decoding}
           fetchPriority={imageProps.priority ? "high" : "auto"}
-          className="absolute inset-0 size-full object-contain p-4 transition-transform duration-250 ease-premium group-hover:scale-[1.07]"
+          className="absolute inset-0 size-full object-contain object-center p-4 transition-transform duration-250 ease-premium group-hover:scale-[1.07]"
         />
       ) : null}
       <div
