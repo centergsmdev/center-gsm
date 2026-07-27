@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Maximize2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 
 import { ProductVisual } from "@/components/catalog/product-visual";
 import { IconButton } from "@/components/ui/icon-button";
@@ -12,6 +12,8 @@ const views = ["Ön görünüm", "Arka görünüm", "Yan görünüm", "Detay gö
 
 export function ProductGallery({ product }: { product: CatalogProduct }) {
   const [selectedView, setSelectedView] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const galleryItems = product.imageUrls?.length
     ? product.imageUrls.map((url, index) => ({
         label: `${product.brand} ${product.model} görsel ${index + 1}`,
@@ -19,39 +21,67 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
       }))
     : views.map((label) => ({ label, url: undefined }));
 
+  function showPrevious() {
+    setSelectedView((current) =>
+      current === 0 ? galleryItems.length - 1 : current - 1,
+    );
+    setIsZoomed(false);
+  }
+
+  function showNext() {
+    setSelectedView((current) => (current + 1) % galleryItems.length);
+    setIsZoomed(false);
+  }
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsLightboxOpen(false);
+      if (event.key === "ArrowLeft") {
+        setSelectedView((current) =>
+          current === 0 ? galleryItems.length - 1 : current - 1,
+        );
+        setIsZoomed(false);
+      }
+      if (event.key === "ArrowRight") {
+        setSelectedView((current) => (current + 1) % galleryItems.length);
+        setIsZoomed(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [galleryItems.length, isLightboxOpen]);
+
+  const selectedItem = galleryItems[selectedView];
+
   return (
     <section aria-label="Ürün galerisi" className="min-w-0">
-      <div
+      <button
         id="product-main-image"
-        role="tabpanel"
-        className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-surface-subtle shadow-xs"
+        type="button"
+        onClick={() => setIsLightboxOpen(true)}
+        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-border bg-surface-subtle shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label={`${selectedItem?.label} görselini tam ekran aç`}
+        aria-haspopup="dialog"
       >
-        <div
-          className={cn(
-            "size-full transition-transform duration-250 ease-premium",
-            selectedView === 1 && "-rotate-3 scale-95",
-            selectedView === 2 && "rotate-6 scale-90",
-            selectedView === 3 && "scale-110",
-          )}
-        >
-          <ProductVisual
-            product={product}
-            imageUrl={galleryItems[selectedView]?.url}
-            performancePreset="product-gallery"
-          />
-        </div>
-        <IconButton
-          label="Ürün görselini büyüt"
-          variant="outline"
-          className="absolute right-4 top-4 z-raised bg-white/90 backdrop-blur"
-          aria-haspopup="dialog"
-        >
+        <ProductVisual
+          product={product}
+          imageUrl={selectedItem?.url}
+          performancePreset="product-gallery"
+        />
+        <span className="absolute right-4 top-4 z-raised inline-grid size-11 place-items-center rounded-full border border-border bg-white/90 text-zinc-700 shadow-xs backdrop-blur">
           <Maximize2 className="size-4" aria-hidden="true" />
-        </IconButton>
-        <p className="absolute bottom-4 left-4 z-raised rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-semibold text-zinc-600 backdrop-blur">
-          Yakınlaştırmak için tıklayın
-        </p>
-      </div>
+        </span>
+        <span className="absolute bottom-4 left-4 z-raised rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-semibold text-zinc-600 backdrop-blur">
+          Tam ekran görüntüle
+        </span>
+      </button>
 
       <div
         className="mt-3 flex snap-x gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-4 sm:overflow-visible"
@@ -73,20 +103,91 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
                 : "border-border hover:border-border-strong",
             )}
           >
-            <div
-              className={cn(
-                "size-full scale-75",
-                index === 1 && "-rotate-3",
-                index === 2 && "rotate-6",
-                index === 3 && "scale-90",
-              )}
-            >
-              <ProductVisual product={product} imageUrl={view.url} performancePreset="thumbnail" />
-            </div>
+            <ProductVisual
+              product={product}
+              imageUrl={view.url}
+              performancePreset="thumbnail"
+            />
             <span className="sr-only">{view.label}</span>
           </button>
         ))}
       </div>
+
+      {isLightboxOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${product.brand} ${product.model} tam ekran galerisi`}
+          className="fixed inset-0 z-modal flex bg-black/95 p-3 backdrop-blur-sm sm:p-6"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <IconButton
+            label="Galeriyi kapat"
+            variant="dark"
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute right-4 top-4 z-raised border border-white/15 bg-white/10 text-white hover:bg-white/20 sm:right-6 sm:top-6"
+          >
+            <X className="size-5" aria-hidden="true" />
+          </IconButton>
+
+          {galleryItems.length > 1 ? (
+            <>
+              <IconButton
+                label="Önceki görsel"
+                variant="dark"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showPrevious();
+                }}
+                className="absolute left-3 top-1/2 z-raised -translate-y-1/2 border border-white/15 bg-white/10 text-white hover:bg-white/20 sm:left-6"
+              >
+                <ChevronLeft className="size-6" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                label="Sonraki görsel"
+                variant="dark"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showNext();
+                }}
+                className="absolute right-3 top-1/2 z-raised -translate-y-1/2 border border-white/15 bg-white/10 text-white hover:bg-white/20 sm:right-6"
+              >
+                <ChevronRight className="size-6" aria-hidden="true" />
+              </IconButton>
+            </>
+          ) : null}
+
+          <div
+            className="m-auto flex size-full items-center justify-center overflow-auto px-12 py-16 [touch-action:pinch-zoom] sm:px-20"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {selectedItem?.url ? (
+              // Supabase Storage URLs are intentionally rendered without a fixed host allowlist.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={selectedItem.url}
+                alt={selectedItem.label}
+                onClick={() => setIsZoomed((current) => !current)}
+                className={cn(
+                  "max-h-full max-w-full cursor-zoom-in select-none object-contain transition-transform duration-300",
+                  isZoomed && "scale-150 cursor-zoom-out",
+                )}
+              />
+            ) : (
+              <div className="aspect-square w-full max-w-3xl overflow-hidden rounded-xl">
+                <ProductVisual
+                  product={product}
+                  performancePreset="product-gallery"
+                />
+              </div>
+            )}
+          </div>
+
+          <p className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1.5 text-xs text-white/75 backdrop-blur">
+            {selectedView + 1} / {galleryItems.length}
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }

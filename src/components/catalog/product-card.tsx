@@ -13,14 +13,17 @@ import type { CatalogProduct } from "@/types/product";
 export function ProductCard({ product }: { product: CatalogProduct }) {
   const productName = `${product.brand} ${product.model}`;
   const stock = {
-    "in-stock": { label: "Stokta", className: "bg-emerald-50 text-emerald-700" },
+    "in-stock": {
+      label: "Stokta",
+      className: "bg-emerald-50 text-emerald-700",
+    },
     limited: { label: "Sınırlı stok", className: "bg-amber-50 text-amber-700" },
     "out-of-stock": { label: "Tükendi", className: "bg-red-50 text-red-700" },
   }[product.stockStatus];
 
   return (
     <Card className="home-premium-interactive home-premium-surface group relative flex h-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 [&_span]:hidden">
+      <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 [&_span]:hidden">
         <ProductVisual product={product} />
         {product.discountRate ? (
           <Badge
@@ -44,7 +47,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
+      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             {product.brand}
@@ -56,7 +59,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           </span>
         </div>
 
-        <h2 className="mt-2 line-clamp-2 min-h-12 text-base font-black leading-6 tracking-[-0.035em] text-zinc-950 sm:text-lg">
+        <h2 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-black leading-5 tracking-[-0.03em] text-zinc-950 sm:text-base">
           <Link
             href={`/urun/${product.slug}`}
             className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
@@ -64,11 +67,11 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             {product.model}
           </Link>
         </h2>
-        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-zinc-500 sm:text-sm">
+        <p className="mt-1.5 line-clamp-2 min-h-9 text-xs leading-[1.125rem] text-zinc-500">
           {product.description}
         </p>
 
-        <div className="mt-3 flex items-center gap-2 text-xs">
+        <div className="mt-2 flex items-center gap-2 text-[11px]">
           <span
             className="flex items-center gap-1 font-bold text-zinc-800"
             aria-label={`${product.rating} puan`}
@@ -82,31 +85,36 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           <span className="text-zinc-400">({product.reviewCount} yorum)</span>
         </div>
 
-        <div className="mt-auto pt-5">
-          <div className="min-h-5">
+        <div className="mt-auto pt-3">
+          <div className="min-h-4">
             {product.previousPrice ? (
-              <p className="text-sm font-medium text-zinc-400 line-through">
+              <p className="text-xs font-medium text-zinc-400 line-through">
                 {formatCurrency(product.previousPrice)}
               </p>
             ) : null}
           </div>
-          <p className="mt-1 text-2xl font-black tracking-[-0.05em] text-zinc-950">
+          <p className="mt-0.5 text-xl font-black tracking-[-0.045em] text-zinc-950 sm:text-2xl">
             {formatCurrency(product.price)}
           </p>
-          <p className="mt-2 w-fit rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600">
-            <strong className="text-zinc-950">{product.installmentCount} ay</strong>{" "}
+          <p className="mt-1.5 w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-medium text-zinc-600">
+            <strong className="text-zinc-950">
+              {product.installmentCount} ay
+            </strong>{" "}
             × {formatCurrency(product.monthlyInstallment)}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {product.freeShipping ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-1 text-[9px] font-bold text-zinc-700">
                 <Truck className="size-3.5 text-primary" aria-hidden="true" />
                 Ücretsiz Kargo
               </span>
             ) : null}
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-zinc-700">
-              <ShieldCheck className="size-3.5 text-primary" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-1 text-[9px] font-bold text-zinc-700">
+              <ShieldCheck
+                className="size-3.5 text-primary"
+                aria-hidden="true"
+              />
               Güvenli Ödeme
             </span>
           </div>
@@ -115,7 +123,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             product={product}
             productId={product.id}
             productName={productName}
-            className="relative z-raised mt-4 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)] active:scale-[0.98]"
+            className="relative z-raised mt-3 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]"
           />
         </div>
       </div>
