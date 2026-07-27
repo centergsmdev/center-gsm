@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, LockKeyhole } from "lucide-react";
+import { LockKeyhole, ShieldCheck, Truck } from "lucide-react";
 
 import { CouponForm } from "@/components/cart/coupon-form";
 import { ShippingCalculator } from "@/components/cart/shipping-calculator";
@@ -13,13 +13,14 @@ import { useCart } from "@/providers/cart-provider";
 
 export function OrderSummary() {
   const { totals, itemCount } = useCart();
-  const totalDiscount = totals.productDiscount + totals.campaignDiscount + totals.couponDiscount;
+  const totalDiscount =
+    totals.productDiscount + totals.campaignDiscount + totals.couponDiscount;
   return (
     <aside
       aria-labelledby="order-summary-title"
       className="lg:sticky lg:top-44"
     >
-      <Card className="border-white/80 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.1)] backdrop-blur sm:p-5">
+      <Card className="home-premium-surface border-white/80 bg-white/95 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
         <h2
           id="order-summary-title"
           className="text-lg font-black tracking-tight"
@@ -64,23 +65,33 @@ export function OrderSummary() {
         <p className="mt-2 text-right text-[11px] text-muted">
           {formatCurrency(totals.vatIncluded)} KDV dahildir
         </p>
-        <div className="mt-5 flex items-center gap-3 rounded-md bg-emerald-50 p-3 text-emerald-800">
-          <CalendarDays className="size-5 shrink-0" aria-hidden="true" />
-          <div>
-            <p className="text-xs font-bold">Tahmini teslimat</p>
-            <p className="mt-0.5 text-[11px]">29–31 Temmuz</p>
+        <div className="mt-5 grid gap-2">
+          <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-3 text-zinc-700">
+            <ShieldCheck
+              className="size-5 shrink-0 text-emerald-600"
+              aria-hidden="true"
+            />
+            <p className="text-xs font-bold">Güvenli ve şifreli ödeme</p>
           </div>
+          {totals.shipping === 0 ? (
+            <div className="flex items-center gap-3 rounded-xl bg-emerald-50 p-3 text-emerald-800">
+              <Truck className="size-5 shrink-0" aria-hidden="true" />
+              <p className="text-xs font-bold">
+                Sepetiniz ücretsiz kargoya uygun
+              </p>
+            </div>
+          ) : null}
         </div>
         <Link
           href="/odeme"
-          className={buttonVariants({ size: "lg", className: "mt-5 w-full" })}
+          className={buttonVariants({
+            size: "lg",
+            className: "mt-5 hidden w-full lg:inline-flex",
+          })}
         >
           <LockKeyhole className="size-4" aria-hidden="true" />
           Güvenli Ödemeye Geç
         </Link>
-        <p className="mt-3 text-center text-[11px] leading-5 text-muted">
-          Demo checkout; gerçek ödeme alınmaz.
-        </p>
       </Card>
 
       <Card className="mt-3 border-white/80 bg-white/90 p-4 backdrop-blur">
@@ -88,6 +99,25 @@ export function OrderSummary() {
         <Divider className="my-5" />
         <ShippingCalculator />
       </Card>
+      <div className="fixed inset-x-0 bottom-0 z-sticky border-t border-zinc-200 bg-white/95 p-3 shadow-[0_-14px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              Genel toplam
+            </p>
+            <p className="truncate text-xl font-black tracking-[-0.04em]">
+              {formatCurrency(totals.total)}
+            </p>
+          </div>
+          <Link
+            href="/odeme"
+            className={buttonVariants({ size: "lg", className: "shrink-0" })}
+          >
+            <LockKeyhole className="size-4" aria-hidden="true" />
+            Ödemeye Geç
+          </Link>
+        </div>
+      </div>
     </aside>
   );
 }

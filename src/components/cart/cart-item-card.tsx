@@ -12,19 +12,26 @@ import { useCart } from "@/providers/cart-provider";
 import { useFavorites } from "@/providers/favorites-provider";
 import type { CartLine } from "@/types/cart";
 
-export function CartItemCard({ line }: { line: CartLine }) {
+export function CartItemCard({
+  line,
+  onRemove,
+}: {
+  line: CartLine;
+  onRemove: () => void;
+}) {
   const { product, quantity, lineTotal } = line;
   const { updateQuantity, removeItem } = useCart();
   const { addFavorite } = useFavorites();
   const productName = `${product.brand} ${product.model}`;
+  const maxQuantity = Math.max(1, Math.min(10, product.availableStock ?? 10));
 
   return (
-    <Card className="overflow-hidden border-white/80 bg-white/90 p-3 shadow-sm backdrop-blur sm:p-4">
-      <div className="flex gap-3 sm:gap-4">
+    <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-3 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
+      <div className="grid min-w-0 grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
         <Link
           href={`/urun/${product.slug}`}
           aria-label={`${productName} ürün detayını aç`}
-          className="size-20 shrink-0 overflow-hidden rounded-md border border-border bg-surface-subtle transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:size-28"
+          className="aspect-square w-full overflow-hidden rounded-xl border border-zinc-100 bg-white transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&_span]:hidden"
         >
           <ProductVisual product={product} />
         </Link>
@@ -34,7 +41,7 @@ export function CartItemCard({ line }: { line: CartLine }) {
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted">
                 {product.brand}
               </p>
-              <h2 className="mt-1 truncate text-sm font-bold sm:text-base">
+              <h2 className="mt-1 line-clamp-2 text-sm font-black tracking-[-0.02em] sm:text-base">
                 <Link
                   href={`/urun/${product.slug}`}
                   className="hover:text-primary"
@@ -43,20 +50,22 @@ export function CartItemCard({ line }: { line: CartLine }) {
                 </Link>
               </h2>
               <p className="mt-1 text-[10px] text-muted sm:text-xs">
-                SKU: CG-{product.id.slice(2).padStart(6, "0")}
+                SKU:{" "}
+                {product.sku ?? `CG-${product.id.slice(2).padStart(6, "0")}`}
               </p>
             </div>
             <IconButton
               label={`${productName} ürününü sepetten sil`}
               size="sm"
               variant="ghost"
-              onClick={() => removeItem(product.id)}
+              onClick={onRemove}
+              className="text-zinc-400 hover:bg-red-50 hover:text-primary"
             >
               <Trash2 className="size-4" aria-hidden="true" />
             </IconButton>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+          <div className="mt-3 grid grid-cols-2 items-end gap-3">
             <div>
               {product.previousPrice ? (
                 <p className="text-[11px] text-muted line-through">
@@ -72,18 +81,18 @@ export function CartItemCard({ line }: { line: CartLine }) {
                 </Badge>
               ) : null}
             </div>
-            <div className="text-right">
+            <div className="min-w-0 text-right">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
                 Ara toplam
               </p>
-              <p className="mt-1 text-base font-black tracking-tight sm:text-lg">
+              <p className="mt-1 truncate text-base font-black tracking-tight sm:text-lg">
                 {formatCurrency(lineTotal)}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex h-10 w-fit items-center rounded-full border border-border bg-surface shadow-xs">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <div className="flex h-10 w-fit items-center rounded-full border border-border bg-white shadow-xs transition-shadow focus-within:shadow-md">
               <IconButton
                 label={`${productName} adedini azalt`}
                 size="sm"
@@ -93,9 +102,10 @@ export function CartItemCard({ line }: { line: CartLine }) {
                 <Minus className="size-3.5" aria-hidden="true" />
               </IconButton>
               <output
+                key={quantity}
                 aria-live="polite"
                 aria-label={`${productName} adedi`}
-                className="min-w-8 text-center text-sm font-bold"
+                className="animate-in zoom-in min-w-8 text-center text-sm font-black duration-150"
               >
                 {quantity}
               </output>
@@ -103,7 +113,7 @@ export function CartItemCard({ line }: { line: CartLine }) {
                 label={`${productName} adedini artır`}
                 size="sm"
                 onClick={() => updateQuantity(product.id, quantity + 1)}
-                disabled={quantity === 10}
+                disabled={quantity >= maxQuantity}
               >
                 <Plus className="size-3.5" aria-hidden="true" />
               </IconButton>
