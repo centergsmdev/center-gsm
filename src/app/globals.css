@@ -167,10 +167,30 @@
   }
 
   a.home-premium-surface:hover,
-  .home-premium-surface:has(> a:hover) {
+  .home-premium-surface:has(> a:hover),
+  .home-premium-interactive:hover {
     transform: translate3d(0, -5px, 0);
     border-color: rgb(248 113 113 / 0.45);
     box-shadow: var(--home-premium-shadow-hover);
+  }
+
+  .brand-premium-card::before {
+    position: absolute;
+    inset: 24% 16%;
+    border-radius: 9999px;
+    content: "";
+    pointer-events: none;
+    background: rgb(239 68 68 / 0);
+    filter: blur(28px);
+    transition: background-color 300ms var(--ease-premium);
+  }
+
+  .brand-premium-card:hover::before {
+    background: rgb(239 68 68 / 0.09);
+  }
+
+  .brand-premium-card > img {
+    position: relative;
   }
 
   .premium-hero.home-premium-surface:hover {
