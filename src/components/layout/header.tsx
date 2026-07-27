@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { CartHeaderAction } from "@/components/cart/cart-header-action";
 import { FavoritesHeaderAction } from "@/components/favorites/favorites-header-action";
@@ -9,19 +9,6 @@ import { Divider } from "@/components/ui/divider";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
 import { getCategories } from "@/lib/catalog/data";
-
-const navigationCategoryNames = [
-  "Telefon",
-  "Bilgisayar",
-  "Tablet",
-  "Akıllı Saat",
-  "Kulaklık",
-  "Aksesuar",
-] as const;
-
-function normalizeCategoryName(value: string) {
-  return value.trim().toLocaleLowerCase("tr-TR");
-}
 
 function BrandLogo() {
   return (
@@ -47,16 +34,7 @@ function BrandLogo() {
 
 export async function Header() {
   const categoryResult = await getCategories();
-  const categoriesByName = new Map(
-    categoryResult.data.map((category) => [
-      normalizeCategoryName(category.name),
-      category,
-    ]),
-  );
-  const navigationCategories = navigationCategoryNames.flatMap((name) => {
-    const category = categoriesByName.get(normalizeCategoryName(name));
-    return category ? [{ name, slug: category.slug }] : [];
-  });
+  const navigationCategories = categoryResult.data;
 
   return (
     <header className="sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
@@ -136,22 +114,21 @@ export async function Header() {
           >
             <Menu className="size-4" aria-hidden="true" />
             Tüm Kategoriler
-            <ChevronDown className="size-3.5" aria-hidden="true" />
           </Link>
           <Divider orientation="vertical" className="h-5" />
-          <div className="flex flex-1 items-center justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-6 overflow-x-auto">
             {navigationCategories.map((category) => (
               <Link
                 key={category.slug}
                 href={`/kategori/${category.slug}`}
-                className="rounded-sm text-sm font-medium text-zinc-600 transition-colors duration-200 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="shrink-0 rounded-sm text-sm font-medium text-zinc-600 transition-colors duration-200 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {category.name}
               </Link>
             ))}
             <Link
               href="/#deals"
-              className="rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-primary transition-colors duration-200 hover:bg-red-100"
+              className="ml-auto shrink-0 rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-primary transition-colors duration-200 hover:bg-red-100"
             >
               Kampanyalar
             </Link>
