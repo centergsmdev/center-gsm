@@ -39,7 +39,7 @@ export function HeroVisual() {
       <div ref={visualRef} className="hero-product-parallax absolute inset-0">
         <div className="hero-product-float relative size-full">
           <Image
-            src="/images/home/premium-tech-hero.png"
+            src="/images/home/premium-tech-hero-transparent.webp"
             alt="PlayStation 5, iPhone 17 Pro Max ve Apple Watch Ultra"
             fill
             priority={true}

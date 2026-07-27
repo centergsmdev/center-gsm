@@ -151,8 +151,9 @@
   .premium-hero {
     background-color: #03050c;
     background-image:
-      radial-gradient(circle at 78% 20%, rgb(30 64 175 / 0.2), transparent 34rem),
-      radial-gradient(circle at 92% 86%, rgb(127 29 29 / 0.3), transparent 30rem),
+      radial-gradient(circle at 62% 58%, rgb(37 99 235 / 0.28), transparent 32rem),
+      radial-gradient(circle at 88% 60%, rgb(220 38 38 / 0.34), transparent 32rem),
+      radial-gradient(circle at 24% 18%, rgb(15 23 42 / 0.48), transparent 30rem),
       linear-gradient(118deg, #08142b 0%, #03050c 52%, #2a080e 100%);
   }
 
@@ -192,14 +193,13 @@
 
   .premium-hero::after {
     position: absolute;
-    inset: auto 8% -36% auto;
-    width: 32rem;
-    height: 32rem;
-    border-radius: 9999px;
+    inset: 0;
     content: "";
     pointer-events: none;
-    background: rgb(220 38 38 / 0.12);
-    filter: blur(90px);
+    background:
+      linear-gradient(90deg, transparent 46%, rgb(59 130 246 / 0.08) 62%, transparent 76%),
+      linear-gradient(90deg, transparent 68%, rgb(239 68 68 / 0.1) 86%, transparent 100%);
+    filter: blur(28px);
   }
 
   .hero-copy-enter {
@@ -225,7 +225,6 @@
 
   .hero-product-image {
     filter: drop-shadow(0 28px 42px rgb(0 0 0 / 0.36));
-    mask-image: linear-gradient(to right, transparent 0%, black 16%, black 100%);
   }
 
   .hero-cta {
@@ -286,12 +285,6 @@
 @keyframes hero-product-float {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(0, -4px, 0); }
-}
-
-@media (max-width: 1023px) {
-  .hero-product-image {
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 100%);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
