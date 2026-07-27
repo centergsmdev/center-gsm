@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -236,7 +237,10 @@ export function GlobalSearch({
           activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
         }
         aria-autocomplete="list"
-        className="h-12 rounded-full border-zinc-200 bg-surface-subtle pl-11 pr-11 shadow-inner focus:bg-white"
+        className={cn(
+          "h-12 rounded-full border-zinc-200 bg-surface-subtle pl-11 pr-11 shadow-inner focus:bg-white",
+          variant === "mobile" && "text-base",
+        )}
       />
       {query ? (
         <IconButton
@@ -392,17 +396,20 @@ export function GlobalSearch({
           <Search className="size-4" aria-hidden="true" />
           Ürün, kategori veya marka ara
         </button>
-        {open ? (
-          <div className="animate-in fade-in fixed inset-0 z-modal flex flex-col bg-white duration-200">
-            <div className="flex items-center gap-2 border-b border-border p-3 shadow-sm">
-              <div className="min-w-0 flex-1">{searchInput}</div>
-              <IconButton label="Aramayı kapat" onClick={closeSearch}>
-                <X className="size-5" aria-hidden="true" />
-              </IconButton>
-            </div>
-            {resultsPanel}
-          </div>
-        ) : null}
+        {open
+          ? createPortal(
+              <div className="animate-in fade-in fixed inset-0 z-modal flex h-dvh flex-col overflow-hidden bg-white duration-200">
+                <div className="flex shrink-0 items-center gap-2 border-b border-border p-3 shadow-sm">
+                  <div className="min-w-0 flex-1">{searchInput}</div>
+                  <IconButton label="Aramayı kapat" onClick={closeSearch}>
+                    <X className="size-5" aria-hidden="true" />
+                  </IconButton>
+                </div>
+                {resultsPanel}
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     );
   }
