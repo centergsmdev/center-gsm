@@ -21,6 +21,7 @@ type Category = Timestamps & {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  search_name: string;
 };
 type Brand = Timestamps & {
   id: string;
@@ -29,6 +30,7 @@ type Brand = Timestamps & {
   description: string | null;
   logo_url: string | null;
   is_active: boolean;
+  search_name: string;
 };
 type Product = Timestamps & {
   id: string;
@@ -47,6 +49,7 @@ type Product = Timestamps & {
   warranty_months: number;
   rating: number;
   review_count: number;
+  search_text: string;
 };
 type ProductImage = Timestamps & {
   id: string;
@@ -874,25 +877,53 @@ type ReturnStatusHistory = Timestamps & {
 };
 
 type WishlistAlertPreferenceRow = Timestamps & {
-  id: string; user_id: string; product_id: string;
-  price_drop: boolean; back_in_stock: boolean; promotion_started: boolean;
+  id: string;
+  user_id: string;
+  product_id: string;
+  price_drop: boolean;
+  back_in_stock: boolean;
+  promotion_started: boolean;
 };
 type WishlistAlertEventRow = {
-  id: string; user_id: string; product_id: string; event_type: string;
-  idempotency_key: string; payload: Json; status: string; created_at: string;
-  processed_at: string | null; cancelled_at: string | null;
+  id: string;
+  user_id: string;
+  product_id: string;
+  event_type: string;
+  idempotency_key: string;
+  payload: Json;
+  status: string;
+  created_at: string;
+  processed_at: string | null;
+  cancelled_at: string | null;
 };
 type WishlistAlertDeliveryRow = Timestamps & {
-  id: string; event_id: string; user_id: string; channel: string; status: string;
-  attempt_count: number; last_error: string | null; delivered_at: string | null;
+  id: string;
+  event_id: string;
+  user_id: string;
+  channel: string;
+  status: string;
+  attempt_count: number;
+  last_error: string | null;
+  delivered_at: string | null;
 };
 type ProductPriceHistoryRow = {
-  id: string; product_id: string; old_price: number; new_price: number;
-  change_percentage: number; source: string; changed_at: string;
+  id: string;
+  product_id: string;
+  old_price: number;
+  new_price: number;
+  change_percentage: number;
+  source: string;
+  changed_at: string;
 };
 type ProductStockHistoryRow = {
-  id: string; product_id: string; old_stock: number; new_stock: number;
-  old_status: string; new_status: string; warehouse_id: string | null; changed_at: string;
+  id: string;
+  product_id: string;
+  old_stock: number;
+  new_stock: number;
+  old_status: string;
+  new_status: string;
+  warehouse_id: string | null;
+  changed_at: string;
 };
 
 export type Database = {
@@ -1113,7 +1144,11 @@ export type Database = {
       gift_card_transactions: Table<GiftCardTransaction, never, never>;
       store_credit_accounts: Table<StoreCreditAccount, never, never>;
       store_credit_transactions: Table<StoreCreditTransaction, never, never>;
-      wishlist_alert_preferences: Table<WishlistAlertPreferenceRow, never, never>;
+      wishlist_alert_preferences: Table<
+        WishlistAlertPreferenceRow,
+        never,
+        never
+      >;
       wishlist_alert_events: Table<WishlistAlertEventRow, never, never>;
       wishlist_alert_deliveries: Table<WishlistAlertDeliveryRow, never, never>;
       product_price_history: Table<ProductPriceHistoryRow, never, never>;
@@ -1126,7 +1161,10 @@ export type Database = {
       };
     };
     Functions: {
-      admin_dashboard_metrics: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_dashboard_metrics: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       earn_loyalty_points: {
         Args: {
           p_user_id: string;
@@ -1556,21 +1594,47 @@ export type Database = {
         Returns: number;
       };
       set_wishlist_alert_preference: {
-        Args: { p_product_id: string; p_price_drop: boolean; p_back_in_stock: boolean; p_promotion_started: boolean };
+        Args: {
+          p_product_id: string;
+          p_price_drop: boolean;
+          p_back_in_stock: boolean;
+          p_promotion_started: boolean;
+        };
         Returns: boolean;
       };
       create_wishlist_alert_event: {
-        Args: { p_product_id: string; p_event_type: string; p_payload?: Json; p_idempotency_key: string };
+        Args: {
+          p_product_id: string;
+          p_event_type: string;
+          p_payload?: Json;
+          p_idempotency_key: string;
+        };
         Returns: number;
       };
       complete_wishlist_alert_delivery: {
-        Args: { p_delivery_id: string; p_success: boolean; p_error?: string | null };
+        Args: {
+          p_delivery_id: string;
+          p_success: boolean;
+          p_error?: string | null;
+        };
         Returns: boolean;
       };
-      retry_wishlist_alert_delivery: { Args: { p_event_id: string }; Returns: boolean };
-      cancel_wishlist_alert_event: { Args: { p_event_id: string }; Returns: boolean };
+      retry_wishlist_alert_delivery: {
+        Args: { p_event_id: string };
+        Returns: boolean;
+      };
+      cancel_wishlist_alert_event: {
+        Args: { p_event_id: string };
+        Returns: boolean;
+      };
       get_admin_wishlist_alerts: {
-        Args: { p_query?: string; p_type?: string | null; p_status?: string | null; p_page?: number; p_page_size?: number };
+        Args: {
+          p_query?: string;
+          p_type?: string | null;
+          p_status?: string | null;
+          p_page?: number;
+          p_page_size?: number;
+        };
         Returns: Json;
       };
     };

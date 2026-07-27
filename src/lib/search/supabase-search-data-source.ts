@@ -1,54 +1,54 @@
-import {
-  catalogSearchDataSource,
-  getCatalogSuggestions,
-} from "@/lib/search/catalog-search";
 import { mapSupabaseProduct } from "@/lib/catalog/mapper";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/database";
 import type {
   SearchDataSource,
-  SearchSuggestion,
   SearchSuggestionGroups,
 } from "@/types/search";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
+import { normalizeSearchTerm } from "@/lib/search/normalize-search";
 type BrowserCatalogClient = NonNullable<ReturnType<typeof createClient>>;
 
-const recent = ["Kablosuz kulaklık", "Nova X Pro", "Dizüstü bilgisayar"];
-const popular = [
-  "Akıllı telefon",
-  "Oyuncu bilgisayarı",
-  "Akıllı saat",
-  "Tablet",
-];
-const normalize = (value: string) => value.toLocaleLowerCase("tr-TR").trim();
-function termSuggestions(
-  terms: string[],
-  kind: SearchSuggestion["kind"],
-  query: string,
-) {
-  const normalized = normalize(query);
-  return terms
-    .filter((term) => !normalized || normalize(term).includes(normalized))
-    .slice(0, 5)
-    .map((term, index): SearchSuggestion => ({
-      id: `${kind}-${index}-${term}`,
-      kind,
-      label: term,
-      href: `/arama?q=${encodeURIComponent(term)}`,
-    }));
-}
+const emptySearchGroups: SearchSuggestionGroups = {
+  products: [],
+  brands: [],
+  categories: [],
+  recent: [],
+  popular: [],
+};
 
 async function browserProducts(client: BrowserCatalogClient, query: string) {
-  const safe = query.replace(/[^\p{L}\p{N}\s-]/gu, " ").trim();
+  const safe = normalizeSearchTerm(query);
+  const [matchingBrands, matchingCategories] = await Promise.all([
+    client
+      .from("brands")
+      .select("id")
+      .eq("is_active", true)
+      .like("search_name", `%${safe}%`),
+    client
+      .from("categories")
+      .select("id")
+      .eq("is_active", true)
+      .like("search_name", `%${safe}%`),
+  ]);
+  if (matchingBrands.error || matchingCategories.error) return null;
   let productQuery = client
     .from("products")
     .select("*")
     .eq("is_active", true)
     .limit(8);
-  if (safe)
-    productQuery = productQuery.or(
-      `name.ilike.%${safe}%,description.ilike.%${safe}%,short_description.ilike.%${safe}%,sku.ilike.%${safe}%`,
-    );
+  if (safe) {
+    const clauses = [`search_text.like.%${safe}%`];
+    if (matchingBrands.data.length)
+      clauses.push(
+        `brand_id.in.(${matchingBrands.data.map((item) => item.id).join(",")})`,
+      );
+    if (matchingCategories.data.length)
+      clauses.push(
+        `category_id.in.(${matchingCategories.data.map((item) => item.id).join(",")})`,
+      );
+    productQuery = productQuery.or(clauses.join(","));
+  }
   const productsResult = await productQuery;
   if (productsResult.error || !productsResult.data.length)
     return productsResult.error ? null : [];
@@ -106,38 +106,35 @@ async function browserProducts(client: BrowserCatalogClient, query: string) {
 export const supabaseSearchDataSource: SearchDataSource = {
   async products(query) {
     const client = createClient();
-    if (!client) return catalogSearchDataSource.products(query);
+    if (!client) return [];
     try {
-      return (
-        (await browserProducts(client, query)) ??
-        catalogSearchDataSource.products(query)
-      );
+      return (await browserProducts(client, query)) ?? [];
     } catch {
-      return catalogSearchDataSource.products(query);
+      return [];
     }
   },
   async suggestions(query): Promise<SearchSuggestionGroups> {
     const client = createClient();
-    if (!client) return getCatalogSuggestions(query);
+    if (!client) return emptySearchGroups;
     try {
-      const safe = query.replace(/[^\p{L}\p{N}\s-]/gu, " ").trim();
+      const safe = normalizeSearchTerm(query);
       const [products, brands, categories] = await Promise.all([
         browserProducts(client, query),
         client
           .from("brands")
           .select("*")
           .eq("is_active", true)
-          .ilike("name", `%${safe}%`)
+          .like("search_name", `%${safe}%`)
           .limit(5),
         client
           .from("categories")
           .select("*")
           .eq("is_active", true)
-          .ilike("name", `%${safe}%`)
+          .like("search_name", `%${safe}%`)
           .limit(5),
       ]);
       if (!products || brands.error || categories.error)
-        return getCatalogSuggestions(query);
+        return emptySearchGroups;
       return {
         products: products.slice(0, 4).map((product) => ({
           id: `product-${product.id}`,
@@ -159,11 +156,11 @@ export const supabaseSearchDataSource: SearchDataSource = {
           label: category.name,
           href: `/urunler?kategori=${encodeURIComponent(category.slug)}`,
         })),
-        recent: termSuggestions(recent, "recent", query),
-        popular: termSuggestions(popular, "popular", query),
+        recent: [],
+        popular: [],
       };
     } catch {
-      return getCatalogSuggestions(query);
+      return emptySearchGroups;
     }
   },
 };

@@ -10,6 +10,7 @@ import type {
   SupabaseCatalogRow,
 } from "@/lib/catalog/types";
 import { createPublicClient as createClient } from "@/lib/supabase/public";
+import { normalizeSearchTerm } from "@/lib/search/normalize-search";
 import type { Tables } from "@/types/database";
 import type { CatalogProduct } from "@/types/product";
 
@@ -18,13 +19,17 @@ type CatalogClient = NonNullable<ReturnType<typeof createClient>>;
 
 function fallbackProducts(filters: CatalogFilters): CatalogListResult {
   let data = [...catalogProducts];
-  const query = filters.query?.trim().toLocaleLowerCase("tr-TR");
+  const query = normalizeSearchTerm(filters.query ?? "");
   if (query)
     data = data.filter((product) =>
-      [product.brand, product.model, product.description, product.category]
-        .join(" ")
-        .toLocaleLowerCase("tr-TR")
-        .includes(query),
+      normalizeSearchTerm(
+        [
+          product.brand,
+          product.model,
+          product.description,
+          product.category,
+        ].join(" "),
+      ).includes(query),
     );
   if (filters.categories?.length)
     data = data.filter((product) =>
@@ -82,23 +87,31 @@ async function hydrateProducts(
     ...new Set(products.map((product) => product.category_id)),
   ];
   const brandIds = [...new Set(products.map((product) => product.brand_id))];
-  const [categoriesResult, brandsResult, imagesResult, variantsResult, stockResult] =
-    await Promise.all([
-      client.from("categories").select("*").in("id", categoryIds),
-      client.from("brands").select("*").in("id", brandIds),
-      client
-        .from("product_images")
-        .select("*")
-        .in("product_id", productIds)
-        .order("sort_order", { ascending: true }),
-      client
-        .from("product_variants")
-        .select("*")
-        .in("product_id", productIds)
-        .eq("is_active", true)
-        .order("created_at", { ascending: true }),
-      client.from("product_available_stock").select("*").in("product_id", productIds),
-    ]);
+  const [
+    categoriesResult,
+    brandsResult,
+    imagesResult,
+    variantsResult,
+    stockResult,
+  ] = await Promise.all([
+    client.from("categories").select("*").in("id", categoryIds),
+    client.from("brands").select("*").in("id", brandIds),
+    client
+      .from("product_images")
+      .select("*")
+      .in("product_id", productIds)
+      .order("sort_order", { ascending: true }),
+    client
+      .from("product_variants")
+      .select("*")
+      .in("product_id", productIds)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
+    client
+      .from("product_available_stock")
+      .select("*")
+      .in("product_id", productIds),
+  ]);
   if (
     categoriesResult.error ||
     brandsResult.error ||
@@ -118,7 +131,9 @@ async function hydrateProducts(
     return [
       {
         ...product,
-        availableStock: stockResult.data.find((item) => item.product_id === product.id)?.available_stock ?? 0,
+        availableStock:
+          stockResult.data.find((item) => item.product_id === product.id)
+            ?.available_stock ?? 0,
         category,
         brand,
         images: imagesResult.data.filter(
@@ -181,7 +196,7 @@ export async function getProducts(
       48,
       Math.max(1, filters.pageSize ?? DEFAULT_PAGE_SIZE),
     );
-    const safeQuery = filters.query?.replace(/[^\p{L}\p{N}\s-]/gu, " ").trim();
+    const safeQuery = normalizeSearchTerm(filters.query ?? "");
     let searchCategoryIds: string[] = [];
     let searchBrandIds: string[] = [];
     if (safeQuery) {
@@ -190,12 +205,12 @@ export async function getProducts(
           .from("categories")
           .select("*")
           .eq("is_active", true)
-          .ilike("name", `%${safeQuery}%`),
+          .like("search_name", `%${safeQuery}%`),
         client
           .from("brands")
           .select("*")
           .eq("is_active", true)
-          .ilike("name", `%${safeQuery}%`),
+          .like("search_name", `%${safeQuery}%`),
       ]);
       if (matchingCategories.error || matchingBrands.error)
         return {
@@ -223,12 +238,7 @@ export async function getProducts(
     if (filters.discount) query = query.not("old_price", "is", null);
     if (filters.featured) query = query.eq("is_featured", true);
     if (safeQuery) {
-      const clauses = [
-        `name.ilike.%${safeQuery}%`,
-        `description.ilike.%${safeQuery}%`,
-        `short_description.ilike.%${safeQuery}%`,
-        `sku.ilike.%${safeQuery}%`,
-      ];
+      const clauses = [`search_text.like.%${safeQuery}%`];
       if (searchCategoryIds.length)
         clauses.push(`category_id.in.(${searchCategoryIds.join(",")})`);
       if (searchBrandIds.length)
