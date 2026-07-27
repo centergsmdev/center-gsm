@@ -1,26 +1,57 @@
-import {
-  Gamepad2,
-  Headphones,
-  Laptop,
-  MonitorSmartphone,
-  Smartphone,
-  Watch,
-} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
+import { getCategories } from "@/lib/catalog/data";
 
-const categories = [
-  { name: "Telefon", subtitle: "En yeni modeller", icon: Smartphone },
-  { name: "Bilgisayar", subtitle: "Performans ve mobilite", icon: Laptop },
-  { name: "Tablet", subtitle: "Her an üretken", icon: MonitorSmartphone },
-  { name: "Akıllı Saat", subtitle: "Günün sizinle", icon: Watch },
-  { name: "Kulaklık", subtitle: "Sesi yeniden keşfedin", icon: Headphones },
-  { name: "Oyuncu", subtitle: "Oyunun merkezinde", icon: Gamepad2 },
-];
+const categoryCards = [
+  {
+    name: "Telefon",
+    subtitle: "En yeni modeller",
+    image: "/images/home/categories/phone.webp",
+  },
+  {
+    name: "Bilgisayar",
+    subtitle: "Performans ve mobilite",
+    image: "/images/home/categories/computer.webp",
+  },
+  {
+    name: "Tablet",
+    subtitle: "Her an üretken",
+    image: "/images/home/categories/tablet.webp",
+  },
+  {
+    name: "Akıllı Saat",
+    subtitle: "Günün sizinle",
+    image: "/images/home/categories/smartwatch.webp",
+  },
+  {
+    name: "Kulaklık",
+    subtitle: "Sesi yeniden keşfedin",
+    image: "/images/home/categories/headphones.webp",
+  },
+  {
+    name: "Aksesuar",
+    subtitle: "Tamamlayıcı ürünler",
+    image: "/images/home/categories/accessories.webp",
+  },
+] as const;
 
-export function Categories() {
+function normalizeName(value: string) {
+  return value.trim().toLocaleLowerCase("tr-TR");
+}
+
+export async function Categories() {
+  const categoryResult = await getCategories();
+  const categoriesByName = new Map(
+    categoryResult.data.map((category) => [
+      normalizeName(category.name),
+      category,
+    ]),
+  );
+
   return (
     <section
       id="categories"
@@ -32,32 +63,43 @@ export function Categories() {
           id="categories-title"
           eyebrow="Kategoriler"
           title="Teknoloji dünyasını keşfedin"
-          action={{ label: "Tüm kategoriler", href: "/" }}
+          action={{ label: "Tüm kategoriler", href: "/urunler" }}
         />
-        <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.map(({ name, subtitle, icon: Icon }) => (
-            <Card
-              key={name}
-              className="group relative overflow-hidden border-white/80 bg-white/85 shadow-sm backdrop-blur hover:-translate-y-1 hover:border-red-200 hover:shadow-md active:scale-[0.99]"
-            >
-              <button
-                type="button"
-                className="flex min-h-32 w-full flex-col items-start p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-36"
+        <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
+          {categoryCards.map((card) => {
+            const category = categoriesByName.get(normalizeName(card.name));
+            if (!category) return null;
+
+            return (
+              <Card
+                key={category.id}
+                className="home-premium-surface group overflow-hidden border-zinc-200/80 bg-white"
               >
-                <span className="grid size-11 place-items-center rounded-md bg-surface-subtle text-zinc-800 transition-colors duration-200 group-hover:bg-zinc-950 group-hover:text-white">
-                  <Icon
-                    className="size-5"
-                    strokeWidth={1.6}
-                    aria-hidden="true"
-                  />
-                </span>
-                <span className="mt-auto block text-sm font-bold">{name}</span>
-                <span className="mt-1 block text-xs leading-5 text-muted">
-                  {subtitle}
-                </span>
-              </button>
-            </Card>
-          ))}
+                <Link
+                  href={`/kategori/${category.slug}`}
+                  className="flex h-full min-h-64 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
+                >
+                  <span className="relative block min-h-40 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
+                    <Image
+                      src={card.image}
+                      alt={`${card.name} kategorisi`}
+                      fill
+                      sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 16vw"
+                      className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
+                    />
+                  </span>
+                  <span className="px-1 pb-1 pt-4">
+                    <span className="block text-sm font-black tracking-[-0.025em] text-zinc-950 sm:text-base">
+                      {card.name}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-zinc-500 sm:text-sm">
+                      {card.subtitle}
+                    </span>
+                  </span>
+                </Link>
+              </Card>
+            );
+          })}
         </div>
       </Container>
     </section>

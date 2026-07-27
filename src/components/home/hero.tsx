@@ -11,7 +11,7 @@ export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="py-3 sm:py-5">
       <Container>
-        <div className="premium-hero relative isolate overflow-hidden rounded-2xl border border-white/10 text-white shadow-[0_32px_90px_rgba(2,6,23,0.34)]">
+        <div className="home-premium-surface premium-hero relative isolate overflow-hidden border border-white/10 text-white">
           <div className="relative z-raised grid min-h-[560px] lg:min-h-[520px] lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
             <div className="hero-copy-enter flex flex-col justify-center px-6 pb-3 pt-10 sm:px-10 sm:pt-14 lg:px-14 lg:py-16">
               <Badge
@@ -50,6 +50,13 @@ export function Hero() {
                     aria-hidden="true"
                   />
                 </Link>
+              </div>
+              <div
+                className="mt-8 flex items-center gap-3 text-[10px] font-semibold text-zinc-500"
+                aria-label="Slayt 1 / 1"
+              >
+                <span className="h-1.5 w-9 rounded-full bg-primary" />
+                <span>01 / 01</span>
               </div>
             </div>
 
