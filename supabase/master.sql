@@ -276,6 +276,22 @@ grant insert, update on public.products to authenticated;
 grant insert, update, delete on public.product_images to authenticated;
 
 -- ============================================================================
+-- SOURCE: supabase/migrations/202607240002a_current_user_is_admin.sql
+-- ============================================================================
+create or replace function public.current_user_is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select public.is_admin();
+$$;
+
+revoke all on function public.current_user_is_admin() from public, anon;
+grant execute on function public.current_user_is_admin() to authenticated;
+
+-- ============================================================================
 -- SOURCE: supabase/migrations/202607240003_product_images_storage.sql
 -- ============================================================================
 alter table public.product_images

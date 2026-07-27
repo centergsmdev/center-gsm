@@ -119,12 +119,12 @@ create trigger products_wishlist_history after update of price,stock_quantity on
 
 create or replace function public.capture_inventory_stock_history() returns trigger language plpgsql security definer set search_path=public as $$
 begin
- if old.quantity is distinct from new.quantity then
-  insert into public.product_stock_history(product_id,old_stock,new_stock,old_status,new_status,warehouse_id) values(new.product_id,old.quantity,new.quantity,case when old.quantity>0 then 'in_stock' else 'out_of_stock' end,case when new.quantity>0 then 'in_stock' else 'out_of_stock' end,new.warehouse_id);
-  if old.quantity<=0 and new.quantity>0 then perform public.create_wishlist_alert_event(new.product_id,'back_in_stock',jsonb_build_object('stock',new.quantity,'warehouse_id',new.warehouse_id),'inventory:'||new.product_id||':'||new.warehouse_id||':'||new.quantity); end if;
+ if old.quantity_on_hand is distinct from new.quantity_on_hand then
+  insert into public.product_stock_history(product_id,old_stock,new_stock,old_status,new_status,warehouse_id) values(new.product_id,old.quantity_on_hand,new.quantity_on_hand,case when old.quantity_on_hand>0 then 'in_stock' else 'out_of_stock' end,case when new.quantity_on_hand>0 then 'in_stock' else 'out_of_stock' end,new.warehouse_id);
+  if old.quantity_on_hand<=0 and new.quantity_on_hand>0 then perform public.create_wishlist_alert_event(new.product_id,'back_in_stock',jsonb_build_object('stock',new.quantity_on_hand,'warehouse_id',new.warehouse_id),'inventory:'||new.product_id||':'||new.warehouse_id||':'||new.quantity_on_hand); end if;
  end if; return new;
 end $$;
-create trigger inventory_wishlist_history after update of quantity on public.inventory for each row execute function public.capture_inventory_stock_history();
+create trigger inventory_wishlist_history after update of quantity_on_hand on public.inventory for each row execute function public.capture_inventory_stock_history();
 
 create or replace function public.capture_campaign_wishlist_alerts() returns trigger language plpgsql security definer set search_path=public as $$
 declare v_product uuid;

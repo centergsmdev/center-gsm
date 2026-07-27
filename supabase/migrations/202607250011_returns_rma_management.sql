@@ -46,16 +46,24 @@ create index if not exists return_history_request_created_idx on public.return_s
 
 alter table public.return_requests enable row level security; alter table public.return_request_items enable row level security;
 alter table public.return_messages enable row level security; alter table public.return_attachments enable row level security; alter table public.return_status_history enable row level security;
+drop policy if exists return_requests_owner_admin_read on public.return_requests;
 create policy return_requests_owner_admin_read on public.return_requests for select using(user_id=auth.uid() or public.current_user_is_admin());
+drop policy if exists return_items_owner_admin_read on public.return_request_items;
 create policy return_items_owner_admin_read on public.return_request_items for select using(exists(select 1 from public.return_requests r where r.id=return_request_id and (r.user_id=auth.uid() or public.current_user_is_admin())));
+drop policy if exists return_messages_owner_admin_read on public.return_messages;
 create policy return_messages_owner_admin_read on public.return_messages for select using(not is_internal and exists(select 1 from public.return_requests r where r.id=return_request_id and r.user_id=auth.uid()) or public.current_user_is_admin());
+drop policy if exists return_attachments_owner_admin_read on public.return_attachments;
 create policy return_attachments_owner_admin_read on public.return_attachments for select using(public.current_user_is_admin() or (exists(select 1 from public.return_requests r where r.id=return_request_id and r.user_id=auth.uid()) and (message_id is null or exists(select 1 from public.return_messages m where m.id=message_id and not m.is_internal))));
+drop policy if exists return_history_owner_admin_read on public.return_status_history;
 create policy return_history_owner_admin_read on public.return_status_history for select using(exists(select 1 from public.return_requests r where r.id=return_request_id and (r.user_id=auth.uid() or public.current_user_is_admin())));
 revoke insert,update,delete on public.return_requests,public.return_request_items,public.return_messages,public.return_attachments,public.return_status_history from anon,authenticated;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('return-attachments','return-attachments',false,52428800,array['image/jpeg','image/png','image/webp','video/mp4','video/webm','application/pdf']) on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+drop policy if exists return_storage_owner_admin_read on storage.objects;
 create policy return_storage_owner_admin_read on storage.objects for select to authenticated using(bucket_id='return-attachments' and (public.current_user_is_admin() or (storage.foldername(name))[1]=auth.uid()::text));
+drop policy if exists return_storage_owner_upload on storage.objects;
 create policy return_storage_owner_upload on storage.objects for insert to authenticated with check(bucket_id='return-attachments' and (storage.foldername(name))[1]=auth.uid()::text);
+drop policy if exists return_storage_owner_admin_delete on storage.objects;
 create policy return_storage_owner_admin_delete on storage.objects for delete to authenticated using(bucket_id='return-attachments' and (public.current_user_is_admin() or (storage.foldername(name))[1]=auth.uid()::text));
 
 create or replace function public.create_return_request(p_order_id uuid,p_reason text,p_description text,p_items jsonb,p_request_type text default 'return') returns uuid language plpgsql security definer set search_path='' as $$
