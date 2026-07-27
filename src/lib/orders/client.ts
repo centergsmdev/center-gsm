@@ -25,7 +25,15 @@ export async function createOrder(
   });
   if (result.error) {
     if (process.env.NODE_ENV === "development") {
-      console.error("[orders/createOrder] Supabase RPC error", result.error);
+      const stack = new Error("Supabase create_order RPC failed").stack;
+      console.error("[orders/createOrder] Supabase RPC error", {
+        error: result.error,
+        code: result.error.code,
+        message: result.error.message,
+        details: result.error.details,
+        hint: result.error.hint,
+        stack,
+      });
     }
     return {
       data: null,
