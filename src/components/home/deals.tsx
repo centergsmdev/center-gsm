@@ -29,9 +29,17 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
           action={{ label: "Tüm fırsatlar", href: "/urunler?sirala=popular" }}
         />
         {discountedProducts.length ? (
-          <div className="stagger-grid grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+          <div
+            className="stagger-grid -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
+            aria-label="Kampanyalı ürünler"
+          >
             {discountedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <div
+                key={product.id}
+                className="w-[82%] shrink-0 snap-start min-[480px]:w-[46%] md:w-[31%] lg:w-auto"
+              >
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         ) : (
