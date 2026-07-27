@@ -6,18 +6,22 @@ import { FavoritesHeaderAction } from "@/components/favorites/favorites-header-a
 import { ComparisonHeaderAction } from "@/components/comparison/comparison-header-action";
 import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
-import { IconButton } from "@/components/ui/icon-button";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
+import { getCategories } from "@/lib/catalog/data";
 
-const categories = [
+const navigationCategoryNames = [
   "Telefon",
   "Bilgisayar",
   "Tablet",
   "Akıllı Saat",
   "Kulaklık",
   "Aksesuar",
-];
+] as const;
+
+function normalizeCategoryName(value: string) {
+  return value.trim().toLocaleLowerCase("tr-TR");
+}
 
 function BrandLogo() {
   return (
@@ -41,7 +45,19 @@ function BrandLogo() {
   );
 }
 
-export function Header() {
+export async function Header() {
+  const categoryResult = await getCategories();
+  const categoriesByName = new Map(
+    categoryResult.data.map((category) => [
+      normalizeCategoryName(category.name),
+      category,
+    ]),
+  );
+  const navigationCategories = navigationCategoryNames.flatMap((name) => {
+    const category = categoriesByName.get(normalizeCategoryName(name));
+    return category ? [{ name, slug: category.slug }] : [];
+  });
+
   return (
     <header className="sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
       <div className="bg-zinc-950 text-white">
@@ -55,14 +71,39 @@ export function Header() {
 
       <Container>
         <div className="flex h-14 items-center gap-2 sm:h-16 lg:gap-6">
-          <IconButton
-            label="Ana menüyü aç"
-            className="lg:hidden"
-            aria-expanded="false"
-            aria-controls="mobile-navigation"
-          >
-            <Menu className="size-5" aria-hidden="true" />
-          </IconButton>
+          <details className="group relative lg:hidden">
+            <summary className="flex size-10 cursor-pointer list-none items-center justify-center rounded-md text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+              <span className="sr-only">Ana menüyü aç</span>
+              <Menu className="size-5" aria-hidden="true" />
+            </summary>
+            <nav
+              id="mobile-navigation"
+              aria-label="Mobil ürün kategorileri"
+              className="absolute left-0 top-12 z-dropdown w-64 rounded-lg border border-border bg-white p-2 shadow-xl"
+            >
+              <Link
+                href="/urunler"
+                className="block rounded-md px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Tüm Kategoriler
+              </Link>
+              {navigationCategories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/kategori/${category.slug}`}
+                  className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {category.name}
+                </Link>
+              ))}
+              <Link
+                href="/#deals"
+                className="block rounded-md px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Kampanyalar
+              </Link>
+            </nav>
+          </details>
           <BrandLogo />
 
           <div className="hidden flex-1 md:block">
@@ -89,25 +130,23 @@ export function Header() {
         className="hidden lg:block"
       >
         <Container className="flex h-10 items-center gap-8">
-          <button
-            type="button"
-            aria-expanded="false"
-            aria-controls="category-menu"
+          <Link
+            href="/urunler"
             className="inline-flex items-center gap-2 rounded-sm text-sm font-bold text-primary transition-colors duration-200 hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Menu className="size-4" aria-hidden="true" />
             Tüm Kategoriler
             <ChevronDown className="size-3.5" aria-hidden="true" />
-          </button>
+          </Link>
           <Divider orientation="vertical" className="h-5" />
           <div className="flex flex-1 items-center justify-between">
-            {categories.map((category) => (
+            {navigationCategories.map((category) => (
               <Link
-                key={category}
-                href="/#categories"
+                key={category.slug}
+                href={`/kategori/${category.slug}`}
                 className="rounded-sm text-sm font-medium text-zinc-600 transition-colors duration-200 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                {category}
+                {category.name}
               </Link>
             ))}
             <Link
