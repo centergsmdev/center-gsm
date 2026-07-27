@@ -23,6 +23,7 @@ export function catalogFiltersFromParams(
     ? (sortValue as CatalogSort)
     : "popular";
   return {
+    query: first(params.search),
     categories: many(params.kategori),
     brands: many(params.brand ?? params.marka),
     minPrice: positiveNumber(first(params.minFiyat)),
