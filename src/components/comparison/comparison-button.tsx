@@ -13,11 +13,13 @@ export function ComparisonButton({
   productId,
   productName,
   size = "sm",
+  showLabel = false,
   className,
 }: {
   productId: string;
   productName: string;
   size?: "sm" | "md";
+  showLabel?: boolean;
   className?: string;
 }) {
   const { count, isCompared, toggleComparison } = useComparison();
@@ -44,6 +46,7 @@ export function ComparisonButton({
         "relative z-raised",
         active && "border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800",
         limitReached && "opacity-60",
+        showLabel && "w-auto grid-flow-col gap-2 px-4",
         className,
       )}
     >
@@ -52,6 +55,9 @@ export function ComparisonButton({
       ) : (
         <GitCompareArrows className="size-4" aria-hidden="true" />
       )}
+      {showLabel ? (
+        <span>{active ? "Karşılaştırmadan Çıkar" : "Karşılaştır"}</span>
+      ) : null}
     </IconButton>
   );
 }

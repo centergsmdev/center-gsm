@@ -10,11 +10,13 @@ export function FavoriteButton({
   productId,
   productName,
   size = "sm",
+  showLabel = false,
   className,
 }: {
   productId: string;
   productName: string;
   size?: "sm" | "md";
+  showLabel?: boolean;
   className?: string;
 }) {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -33,6 +35,7 @@ export function FavoriteButton({
         "transition-all duration-200",
         active &&
           "border-red-200 bg-red-50 text-primary hover:border-red-300 hover:bg-red-100",
+        showLabel && "w-auto grid-flow-col gap-2 px-4",
         className,
       )}
       onClick={() => toggleFavorite(productId)}
@@ -41,6 +44,9 @@ export function FavoriteButton({
         className={cn("size-4", active && "fill-current")}
         aria-hidden="true"
       />
+      {showLabel ? (
+        <span>{active ? "Favorilerden Çıkar" : "Favorilere Ekle"}</span>
+      ) : null}
     </IconButton>
   );
 }

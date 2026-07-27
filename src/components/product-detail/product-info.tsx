@@ -1,7 +1,7 @@
 import {
-  BadgeCheck,
   Box,
   PackageCheck,
+  CreditCard,
   ShieldCheck,
   Star,
   Truck,
@@ -20,11 +20,20 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
     product.stockStatus === "in-stock"
       ? "Stokta"
       : product.stockStatus === "limited"
-        ? "Sınırlı stok"
+        ? "Son birkaç ürün"
         : "Tükendi";
+  const stockVariant =
+    product.stockStatus === "in-stock"
+      ? "success"
+      : product.stockStatus === "limited"
+        ? "warning"
+        : "danger";
 
   return (
-    <section aria-labelledby="product-title" className="rounded-xl border border-white/80 bg-white/85 p-4 shadow-md backdrop-blur sm:p-6 lg:sticky lg:top-36">
+    <section
+      aria-labelledby="product-title"
+      className="home-premium-surface rounded-2xl border border-white/80 bg-white/90 p-4 shadow-xl backdrop-blur sm:p-6 lg:sticky lg:top-36"
+    >
       <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
         {product.brand}
       </p>
@@ -55,9 +64,8 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
         {product.discountRate ? (
           <Badge variant="brand">%{product.discountRate} indirim</Badge>
         ) : null}
-        <Badge
-          variant={product.stockStatus === "limited" ? "warning" : "success"}
-        >
+        <Badge variant={stockVariant} className="gap-2 px-3 py-2">
+          <span className="size-2 rounded-full bg-current" aria-hidden="true" />
           {stockLabel}
         </Badge>
       </div>
@@ -79,8 +87,7 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
         </p>
       </div>
 
-      <Card className="mt-5 divide-y divide-border bg-gradient-to-br from-slate-50 to-white shadow-sm">
-        <InfoRow icon={Box} title={stockLabel} description="Siparişe hazır" />
+      <Card className="mt-5 grid gap-2 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">
         {product.sameDayShipping ? (
           <InfoRow
             icon={PackageCheck}
@@ -88,6 +95,11 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
             description="14.00'e kadar verilen siparişlerde"
           />
         ) : null}
+        <InfoRow
+          icon={CreditCard}
+          title="Güvenli ödeme"
+          description="Şifreli ödeme altyapısı"
+        />
         {product.freeShipping ? (
           <InfoRow
             icon={Truck}
@@ -97,13 +109,8 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
         ) : null}
         <InfoRow
           icon={ShieldCheck}
-          title={`${product.warrantyMonths ?? 24} ay garanti`}
-          description="Resmi distribütör garantili"
-        />
-        <InfoRow
-          icon={BadgeCheck}
-          title="Orijinal ürün"
-          description="Kapalı kutu ve faturalı"
+          title="Orijinal ürün garantisi"
+          description={`${product.warrantyMonths ?? 24} ay resmi distribütör garantili`}
         />
       </Card>
 
@@ -126,9 +133,9 @@ function InfoRow({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4">
-      <span className="grid size-9 shrink-0 place-items-center rounded-md bg-white text-primary shadow-xs">
-        <Icon className="size-4" aria-hidden="true" />
+    <div className="flex items-center gap-3 rounded-xl border border-white bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-red-50 text-primary">
+        <Icon className="size-5" aria-hidden="true" />
       </span>
       <div>
         <p className="text-xs font-bold text-foreground">{title}</p>

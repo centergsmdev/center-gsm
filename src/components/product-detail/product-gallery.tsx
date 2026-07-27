@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 
 import { ProductVisual } from "@/components/catalog/product-visual";
@@ -14,6 +14,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
   const [selectedView, setSelectedView] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   const galleryItems = product.imageUrls?.length
     ? product.imageUrls.map((url, index) => ({
         label: `${product.brand} ${product.model} görsel ${index + 1}`,
@@ -70,11 +71,16 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
         aria-label={`${selectedItem?.label} görselini tam ekran aç`}
         aria-haspopup="dialog"
       >
-        <ProductVisual
-          product={product}
-          imageUrl={selectedItem?.url}
-          performancePreset="product-gallery"
-        />
+        <div
+          key={selectedItem?.url ?? selectedView}
+          className="animate-in fade-in size-full duration-300"
+        >
+          <ProductVisual
+            product={product}
+            imageUrl={selectedItem?.url}
+            performancePreset="product-gallery"
+          />
+        </div>
         <span className="absolute right-4 top-4 z-raised inline-grid size-11 place-items-center rounded-full border border-border bg-white/90 text-zinc-700 shadow-xs backdrop-blur">
           <Maximize2 className="size-4" aria-hidden="true" />
         </span>
@@ -99,7 +105,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
             className={cn(
               "relative aspect-square min-w-20 snap-start overflow-hidden rounded-md border bg-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-w-0",
               selectedView === index
-                ? "border-zinc-950 shadow-sm"
+                ? "border-primary shadow-[0_0_0_2px_rgba(220,38,38,0.12)]"
                 : "border-border hover:border-border-strong",
             )}
           >
@@ -120,6 +126,19 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
           aria-label={`${product.brand} ${product.model} tam ekran galerisi`}
           className="fixed inset-0 z-modal flex bg-black/95 p-3 backdrop-blur-sm sm:p-6"
           onClick={() => setIsLightboxOpen(false)}
+          onTouchStart={(event) => {
+            touchStartX.current = event.touches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(event) => {
+            const start = touchStartX.current;
+            const end = event.changedTouches[0]?.clientX;
+            touchStartX.current = null;
+            if (start === null || end === undefined) return;
+            const distance = end - start;
+            if (Math.abs(distance) < 50) return;
+            if (distance > 0) showPrevious();
+            else showNext();
+          }}
         >
           <IconButton
             label="Galeriyi kapat"

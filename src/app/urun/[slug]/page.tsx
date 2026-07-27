@@ -5,15 +5,12 @@ import { notFound } from "next/navigation";
 import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
 import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
+import { RecentlyViewedProducts } from "@/components/product-detail/recently-viewed-products";
 import { ProductDetailErrorState } from "@/components/product-detail/product-detail-states";
 import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
 import { catalogProducts } from "@/data/catalog-products";
-import {
-  getProductBySlug,
-  getProducts,
-  getRelatedProducts,
-} from "@/lib/catalog/data";
+import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/data";
 import { generateSeoMetadata, plainText } from "@/lib/seo/seo";
 import {
   JsonLd,
@@ -24,8 +21,28 @@ import {
 
 type ProductPageProps = { params: Promise<{ slug: string }> };
 export const revalidate = 600;
-const ProductTabs = dynamic(() => import("@/components/product-detail/product-tabs").then((module) => module.ProductTabs), { loading: () => <div className="h-72 rounded-xl bg-zinc-100" aria-hidden="true" /> });
-const ProductRecommendations = dynamic(() => import("@/components/product-detail/product-recommendations").then((module) => module.ProductRecommendations), { loading: () => <div className="h-96 rounded-xl bg-zinc-100" aria-hidden="true" /> });
+const ProductTabs = dynamic(
+  () =>
+    import("@/components/product-detail/product-tabs").then(
+      (module) => module.ProductTabs,
+    ),
+  {
+    loading: () => (
+      <div className="h-72 rounded-xl bg-zinc-100" aria-hidden="true" />
+    ),
+  },
+);
+const ProductRecommendations = dynamic(
+  () =>
+    import("@/components/product-detail/product-recommendations").then(
+      (module) => module.ProductRecommendations,
+    ),
+  {
+    loading: () => (
+      <div className="h-96 rounded-xl bg-zinc-100" aria-hidden="true" />
+    ),
+  },
+);
 export function generateStaticParams() {
   return catalogProducts.map((product) => ({ slug: product.slug }));
 }
@@ -85,12 +102,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   if (!result.data) notFound();
   const product = result.data;
-  const [related, recent] = await Promise.all([
-    getRelatedProducts(product, 4),
-    getProducts({ pageSize: 5, sort: "newest" }),
-  ]);
+  const related = await getRelatedProducts(product, 4);
   return (
-    <main className="min-h-screen tech-atmosphere pb-12 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
       <JsonLd id="product-schema" data={createProductSchema(product)} />
       <JsonLd
         id="product-category-breadcrumb-schema"
@@ -136,13 +150,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           />
         )}
         <Divider />
-        {recent.error ? null : (
-          <ProductRecommendations
-            eyebrow="Keşfetmeye devam edin"
-            title="Son görüntülenen ürünler"
-            products={recent.data.filter((item) => item.slug !== product.slug)}
-          />
-        )}
+        <RecentlyViewedProducts product={product} />
       </Container>
     </main>
   );

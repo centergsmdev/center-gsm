@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
@@ -19,6 +20,7 @@ export function PurchaseControls({
   productName: string;
 }) {
   const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
   const { addItem } = useCart();
   const maxQuantity = Math.min(10, product.availableStock ?? 10);
   const unavailable = product.stockStatus === "out-of-stock";
@@ -52,49 +54,59 @@ export function PurchaseControls({
             <IconButton
               label="Adedi artır"
               size="sm"
-              onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+              onClick={() =>
+                setQuantity((value) => Math.min(maxQuantity, value + 1))
+              }
               disabled={unavailable || quantity >= maxQuantity}
             >
               <Plus className="size-3.5" aria-hidden="true" />
             </IconButton>
           </div>
         </div>
-        <div className="flex items-end gap-2">
+      </div>
+      <div className="sticky bottom-0 z-raised -mx-4 mt-4 border-t border-zinc-100 bg-white/95 p-4 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            size="lg"
+            className="w-full shadow-[0_10px_24px_rgba(220,38,38,0.22)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(220,38,38,0.3)] active:scale-[0.99]"
+            aria-label={`${quantity} adet ${productName} ürününü sepete ekle`}
+            onClick={() => addItem(productId, quantity, product)}
+            disabled={unavailable}
+          >
+            <ShoppingBag className="size-4" aria-hidden="true" />
+            {unavailable ? "Tükendi" : "Sepete Ekle"}
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="transition-premium w-full active:scale-[0.99]"
+            disabled={unavailable}
+            onClick={() => {
+              addItem(productId, quantity, product);
+              router.push("/odeme");
+            }}
+          >
+            <Zap className="size-4" aria-hidden="true" />
+            Hemen Satın Al
+          </Button>
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <FavoriteButton
             productId={productId}
             productName={productName}
             size="md"
+            showLabel
+            className="w-full justify-center rounded-full"
           />
           <ComparisonButton
             productId={productId}
             productName={productName}
             size="md"
+            showLabel
+            className="w-full justify-center rounded-full"
           />
         </div>
       </div>
-      <Button
-        size="lg"
-        className="mt-4 w-full shadow-[0_10px_24px_rgba(220,38,38,0.22)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(220,38,38,0.3)] active:scale-[0.99]"
-        aria-label={`${quantity} adet ${productName} ürününü sepete ekle`}
-        onClick={() => addItem(productId, quantity, product)}
-        disabled={unavailable}
-      >
-        <ShoppingBag className="size-4" aria-hidden="true" />
-        {unavailable ? "Tükendi" : "Sepete Ekle"}
-      </Button>
-      <Button
-        size="lg"
-        variant="secondary"
-        className="mt-2 w-full transition-premium active:scale-[0.99]"
-        disabled
-        aria-disabled="true"
-      >
-        <Zap className="size-4" aria-hidden="true" />
-        Hemen Al
-      </Button>
-      <p className="mt-3 text-center text-[11px] leading-5 text-muted">
-        Hemen Al seçeneği ödeme sistemi aktif olduğunda kullanılabilir.
-      </p>
     </div>
   );
 }
