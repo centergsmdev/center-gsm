@@ -24,7 +24,7 @@ export function catalogFiltersFromParams(
     : "popular";
   return {
     categories: many(params.kategori),
-    brands: many(params.marka),
+    brands: many(params.brand ?? params.marka),
     minPrice: positiveNumber(first(params.minFiyat)),
     maxPrice: positiveNumber(first(params.maxFiyat)),
     stock: first(params.stok) === "var" ? "in-stock" : undefined,

@@ -1,15 +1,16 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 
 const brands = [
-  { name: "Apple", logo: "/images/brands/apple.svg" },
-  { name: "Samsung", logo: "/images/brands/samsung.svg" },
-  { name: "Xiaomi", logo: "/images/brands/xiaomi.svg" },
-  { name: "Huawei", logo: "/images/brands/huawei.svg" },
-  { name: "Lenovo", logo: "/images/brands/lenovo.svg" },
-  { name: "JBL", logo: "/images/brands/jbl.svg" },
+  { name: "Apple", slug: "apple", logo: "/images/brands/apple.svg" },
+  { name: "Samsung", slug: "samsung", logo: "/images/brands/samsung.svg" },
+  { name: "Xiaomi", slug: "xiaomi", logo: "/images/brands/xiaomi.svg" },
+  { name: "Huawei", slug: "huawei", logo: "/images/brands/huawei.svg" },
+  { name: "Lenovo", slug: "lenovo", logo: "/images/brands/lenovo.svg" },
+  { name: "JBL", slug: "jbl", logo: "/images/brands/jbl.svg" },
 ] as const;
 
 export function Brands() {
@@ -27,8 +28,10 @@ export function Brands() {
         />
         <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
           {brands.map((brand) => (
-            <div
+            <Link
               key={brand.name}
+              href={`/urunler?brand=${brand.slug}`}
+              aria-label={`${brand.name} ürünlerini incele`}
               className="brand-premium-card home-premium-interactive home-premium-surface group relative grid min-h-32 place-items-center overflow-hidden border border-zinc-200/80 bg-white px-6 sm:min-h-36"
             >
               <span
@@ -42,7 +45,7 @@ export function Brands() {
                 height={52}
                 className="max-h-11 w-auto max-w-full object-contain opacity-75 transition-[transform,opacity,filter] duration-300 ease-premium group-hover:scale-105 group-hover:opacity-100"
               />
-            </div>
+            </Link>
           ))}
         </div>
       </Container>

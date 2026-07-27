@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { PackageCheck, Star, Truck } from "lucide-react";
+import { ShieldCheck, Star, Truck } from "lucide-react";
 
-import { ProductVisual } from "@/components/catalog/product-visual";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
-import { FavoriteButton } from "@/components/favorites/favorite-button";
+import { ProductVisual } from "@/components/catalog/product-visual";
 import { ComparisonButton } from "@/components/comparison/comparison-button";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
@@ -12,47 +12,51 @@ import type { CatalogProduct } from "@/types/product";
 
 export function ProductCard({ product }: { product: CatalogProduct }) {
   const productName = `${product.brand} ${product.model}`;
-  const stockLabel =
-    product.stockStatus === "in-stock"
-      ? "Stokta"
-      : product.stockStatus === "limited"
-        ? "Sınırlı stok"
-        : "Tükendi";
+  const stock = {
+    "in-stock": { label: "Stokta", className: "bg-emerald-50 text-emerald-700" },
+    limited: { label: "Sınırlı stok", className: "bg-amber-50 text-amber-700" },
+    "out-of-stock": { label: "Tükendi", className: "bg-red-50 text-red-700" },
+  }[product.stockStatus];
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden border-white/70 bg-white/95 shadow-sm transition-[transform,border-color,box-shadow] duration-200 ease-premium hover:-translate-y-1 hover:border-red-200 hover:shadow-[0_18px_45px_rgba(15,23,42,0.13)] active:scale-[0.99]">
-      <div className="relative aspect-[5/4] overflow-hidden bg-surface-subtle">
+    <Card className="home-premium-interactive home-premium-surface group relative flex h-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 [&_span]:hidden">
         <ProductVisual product={product} />
-        <div className="absolute left-2 top-2 z-raised flex flex-col items-start gap-1 sm:left-3 sm:top-3">
-          {product.discountRate ? (
-            <Badge variant="brand">%{product.discountRate} indirim</Badge>
-          ) : null}
-          {product.sameDayShipping ? (
-            <Badge variant="dark">
-              <PackageCheck className="mr-1 size-3" aria-hidden="true" />
-              Aynı gün kargo
-            </Badge>
-          ) : null}
-        </div>
-        <div className="absolute right-2 top-2 z-raised flex flex-col gap-1 sm:right-3 sm:top-3">
+        {product.discountRate ? (
+          <Badge
+            variant="brand"
+            className="absolute left-3 top-3 z-raised shadow-sm sm:left-4 sm:top-4"
+          >
+            %{product.discountRate} indirim
+          </Badge>
+        ) : null}
+        <div className="absolute right-3 top-3 z-raised flex flex-col gap-2 sm:right-4 sm:top-4">
           <FavoriteButton
             productId={product.id}
             productName={productName}
-            className="bg-white/90 backdrop-blur"
+            className="border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"
           />
           <ComparisonButton
             productId={product.id}
             productName={productName}
-            className="bg-white/90 backdrop-blur"
+            className="border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"
           />
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-          {product.brand}
-        </p>
-        <h2 className="mt-1 truncate text-sm font-bold leading-5 text-foreground">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            {product.brand}
+          </p>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${stock.className}`}
+          >
+            {stock.label}
+          </span>
+        </div>
+
+        <h2 className="mt-2 line-clamp-2 min-h-12 text-base font-black leading-6 tracking-[-0.035em] text-zinc-950 sm:text-lg">
           <Link
             href={`/urun/${product.slug}`}
             className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
@@ -60,65 +64,58 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             {product.model}
           </Link>
         </h2>
-        <p className="mt-2 hidden line-clamp-2 text-xs leading-5 text-muted sm:block">
+        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-zinc-500 sm:text-sm">
           {product.description}
         </p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px]">
+        <div className="mt-3 flex items-center gap-2 text-xs">
           <span
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 font-bold text-zinc-800"
             aria-label={`${product.rating} puan`}
           >
             <Star
               className="size-3.5 fill-amber-400 text-amber-400"
               aria-hidden="true"
             />
-            <strong>{product.rating.toFixed(1)}</strong>
+            {product.rating.toFixed(1)}
           </span>
-          <span className="text-muted">({product.reviewCount} yorum)</span>
-          <span
-            className={
-              product.stockStatus === "limited"
-                ? "font-semibold text-amber-700"
-                : product.stockStatus === "out-of-stock"
-                  ? "font-semibold text-danger"
-                  : "font-semibold text-success"
-            }
-          >
-            {stockLabel}
-          </span>
+          <span className="text-zinc-400">({product.reviewCount} yorum)</span>
         </div>
 
-        <div className="mt-auto pt-3">
-          {product.previousPrice ? (
-            <p className="text-xs text-muted line-through">
-              {formatCurrency(product.previousPrice)}
-            </p>
-          ) : (
-            <div className="h-[18px]" />
-          )}
-          <p className="text-lg font-black tracking-[-0.035em] text-foreground sm:text-xl">
-            {formatCurrency(product.price)}
-          </p>
-          <p className="mt-1 text-[11px] text-muted">
-            {product.installmentCount} ay ×{" "}
-            <strong className="text-zinc-700">
-              {formatCurrency(product.monthlyInstallment)}
-            </strong>
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold text-zinc-600">
-            {product.freeShipping ? (
-              <span className="inline-flex items-center gap-1">
-                <Truck className="size-3.5 text-primary" aria-hidden="true" />
-                Ücretsiz kargo
-              </span>
+        <div className="mt-auto pt-5">
+          <div className="min-h-5">
+            {product.previousPrice ? (
+              <p className="text-sm font-medium text-zinc-400 line-through">
+                {formatCurrency(product.previousPrice)}
+              </p>
             ) : null}
           </div>
+          <p className="mt-1 text-2xl font-black tracking-[-0.05em] text-zinc-950">
+            {formatCurrency(product.price)}
+          </p>
+          <p className="mt-2 w-fit rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600">
+            <strong className="text-zinc-950">{product.installmentCount} ay</strong>{" "}
+            × {formatCurrency(product.monthlyInstallment)}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {product.freeShipping ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-zinc-700">
+                <Truck className="size-3.5 text-primary" aria-hidden="true" />
+                Ücretsiz Kargo
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-zinc-700">
+              <ShieldCheck className="size-3.5 text-primary" aria-hidden="true" />
+              Güvenli Ödeme
+            </span>
+          </div>
+
           <AddToCartButton
             product={product}
             productId={product.id}
             productName={productName}
-            className="relative z-raised mt-3 w-full shadow-sm transition-[transform,box-shadow] active:scale-[0.98]"
+            className="relative z-raised mt-4 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)] active:scale-[0.98]"
           />
         </div>
       </div>

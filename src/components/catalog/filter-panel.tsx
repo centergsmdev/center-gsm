@@ -61,12 +61,9 @@ function FilterForm({
         ? [params.kategori]
         : [],
   );
+  const brandParam = params.brand ?? params.marka;
   const selectedBrands = new Set(
-    Array.isArray(params.marka)
-      ? params.marka
-      : params.marka
-        ? [params.marka]
-        : [],
+    Array.isArray(brandParam) ? brandParam : brandParam ? [brandParam] : [],
   );
   const query = Array.isArray(params.q) ? params.q[0] : params.q;
   return (
@@ -131,7 +128,7 @@ function FilterForm({
         />
       </FilterGroup>
       <FilterGroup title="Marka">
-        <Options name="marka" options={brands} selected={selectedBrands} />
+        <Options name="brand" options={brands} selected={selectedBrands} />
       </FilterGroup>
       <FilterGroup title="Durum">
         <label className="flex cursor-pointer items-center gap-3 text-sm text-zinc-600">
