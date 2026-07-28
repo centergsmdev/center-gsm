@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 import { getBrands } from "@/lib/catalog/data";
+import { MobileSectionHeading } from "./mobile-section-heading";
 
 const brandLogos: Record<string, string> = {
   apple: "/images/brands/apple.svg",
@@ -23,12 +24,7 @@ export async function Brands() {
   return (
     <section aria-label="Markalar" className="reveal-on-scroll py-6 sm:py-16">
       <Container>
-        <h2
-          id="brands-title"
-          className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-zinc-950 sm:hidden"
-        >
-          Markalar
-        </h2>
+        <MobileSectionHeading id="brands-title">Markalar</MobileSectionHeading>
         <div className="hidden sm:block">
           <SectionTitle
             id="brands-title-desktop"
