@@ -44,7 +44,11 @@ function fallbackProducts(filters: CatalogFilters): CatalogListResult {
     );
   if (filters.brands?.length)
     data = data.filter((product) =>
-      filters.brands?.includes(product.brand.toLocaleLowerCase("tr-TR")),
+      filters.brands?.some(
+        (brand) =>
+          brand.toLocaleLowerCase("tr-TR") ===
+          product.brand.toLocaleLowerCase("tr-TR"),
+      ),
     );
   if (filters.minPrice !== undefined)
     data = data.filter((product) => product.price >= filters.minPrice!);
@@ -153,10 +157,14 @@ async function taxonomyIds(
   slugs: string[] | undefined,
 ) {
   if (!slugs?.length) return null;
+  const uniqueSlugs = [...new Set(slugs.map((slug) => slug.trim()))].filter(
+    Boolean,
+  );
+  if (!uniqueSlugs.length) return null;
   const { data, error } = await client
     .from(table)
     .select("*")
-    .in("slug", slugs)
+    .or(uniqueSlugs.map((slug) => `slug.ilike.${slug}`).join(","))
     .eq("is_active", true);
   return error ? undefined : data.map((item) => item.id);
 }
