@@ -50,7 +50,7 @@ export function HeroVisual() {
           fill
           priority
           sizes="(max-width: 767px) 100vw, (max-width: 1279px) 62vw, 760px"
-          className="object-contain object-center lg:object-right"
+          className="launch-product-image object-contain object-center lg:object-right"
         />
       </div>
     </div>
