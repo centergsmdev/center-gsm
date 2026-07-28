@@ -60,20 +60,19 @@ export function ProductVisual({
           className="absolute inset-0 size-full object-contain object-center p-4 transition-transform duration-250 ease-premium group-hover:scale-[1.07]"
         />
       ) : null}
-      <div
-        aria-hidden="true"
-        className="absolute left-1/2 top-1/2 size-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70 blur-2xl"
-      />
       {!resolvedImage ? (
-        <Icon
-          aria-hidden="true"
-          className="relative size-20 drop-shadow-xl transition-transform duration-250 ease-premium group-hover:scale-[1.07] sm:size-24"
-          strokeWidth={0.85}
-        />
+        <>
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 size-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-100/80 blur-2xl"
+          />
+          <Icon
+            aria-hidden="true"
+            className="relative size-20 drop-shadow-xl transition-transform duration-250 ease-premium group-hover:scale-[1.07] sm:size-24"
+            strokeWidth={0.85}
+          />
+        </>
       ) : null}
-      <span className="absolute bottom-3 text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-        Ürün görseli
-      </span>
     </div>
   );
 }

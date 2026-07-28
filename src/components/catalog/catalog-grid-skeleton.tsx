@@ -11,14 +11,14 @@ export function CatalogGridSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }, (_, index) => (
         <Card key={index} className="overflow-hidden">
           <Skeleton className="aspect-square rounded-none" />
-          <div className="space-y-3 p-5">
+          <div className="space-y-2.5 p-3 sm:p-3.5">
             <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-            <div className="pt-4">
-              <Skeleton className="h-7 w-28" />
-              <Skeleton className="mt-4 h-11 w-full rounded-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-3.5 w-2/3" />
+            <div className="pt-2">
+              <Skeleton className="h-6 w-28" />
+              <Skeleton className="mt-3 h-10 w-full rounded-full" />
             </div>
           </div>
         </Card>
