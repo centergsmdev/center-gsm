@@ -185,13 +185,15 @@
     background-image:
       radial-gradient(
         ellipse at 44% 56%,
-        rgb(37 99 235 / 0.24),
-        transparent 34rem
+        rgb(37 99 235 / 0.34) 0%,
+        rgb(30 64 175 / 0.16) 30%,
+        transparent 58%
       ),
       radial-gradient(
         ellipse at 91% 58%,
-        rgb(220 38 38 / 0.3),
-        transparent 34rem
+        rgb(220 38 38 / 0.38) 0%,
+        rgb(153 27 27 / 0.18) 32%,
+        transparent 60%
       ),
       radial-gradient(
         ellipse at 20% 12%,
@@ -246,6 +248,7 @@
   .premium-hero::before {
     position: absolute;
     inset: 0;
+    z-index: 0;
     content: "";
     pointer-events: none;
     background-image:
@@ -263,22 +266,23 @@
   .premium-hero::after {
     position: absolute;
     inset: 0;
+    z-index: 0;
     content: "";
     pointer-events: none;
     background:
       linear-gradient(
         90deg,
-        transparent 46%,
-        rgb(59 130 246 / 0.08) 62%,
-        transparent 76%
+        transparent 38%,
+        rgb(59 130 246 / 0.18) 57%,
+        transparent 73%
       ),
       linear-gradient(
         90deg,
-        transparent 68%,
-        rgb(239 68 68 / 0.1) 86%,
+        transparent 62%,
+        rgb(239 68 68 / 0.2) 86%,
         transparent 100%
       );
-    filter: blur(28px);
+    filter: blur(16px);
   }
 
   .hero-copy-enter {
@@ -292,47 +296,49 @@
 
   .hero-visual-enter::before {
     position: absolute;
-    inset: 8% 2% 5%;
-    z-index: -1;
+    inset: 4% 0 3%;
+    z-index: 0;
     content: "";
     pointer-events: none;
     background:
       radial-gradient(
         ellipse at 35% 58%,
-        rgb(37 99 235 / 0.3),
-        transparent 38%
+        rgb(37 99 235 / 0.48) 0%,
+        rgb(29 78 216 / 0.2) 34%,
+        transparent 61%
       ),
       radial-gradient(
         ellipse at 76% 56%,
-        rgb(220 38 38 / 0.28),
-        transparent 42%
+        rgb(239 68 68 / 0.46) 0%,
+        rgb(185 28 28 / 0.2) 36%,
+        transparent 64%
       );
-    filter: blur(22px);
+    filter: blur(12px);
     animation: hero-glow-pulse 6.5s ease-in-out infinite;
   }
 
   .hero-visual-enter::after {
     position: absolute;
     inset: auto 5% 1% 0;
-    height: 22%;
-    z-index: -1;
+    height: 27%;
+    z-index: 0;
     content: "";
     pointer-events: none;
     background:
       linear-gradient(
         90deg,
         transparent 4%,
-        rgb(37 99 235 / 0.14) 32%,
-        rgb(255 255 255 / 0.08) 56%,
-        rgb(220 38 38 / 0.16) 82%,
+        rgb(37 99 235 / 0.26) 30%,
+        rgb(255 255 255 / 0.14) 56%,
+        rgb(220 38 38 / 0.28) 82%,
         transparent 100%
       ),
       radial-gradient(
         ellipse at center,
-        rgb(255 255 255 / 0.08),
-        transparent 68%
+        rgb(255 255 255 / 0.14),
+        transparent 64%
       );
-    filter: blur(14px);
+    filter: blur(8px);
     transform: perspective(180px) rotateX(64deg) scaleX(0.94);
     transform-origin: bottom;
   }
@@ -347,6 +353,7 @@
 
   .hero-product-stage {
     left: -42%;
+    z-index: 1;
     transform: translate3d(0, -26px, 0);
   }
 
