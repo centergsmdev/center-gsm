@@ -6,7 +6,9 @@ const first = (value: string | string[] | undefined) =>
 const many = (value: string | string[] | undefined) =>
   value ? (Array.isArray(value) ? value : [value]) : undefined;
 const positiveNumber = (value: string | undefined) => {
-  const parsed = Number(value);
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 };
 
