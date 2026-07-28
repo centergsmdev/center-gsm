@@ -1,37 +1,26 @@
 import Link from "next/link";
-import {
-  Facebook,
-  Instagram,
-  Mail,
-  MapPin,
-  Phone,
-  Youtube,
-} from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 
+import {
+  FacebookLogo,
+  InstagramLogo,
+  YoutubeLogo,
+} from "@/components/layout/social-logos";
 import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
-import { IconButton } from "@/components/ui/icon-button";
+import { footerLinkGroups, socialLinks } from "@/lib/footer/navigation";
 
-const linkGroups = [
-  {
-    title: "Kurumsal",
-    links: ["Hakkımızda", "Mağazalarımız", "Kariyer", "İletişim"],
-  },
-  {
-    title: "Müşteri Hizmetleri",
-    links: ["Sipariş Takibi", "İade ve Değişim", "Garanti", "Teknik Servis"],
-  },
-  {
-    title: "Yasal",
-    links: ["KVKK", "Gizlilik", "Mesafeli Satış", "Çerez Tercihleri"],
-  },
-];
+const socialLogos = {
+  instagram: InstagramLogo,
+  facebook: FacebookLogo,
+  youtube: YoutubeLogo,
+} as const;
 
 export function Footer() {
   return (
     <footer className="bg-zinc-950 text-white">
-      <Container className="py-14 sm:py-16">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_2fr] lg:gap-20">
+      <Container className="py-10 sm:py-16">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_2fr] lg:gap-20">
           <div>
             <Link
               href="/"
@@ -50,20 +39,20 @@ export function Footer() {
               buluşturuyoruz.
             </p>
             <address className="mt-6 space-y-3 text-sm not-italic text-zinc-400">
-              <Link
+              <a
                 href="tel:08500000000"
-                className="flex w-fit items-center gap-3 transition-colors duration-200 hover:text-white"
+                className="flex w-fit items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 <Phone className="size-4 text-red-500" aria-hidden="true" />
                 0850 000 00 00
-              </Link>
-              <Link
+              </a>
+              <a
                 href="mailto:destek@centergsm.com"
-                className="flex w-fit items-center gap-3 transition-colors duration-200 hover:text-white"
+                className="flex w-fit items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 <Mail className="size-4 text-red-500" aria-hidden="true" />
                 destek@centergsm.com
-              </Link>
+              </a>
               <p className="flex items-center gap-3">
                 <MapPin className="size-4 text-red-500" aria-hidden="true" />
                 Türkiye genelinde hizmet
@@ -73,21 +62,19 @@ export function Footer() {
 
           <nav
             aria-label="Alt bilgi bağlantıları"
-            className="grid gap-9 sm:grid-cols-3"
+            className="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3"
           >
-            {linkGroups.map((group) => (
+            {footerLinkGroups.map((group) => (
               <div key={group.title}>
                 <h2 className="text-sm font-bold text-white">{group.title}</h2>
-                <ul className="mt-5 space-y-3.5">
-                  {group.links.map((label) => (
-                    <li key={label}>
+                <ul className="mt-4 space-y-3 sm:mt-5 sm:space-y-3.5">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
                       <Link
-                        href={
-                          label === "Sipariş Takibi" ? "/siparis-takip" : "/"
-                        }
-                        className="rounded-sm text-sm text-zinc-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        href={link.href}
+                        className="rounded-sm text-sm leading-5 text-zinc-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                       >
-                        {label}
+                        {link.label}
                       </Link>
                     </li>
                   ))}
@@ -97,8 +84,8 @@ export function Footer() {
           </nav>
         </div>
 
-        <Divider className="my-10 bg-white/10" />
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <Divider className="my-8 bg-white/10 sm:my-10" />
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs text-zinc-500">
               © 2026 CENTER GSM. Tüm hakları saklıdır.
@@ -111,31 +98,37 @@ export function Footer() {
             className="flex items-center gap-2"
             aria-label="Sosyal medya bağlantıları"
           >
-            <SocialLink label="Instagram" icon={Instagram} />
-            <SocialLink label="Facebook" icon={Facebook} />
-            <SocialLink label="YouTube" icon={Youtube} />
+            {socialLinks.map((social) => {
+              const Logo = socialLogos[social.id];
+              const className =
+                "grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition duration-300 motion-reduce:transition-none";
+              if (!social.href)
+                return (
+                  <span
+                    key={social.id}
+                    aria-label={`${social.label} bağlantısı yakında`}
+                    role="img"
+                    className={`${className} cursor-not-allowed opacity-60`}
+                  >
+                    <Logo className="size-5" />
+                  </span>
+                );
+              return (
+                <a
+                  key={social.id}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`CENTER GSM ${social.label} hesabını yeni sekmede aç`}
+                  className={`${className} hover:scale-105 hover:border-white/25 hover:shadow-[0_0_20px_rgba(255,255,255,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500`}
+                >
+                  <Logo className="size-5" />
+                </a>
+              );
+            })}
           </div>
         </div>
       </Container>
     </footer>
-  );
-}
-
-function SocialLink({
-  label,
-  icon: Icon,
-}: {
-  label: string;
-  icon: typeof Instagram;
-}) {
-  return (
-    <IconButton
-      label={label}
-      variant="outline"
-      className="border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:bg-white/10 hover:text-white"
-      disabled
-    >
-      <Icon className="size-4" aria-hidden="true" />
-    </IconButton>
   );
 }

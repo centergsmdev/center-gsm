@@ -5,5 +5,18 @@ export function getPageSitemap(): MetadataRoute.Sitemap {
   return [
     sitemapEntry("/", updated, "daily", 1),
     sitemapEntry("/urunler", updated, "daily", 0.8),
+    ...[
+      "/hakkimizda",
+      "/magazalarimiz",
+      "/kariyer",
+      "/iletisim",
+      "/iade-ve-degisim",
+      "/garanti",
+      "/teknik-servis",
+      "/kvkk",
+      "/gizlilik",
+      "/mesafeli-satis",
+      "/cerez-tercihleri",
+    ].map((path) => sitemapEntry(path, updated, "monthly", 0.5)),
   ];
 }
