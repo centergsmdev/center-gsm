@@ -65,9 +65,15 @@ export function CreditPaymentInput({
   return (
     <div className="grid gap-5 md:grid-cols-2">
       <div>
-        <p className="mb-2 text-sm font-black">Gift Card Kodu</p>
+        <label
+          htmlFor="checkout-gift-card-code"
+          className="mb-2 block text-sm font-black"
+        >
+          Gift Card Kodu
+        </label>
         <div className="flex gap-2">
           <Input
+            id="checkout-gift-card-code"
             value={giftCode}
             onChange={(e) => setGiftCode(e.target.value)}
             placeholder="CG-XXXX"
@@ -88,12 +94,18 @@ export function CreditPaymentInput({
         ) : null}
       </div>
       <div>
-        <p className="mb-2 text-sm font-black">Store Credit Kullan</p>
+        <label
+          htmlFor="checkout-store-credit-amount"
+          className="mb-2 block text-sm font-black"
+        >
+          Store Credit Kullan
+        </label>
         <p className="mb-2 text-xs text-muted">
           Bakiyeniz: {formatCurrency(storeBalance)}
         </p>
         <div className="flex gap-2">
           <Input
+            id="checkout-store-credit-amount"
             type="number"
             min={0}
             max={storeBalance}

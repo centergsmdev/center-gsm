@@ -15,6 +15,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const galleryItems = product.imageUrls?.length
     ? product.imageUrls.map((url, index) => ({
         label: `${product.brand} ${product.model} görsel ${index + 1}`,
@@ -38,7 +39,9 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
     if (!isLightboxOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setIsLightboxOpen(false);
       if (event.key === "ArrowLeft") {
@@ -56,6 +59,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
     };
   }, [galleryItems.length, isLightboxOpen]);
 
@@ -121,10 +125,12 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
 
       {isLightboxOpen ? (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={`${product.brand} ${product.model} tam ekran galerisi`}
-          className="fixed inset-0 z-modal flex bg-black/95 p-3 backdrop-blur-sm sm:p-6"
+          tabIndex={-1}
+          className="fixed inset-0 z-modal flex bg-black/95 p-3 outline-none backdrop-blur-sm sm:p-6"
           onClick={() => setIsLightboxOpen(false)}
           onTouchStart={(event) => {
             touchStartX.current = event.touches[0]?.clientX ?? null;

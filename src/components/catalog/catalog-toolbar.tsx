@@ -1,9 +1,6 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, List } from "lucide-react";
-
-import { IconButton } from "@/components/ui/icon-button";
 
 export function CatalogToolbar({ count }: { count: number }) {
   const router = useRouter();
@@ -15,7 +12,7 @@ export function CatalogToolbar({ count }: { count: number }) {
       <p className="text-sm text-muted">
         <strong className="text-foreground">{count} ürün</strong> listeleniyor
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         <label className="flex flex-1 items-center gap-2 sm:flex-none">
           <span className="sr-only sm:not-sr-only sm:text-xs sm:font-semibold sm:text-muted">
             Sırala
@@ -37,27 +34,6 @@ export function CatalogToolbar({ count }: { count: number }) {
             <option value="price-desc">Fiyat Azalan</option>
           </select>
         </label>
-        <div
-          className="hidden items-center gap-1 sm:flex"
-          aria-label="Görünüm seçimi"
-        >
-          <IconButton
-            label="Izgara görünümü"
-            size="sm"
-            variant="dark"
-            aria-pressed="true"
-          >
-            <LayoutGrid className="size-4" />
-          </IconButton>
-          <IconButton
-            label="Liste görünümü"
-            size="sm"
-            variant="ghost"
-            aria-pressed="false"
-          >
-            <List className="size-4" />
-          </IconButton>
-        </div>
       </div>
     </div>
   );
