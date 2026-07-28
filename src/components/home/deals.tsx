@@ -38,13 +38,13 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
         </div>
         {discountedProducts.length ? (
           <div
-            className="stagger-grid -mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto scroll-smooth px-4 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
+            className="stagger-grid -mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth px-4 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
             aria-label="Kampanyalı ürünler"
           >
             {discountedProducts.map((product) => (
               <div
                 key={product.id}
-                className="w-[72%] shrink-0 snap-start min-[480px]:w-[42%] md:w-[31%] lg:w-auto"
+                className="w-[clamp(14rem,64vw,16.5rem)] shrink-0 snap-start md:w-[31%] lg:w-auto"
               >
                 <ProductCard product={product} compactMobile />
               </div>

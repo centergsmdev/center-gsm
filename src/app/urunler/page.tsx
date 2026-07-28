@@ -14,7 +14,20 @@ import {
   type CatalogSearchParams,
 } from "@/lib/catalog/params";
 export const revalidate = 300;
-const FilterPanel = dynamic(() => import("@/components/catalog/filter-panel").then((module) => module.FilterPanel), { loading: () => <div className="h-80 w-full shrink-0 rounded-lg bg-zinc-100 lg:w-64" aria-hidden="true" /> });
+const FilterPanel = dynamic(
+  () =>
+    import("@/components/catalog/filter-panel").then(
+      (module) => module.FilterPanel,
+    ),
+  {
+    loading: () => (
+      <div
+        className="h-80 w-full shrink-0 rounded-lg bg-zinc-100 lg:w-64"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
 
 export default async function ProductsPage({
   searchParams,
@@ -31,7 +44,7 @@ export default async function ProductsPage({
   const hasError = result.error || categories.error || brands.error;
   const totalPages = Math.ceil(result.total / result.pageSize);
   return (
-    <main className="min-h-screen tech-atmosphere pb-12 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
       <Container>
         <CatalogBreadcrumb />
         <div className="mt-6 max-w-3xl">
@@ -60,9 +73,13 @@ export default async function ProductsPage({
             ) : result.data.length === 0 ? (
               <CatalogEmptyState />
             ) : (
-              <div className="stagger-grid grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {result.data.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    compactMobile
+                  />
                 ))}
               </div>
             )}{" "}

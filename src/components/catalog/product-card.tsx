@@ -33,7 +33,7 @@ export function ProductCard({
       <div
         className={cn(
           "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
-          compactMobile && "max-sm:aspect-[1.15/1]",
+          compactMobile && "max-sm:aspect-[1.25/1]",
         )}
       >
         <ProductVisual product={product} />
@@ -62,7 +62,7 @@ export function ProductCard({
       <div
         className={cn(
           "flex flex-1 flex-col p-3 sm:p-3.5",
-          compactMobile && "max-sm:p-2.5",
+          compactMobile && "max-sm:p-2",
         )}
       >
         <div className="flex items-center justify-between gap-3">
@@ -139,7 +139,7 @@ export function ProductCard({
             productName={productName}
             className={cn(
               "relative z-raised mt-2.5 h-9 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]",
-              compactMobile && "max-sm:mt-2 max-sm:h-8",
+              compactMobile && "max-sm:mt-1.5 max-sm:h-8",
             )}
           />
         </div>
