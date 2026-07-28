@@ -2,17 +2,35 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export function CatalogToolbar({ count }: { count: number }) {
+export function CatalogToolbar({
+  count,
+  compactMobile = false,
+}: {
+  count: number;
+  compactMobile?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentSort = searchParams.get("sirala") ?? "popular";
   return (
-    <div className="flex flex-col gap-3 border-y border-border py-4 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted">
+    <div
+      className={`flex border-y border-border sm:flex-row sm:items-center sm:justify-between sm:py-4 ${
+        compactMobile
+          ? "flex-row items-center gap-2 py-2.5"
+          : "flex-col gap-3 py-4"
+      }`}
+    >
+      <p
+        className={`text-sm text-muted ${
+          compactMobile
+            ? "order-2 shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] shadow-xs sm:order-none sm:bg-transparent sm:px-0 sm:py-0 sm:text-sm sm:shadow-none"
+            : ""
+        }`}
+      >
         <strong className="text-foreground">{count} ürün</strong> listeleniyor
       </p>
-      <div className="flex items-center">
+      <div className="flex min-w-0 flex-1 items-center sm:flex-none">
         <label className="flex flex-1 items-center gap-2 sm:flex-none">
           <span className="sr-only sm:not-sr-only sm:text-xs sm:font-semibold sm:text-muted">
             Sırala

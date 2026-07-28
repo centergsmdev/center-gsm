@@ -14,9 +14,11 @@ import type { CatalogProduct } from "@/types/product";
 export function ProductCard({
   product,
   compactMobile = false,
+  denseMobile = false,
 }: {
   product: CatalogProduct;
   compactMobile?: boolean;
+  denseMobile?: boolean;
 }) {
   const productName = `${product.brand} ${product.model}`;
   const stock = {
@@ -34,6 +36,7 @@ export function ProductCard({
         className={cn(
           "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
           compactMobile && "max-sm:aspect-[1.25/1]",
+          denseMobile && "max-sm:aspect-[1.4/1]",
         )}
       >
         <ProductVisual product={product} />
@@ -63,6 +66,7 @@ export function ProductCard({
         className={cn(
           "flex flex-1 flex-col p-3 sm:p-3.5",
           compactMobile && "max-sm:p-2",
+          denseMobile && "max-sm:p-1.5",
         )}
       >
         <div className="flex items-center justify-between gap-3">
@@ -76,7 +80,12 @@ export function ProductCard({
           </span>
         </div>
 
-        <h2 className="mt-1 line-clamp-2 min-h-9 text-sm font-black leading-[1.125rem] tracking-[-0.03em] text-zinc-950 sm:text-[15px]">
+        <h2
+          className={cn(
+            "mt-1 line-clamp-2 min-h-9 text-sm font-black leading-[1.125rem] tracking-[-0.03em] text-zinc-950 sm:text-[15px]",
+            denseMobile && "max-sm:min-h-8 max-sm:text-[13px] max-sm:leading-4",
+          )}
+        >
           <Link
             href={`/urun/${product.slug}`}
             className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
@@ -84,7 +93,12 @@ export function ProductCard({
             {product.model}
           </Link>
         </h2>
-        <p className="mt-1 line-clamp-2 min-h-8 text-[11px] leading-4 text-zinc-500 sm:text-xs">
+        <p
+          className={cn(
+            "mt-1 line-clamp-2 min-h-8 text-[11px] leading-4 text-zinc-500 sm:text-xs",
+            denseMobile && "max-sm:leading-3.5 max-sm:mt-0.5 max-sm:min-h-7",
+          )}
+        >
           {product.description}
         </p>
 
@@ -102,7 +116,7 @@ export function ProductCard({
           <span className="text-zinc-400">({product.reviewCount} yorum)</span>
         </div>
 
-        <div className="mt-auto pt-2">
+        <div className={cn("mt-auto pt-2", denseMobile && "max-sm:pt-1")}>
           <div className="min-h-3.5">
             {product.previousPrice ? (
               <p className="text-[11px] font-medium text-zinc-400 line-through">
@@ -140,6 +154,7 @@ export function ProductCard({
             className={cn(
               "relative z-raised mt-2.5 h-9 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]",
               compactMobile && "max-sm:mt-1.5 max-sm:h-8",
+              denseMobile && "max-sm:mt-1 max-sm:h-8",
             )}
           />
         </div>

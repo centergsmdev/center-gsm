@@ -44,10 +44,10 @@ export default async function ProductsPage({
   const hasError = result.error || categories.error || brands.error;
   const totalPages = Math.ceil(result.total / result.pageSize);
   return (
-    <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen pb-12 pt-3 sm:pb-16 sm:pt-7">
       <Container>
         <CatalogBreadcrumb />
-        <div className="mt-6 max-w-3xl">
+        <div className="mt-6 hidden max-w-3xl sm:block">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Premium katalog
           </p>
@@ -59,13 +59,14 @@ export default async function ProductsPage({
             seçili teknoloji ürünlerini keşfedin.
           </p>
         </div>
-        <CatalogToolbar count={result.total} />
-        <div className="mt-5 flex flex-col items-start gap-5 lg:flex-row">
+        <CatalogToolbar count={result.total} compactMobile />
+        <div className="mt-3 flex flex-col items-start gap-3 lg:mt-5 lg:flex-row lg:gap-5">
           <FilterPanel
             categories={categories.data}
             brands={brands.data}
             params={params}
             basePath="/urunler"
+            compactMobile
           />
           <div className="min-w-0 flex-1">
             {hasError ? (
@@ -79,6 +80,7 @@ export default async function ProductsPage({
                     key={product.id}
                     product={product}
                     compactMobile
+                    denseMobile
                   />
                 ))}
               </div>

@@ -12,11 +12,13 @@ export function FilterPanel({
   brands,
   params,
   basePath,
+  compactMobile = false,
 }: {
   categories: CatalogTaxonomy[];
   brands: BrandTaxonomy[];
   params: CatalogSearchParams;
   basePath: string;
+  compactMobile?: boolean;
 }) {
   return (
     <aside
@@ -25,7 +27,11 @@ export function FilterPanel({
       className="w-full shrink-0 lg:w-60 xl:w-64"
     >
       <details className="rounded-lg border border-border bg-white shadow-xs lg:hidden">
-        <summary className="flex cursor-pointer list-none items-center justify-between p-4 text-sm font-bold">
+        <summary
+          className={`flex cursor-pointer list-none items-center justify-between text-sm font-bold ${
+            compactMobile ? "p-3" : "p-4"
+          }`}
+        >
           <span className="flex items-center gap-2">
             <SlidersHorizontal className="size-4" />
             Filtreler
