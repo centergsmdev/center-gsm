@@ -16,29 +16,37 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
   return (
     <section
       id="deals"
-      aria-labelledby="deals-title"
-      className="tech-panel-dark py-9 sm:py-11"
+      aria-label="Kampanyalar"
+      className="tech-panel-dark py-5 sm:py-11"
     >
       <Container>
-        <SectionTitle
+        <h2
           id="deals-title"
-          inverted
-          eyebrow="Seçili fırsatlar"
-          title="Kaçırılmayacak teknoloji fırsatları"
-          description="Sınırlı süreli fiyatlarla öne çıkan premium teknoloji ürünlerini keşfedin."
-          action={{ label: "Tüm fırsatlar", href: "/urunler?sirala=popular" }}
-        />
+          className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-white sm:hidden"
+        >
+          Kampanyalar
+        </h2>
+        <div className="hidden sm:block">
+          <SectionTitle
+            id="deals-title-desktop"
+            inverted
+            eyebrow="Seçili fırsatlar"
+            title="Kaçırılmayacak teknoloji fırsatları"
+            description="Sınırlı süreli fiyatlarla öne çıkan premium teknoloji ürünlerini keşfedin."
+            action={{ label: "Tüm fırsatlar", href: "/urunler?sirala=popular" }}
+          />
+        </div>
         {discountedProducts.length ? (
           <div
-            className="stagger-grid -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
+            className="stagger-grid -mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto scroll-smooth px-4 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
             aria-label="Kampanyalı ürünler"
           >
             {discountedProducts.map((product) => (
               <div
                 key={product.id}
-                className="w-[82%] shrink-0 snap-start min-[480px]:w-[46%] md:w-[31%] lg:w-auto"
+                className="w-[72%] shrink-0 snap-start min-[480px]:w-[42%] md:w-[31%] lg:w-auto"
               >
-                <ProductCard product={product} />
+                <ProductCard product={product} compactMobile />
               </div>
             ))}
           </div>

@@ -8,9 +8,16 @@ import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
 
-export function ProductCard({ product }: { product: CatalogProduct }) {
+export function ProductCard({
+  product,
+  compactMobile = false,
+}: {
+  product: CatalogProduct;
+  compactMobile?: boolean;
+}) {
   const productName = `${product.brand} ${product.model}`;
   const stock = {
     "in-stock": {
@@ -23,7 +30,12 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
 
   return (
     <Card className="home-premium-interactive home-premium-surface group relative flex h-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
-      <div className="relative aspect-square overflow-hidden bg-white [&_span]:hidden">
+      <div
+        className={cn(
+          "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
+          compactMobile && "max-sm:aspect-[1.15/1]",
+        )}
+      >
         <ProductVisual product={product} />
         {product.discountRate ? (
           <Badge
@@ -47,7 +59,12 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+      <div
+        className={cn(
+          "flex flex-1 flex-col p-3 sm:p-3.5",
+          compactMobile && "max-sm:p-2.5",
+        )}
+      >
         <div className="flex items-center justify-between gap-3">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             {product.brand}
@@ -120,7 +137,10 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             product={product}
             productId={product.id}
             productName={productName}
-            className="relative z-raised mt-2.5 h-9 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]"
+            className={cn(
+              "relative z-raised mt-2.5 h-9 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]",
+              compactMobile && "max-sm:mt-2 max-sm:h-8",
+            )}
           />
         </div>
       </div>

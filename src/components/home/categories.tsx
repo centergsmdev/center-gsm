@@ -55,16 +55,18 @@ export async function Categories() {
   return (
     <section
       id="categories"
-      aria-labelledby="categories-title"
-      className="reveal-on-scroll py-10 sm:py-14"
+      aria-label="Kategoriler"
+      className="reveal-on-scroll pb-6 pt-2 sm:py-14"
     >
       <Container>
-        <SectionTitle
-          id="categories-title"
-          eyebrow="Kategoriler"
-          title="Teknoloji dünyasını keşfedin"
-          action={{ label: "Tüm kategoriler", href: "/urunler" }}
-        />
+        <div className="hidden sm:block">
+          <SectionTitle
+            id="categories-title"
+            eyebrow="Kategoriler"
+            title="Teknoloji dünyasını keşfedin"
+            action={{ label: "Tüm kategoriler", href: "/urunler" }}
+          />
+        </div>
         <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
           {categoryCards.map((card) => {
             const category = categoriesByName.get(normalizeName(card.name));

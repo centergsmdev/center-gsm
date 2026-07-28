@@ -21,24 +21,29 @@ export async function Brands() {
     return logo ? [{ ...brand, logo }] : [];
   });
   return (
-    <section
-      aria-labelledby="brands-title"
-      className="reveal-on-scroll py-12 sm:py-16"
-    >
+    <section aria-label="Markalar" className="reveal-on-scroll py-6 sm:py-16">
       <Container>
-        <SectionTitle
+        <h2
           id="brands-title"
-          eyebrow="Markalar"
-          title="Dünyanın önde gelen teknoloji markaları"
-          description="Güvendiğiniz global markaların seçkin teknoloji ürünleri CENTER GSM'de."
-        />
-        <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
+          className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-zinc-950 sm:hidden"
+        >
+          Markalar
+        </h2>
+        <div className="hidden sm:block">
+          <SectionTitle
+            id="brands-title-desktop"
+            eyebrow="Markalar"
+            title="Dünyanın önde gelen teknoloji markaları"
+            description="Güvendiğiniz global markaların seçkin teknoloji ürünleri CENTER GSM'de."
+          />
+        </div>
+        <div className="stagger-grid grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6 lg:gap-4">
           {brands.map((brand) => (
             <Link
               key={brand.id}
               href={`/urunler?brand=${brand.slug}`}
               aria-label={`${brand.name} ürünlerini incele`}
-              className="brand-premium-card home-premium-interactive home-premium-surface group relative grid min-h-32 place-items-center overflow-hidden border border-zinc-200/80 bg-white px-6 sm:min-h-36"
+              className="brand-premium-card home-premium-interactive home-premium-surface group relative grid min-h-24 place-items-center overflow-hidden border border-zinc-200/80 bg-white px-4 sm:min-h-36 sm:px-6"
             >
               <span
                 className="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-red-500/0 to-transparent transition-all duration-300 group-hover:via-red-500/70"
@@ -49,7 +54,7 @@ export async function Brands() {
                 alt={`${brand.name} logosu`}
                 width={132}
                 height={52}
-                className="max-h-11 w-auto max-w-full object-contain opacity-75 transition-[transform,opacity,filter] duration-300 ease-premium group-hover:scale-105 group-hover:opacity-100"
+                className="max-h-9 w-auto max-w-[85%] object-contain opacity-75 transition-[transform,opacity,filter] duration-300 ease-premium group-hover:scale-105 group-hover:opacity-100 sm:max-h-11 sm:max-w-full"
               />
             </Link>
           ))}
