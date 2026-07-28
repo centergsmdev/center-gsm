@@ -36,6 +36,10 @@ export function HeroVisual() {
       onPointerMove={handlePointerMove}
       onPointerLeave={resetParallax}
     >
+      <div className="hero-neon-columns" aria-hidden="true">
+        <span className="hero-neon-column hero-neon-column-blue" />
+        <span className="hero-neon-column hero-neon-column-red" />
+      </div>
       <div className="hero-product-stage absolute inset-y-0 right-0">
         <div ref={visualRef} className="hero-product-parallax absolute inset-0">
           <div className="hero-product-float relative size-full">

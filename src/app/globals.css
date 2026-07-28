@@ -343,6 +343,69 @@
     transform-origin: bottom;
   }
 
+  .hero-neon-columns {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .hero-neon-column {
+    --hero-neon-rgb: 59 130 246;
+    position: absolute;
+    top: 7%;
+    bottom: 12%;
+    width: 4px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgb(var(--hero-neon-rgb) / 0.12) 8%,
+      rgb(var(--hero-neon-rgb) / 0.92) 44%,
+      rgb(255 255 255 / 0.96) 58%,
+      rgb(var(--hero-neon-rgb) / 0.86) 72%,
+      transparent 100%
+    );
+    box-shadow:
+      0 0 6px rgb(255 255 255 / 0.72),
+      0 0 16px rgb(var(--hero-neon-rgb) / 0.76),
+      0 0 38px rgb(var(--hero-neon-rgb) / 0.48),
+      0 0 72px rgb(var(--hero-neon-rgb) / 0.24);
+    mix-blend-mode: screen;
+    opacity: 0.92;
+    animation: hero-neon-column-pulse 6.8s ease-in-out infinite;
+  }
+
+  .hero-neon-column::after {
+    position: absolute;
+    top: 98%;
+    left: 50%;
+    width: 118px;
+    height: 34px;
+    border-radius: 50%;
+    content: "";
+    background: radial-gradient(
+      ellipse at center,
+      rgb(var(--hero-neon-rgb) / 0.38),
+      rgb(var(--hero-neon-rgb) / 0.12) 36%,
+      transparent 72%
+    );
+    filter: blur(6px);
+    transform: translateX(-50%) perspective(120px) rotateX(62deg);
+    transform-origin: center;
+  }
+
+  .hero-neon-column-blue {
+    left: 29%;
+  }
+
+  .hero-neon-column-red {
+    --hero-neon-rgb: 239 68 68;
+    right: 8%;
+    animation-delay: -3.4s;
+  }
+
   .hero-product-parallax {
     --hero-parallax-x: 0px;
     --hero-parallax-y: 0px;
@@ -483,6 +546,18 @@
   50% {
     opacity: 1;
     transform: scale3d(1.02, 1.02, 1);
+  }
+}
+
+@keyframes hero-neon-column-pulse {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scaleY(0.985);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
   }
 }
 
