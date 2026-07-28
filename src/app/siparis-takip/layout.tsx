@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { generateSeoMetadata } from "@/lib/seo/seo";
+import { generateSeoMetadata, PRIVATE_ROBOTS } from "@/lib/seo/seo";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const metadata = generateSeoMetadata({
@@ -9,6 +9,7 @@ export const metadata = generateSeoMetadata({
   description:
     "CENTER GSM siparişinizin güncel kargo ve teslimat durumunu güvenle sorgulayın.",
   canonical: "/siparis-takip",
+  robots: PRIVATE_ROBOTS,
 });
 export default function Layout({ children }: { children: ReactNode }) {
   return (

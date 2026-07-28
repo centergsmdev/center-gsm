@@ -1,1 +1,15 @@
-import{canonicalUrl}from"@/lib/seo/canonical";export const DEFAULT_OG_IMAGE="/og-default.png";export const DEFAULT_TWITTER_IMAGE="/twitter-default.png";export function socialImageUrl(value:string|undefined,fallback=DEFAULT_OG_IMAGE){const candidate=value?.trim()||fallback;try{const url=new URL(candidate,canonicalUrl("/"));return url.protocol==="https:"?url.toString():canonicalUrl(fallback)}catch{return canonicalUrl(fallback)}}
+import { canonicalUrl } from "@/lib/seo/canonical";
+export const DEFAULT_OG_IMAGE = "/images/hero-tech.png";
+export const DEFAULT_TWITTER_IMAGE = "/images/hero-tech.png";
+export function socialImageUrl(
+  value: string | undefined,
+  fallback = DEFAULT_OG_IMAGE,
+) {
+  const candidate = value?.trim() || fallback;
+  try {
+    const url = new URL(candidate, canonicalUrl("/"));
+    return url.protocol === "https:" ? url.toString() : canonicalUrl(fallback);
+  } catch {
+    return canonicalUrl(fallback);
+  }
+}

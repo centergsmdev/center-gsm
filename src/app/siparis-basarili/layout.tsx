@@ -1,13 +1,15 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { generateSeoMetadata, PRIVATE_ROBOTS } from "@/lib/seo/seo";
 
-export const metadata: Metadata = {
-  title: "Sipariş Oluşturuldu | CENTER GSM",
-  description: "CENTER GSM demo sipariş özeti.",
-};
+export const metadata = generateSeoMetadata({
+  title: "Sipariş Oluşturuldu",
+  description: "CENTER GSM sipariş onayı.",
+  canonical: "/siparis-basarili",
+  robots: PRIVATE_ROBOTS,
+});
 export default function SuccessLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128" role="img" aria-labelledby="title description">
+  <title id="title">CENTER GSM</title>
+  <desc id="description">CENTER GSM teknoloji mağazası logosu</desc>
+  <rect width="128" height="128" rx="28" fill="#09090b"/>
+  <path d="M83 39c-6-7-13-10-22-10-21 0-35 14-35 35s14 35 35 35c9 0 16-3 22-10L70 77c-3 4-6 5-10 5-9 0-15-7-15-18s6-18 15-18c4 0 7 1 10 5l13-12Z" fill="#fff"/>
+  <text x="150" y="78" fill="#09090b" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-3">CENTER</text>
+  <text x="347" y="78" fill="#dc2626" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-3">GSM</text>
+  <text x="153" y="104" fill="#71717a" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="5">TEKNOLOJİNİN MERKEZİ</text>
+</svg>

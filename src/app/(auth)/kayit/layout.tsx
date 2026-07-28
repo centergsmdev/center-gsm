@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { generateSeoMetadata } from "@/lib/seo/seo";
+import { generateSeoMetadata, PRIVATE_ROBOTS } from "@/lib/seo/seo";
 export const metadata = generateSeoMetadata({
   title: "Üye Ol",
   description:
     "CENTER GSM hesabınızı oluşturun ve alışveriş deneyiminizi yönetin.",
   canonical: "/kayit",
-  robots: { index: true, follow: true },
+  robots: PRIVATE_ROBOTS,
   social: false,
 });
 export default function Layout({ children }: { children: ReactNode }) {

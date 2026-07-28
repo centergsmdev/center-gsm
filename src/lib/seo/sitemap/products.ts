@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { catalogProducts } from "@/data/catalog-products";
 import { createPublicClient as createClient } from "@/lib/supabase/public";
 import { sitemapEntry, safeDate } from "./helpers";
 export async function getProductSitemap(): Promise<MetadataRoute.Sitemap> {
@@ -22,7 +21,5 @@ export async function getProductSitemap(): Promise<MetadataRoute.Sitemap> {
         );
     }
   } catch {}
-  return catalogProducts.map((x) =>
-    sitemapEntry(`/urun/${x.slug}`, "2026-07-25T00:00:00.000Z", "weekly", 0.8),
-  );
+  return [];
 }

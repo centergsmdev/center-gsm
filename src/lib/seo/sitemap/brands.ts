@@ -1,15 +1,6 @@
 import type { MetadataRoute } from "next";
-import { catalogProducts } from "@/data/catalog-products";
 import { createPublicClient as createClient } from "@/lib/supabase/public";
 import { sitemapEntry, safeDate } from "./helpers";
-const slug = (v: string) =>
-  v
-    .toLocaleLowerCase("tr-TR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ı/g, "i")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 export async function getBrandSitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const client = createClient();
@@ -30,7 +21,5 @@ export async function getBrandSitemap(): Promise<MetadataRoute.Sitemap> {
         );
     }
   } catch {}
-  return [...new Set(catalogProducts.map((x) => x.brand))].map((x) =>
-    sitemapEntry(`/marka/${slug(x)}`, "2026-07-25T00:00:00.000Z", "daily", 0.8),
-  );
+  return [];
 }
