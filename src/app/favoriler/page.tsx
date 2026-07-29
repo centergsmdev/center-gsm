@@ -8,10 +8,10 @@ import { useFavorites } from "@/providers/favorites-provider";
 export default function FavoritesPage() {
   const { count, isLoading } = useFavorites();
   return (
-    <main className="min-h-screen bg-surface-subtle/50 pb-16 pt-6 sm:pb-20 sm:pt-8">
+    <main className="min-h-screen bg-surface-subtle/50 pb-16 pt-3 sm:pb-20 sm:pt-8">
       <Container>
         <FavoritesBreadcrumb />
-        <div className="mt-6">
+        <div className="mt-6 max-sm:hidden">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
             Kaydettikleriniz
           </p>
@@ -22,11 +22,11 @@ export default function FavoritesPage() {
             {isLoading
               ? "Favori ürünleriniz güvenli şekilde yükleniyor."
               : count > 0
-              ? `${count} favori ürününüzü karşılaştırabilir veya doğrudan sepetinize ekleyebilirsiniz.`
-              : "Beğendiğiniz ürünler burada görüntülenecek."}
+                ? `${count} favori ürününüzü karşılaştırabilir veya doğrudan sepetinize ekleyebilirsiniz.`
+                : "Beğendiğiniz ürünler burada görüntülenecek."}
           </p>
         </div>
-        <div className="mt-8">
+        <div className="mt-3 sm:mt-8">
           <FavoritesGrid />
         </div>
       </Container>

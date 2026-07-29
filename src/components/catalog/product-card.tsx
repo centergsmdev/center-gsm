@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck, Star, Truck } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductVisual } from "@/components/catalog/product-visual";
@@ -15,10 +16,12 @@ export function ProductCard({
   product,
   compactMobile = false,
   denseMobile = false,
+  footerAction,
 }: {
   product: CatalogProduct;
   compactMobile?: boolean;
   denseMobile?: boolean;
+  footerAction?: ReactNode;
 }) {
   const productName = `${product.brand} ${product.model}`;
   const stock = {
@@ -148,6 +151,10 @@ export function ProductCard({
               Güvenli Ödeme
             </span>
           </div>
+
+          {footerAction ? (
+            <div className="relative z-raised mt-2">{footerAction}</div>
+          ) : null}
 
           <AddToCartButton
             product={product}
