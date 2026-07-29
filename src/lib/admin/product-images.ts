@@ -49,10 +49,6 @@ function safeExtension(file: File) {
       ? "webp"
       : "jpg";
 }
-function safePath(productId: string, file: File) {
-  return `${productId}/${crypto.randomUUID()}.${safeExtension(file)}`;
-}
-
 export async function uploadTaxonomyImage(
   folder: "categories" | "brands",
   file: File,
@@ -72,9 +68,7 @@ export async function uploadTaxonomyImage(
       upsert: false,
     });
   if (result.error) return { data: null, error: SAFE_ERROR };
-  const { data } = client.storage
-    .from(PRODUCT_IMAGE_BUCKET)
-    .getPublicUrl(path);
+  const { data } = client.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
   return { data: { url: data.publicUrl, path }, error: null };
 }
 
@@ -91,52 +85,44 @@ export async function deleteStorageImageByUrl(url: string | null) {
 export async function uploadProductImages(
   productId: string,
   files: File[],
-  startOrder: number,
+  _startOrder: number,
   onProgress?: (progress: UploadProgress) => void,
 ): Promise<AdminProductResult<Tables<"product_images">[]>> {
-  const client = createClient();
-  if (!client)
-    return { data: null, error: "Supabase bağlantısı yapılandırılmamış." };
-  const uploaded: Tables<"product_images">[] = [];
-  for (const [index, file] of files.entries()) {
-    const path = safePath(productId, file);
-    onProgress?.({ fileName: file.name, progress: 15, status: "uploading" });
-    const storageResult = await client.storage
-      .from(PRODUCT_IMAGE_BUCKET)
-      .upload(path, file, {
-        cacheControl: "31536000",
-        contentType: file.type,
-        upsert: false,
-      });
-    if (storageResult.error) {
-      onProgress?.({ fileName: file.name, progress: 0, status: "error" });
-      return { data: null, error: SAFE_ERROR };
+  const validation = validateProductImages(files);
+  if (validation.errors.length)
+    return { data: null, error: validation.errors.join(" ") };
+
+  files.forEach((file) =>
+    onProgress?.({ fileName: file.name, progress: 15, status: "uploading" }),
+  );
+  const body = new FormData();
+  body.set("productId", productId);
+  files.forEach((file) => body.append("files", file));
+
+  try {
+    const response = await fetch("/api/admin/product-images", {
+      method: "POST",
+      body,
+    });
+    const result = (await response.json()) as AdminProductResult<
+      Tables<"product_images">[]
+    >;
+    if (!response.ok || !result.data) {
+      files.forEach((file) =>
+        onProgress?.({ fileName: file.name, progress: 0, status: "error" }),
+      );
+      return { data: null, error: result.error ?? SAFE_ERROR };
     }
-    onProgress?.({ fileName: file.name, progress: 70, status: "uploading" });
-    const { data: publicUrl } = client.storage
-      .from(PRODUCT_IMAGE_BUCKET)
-      .getPublicUrl(path);
-    const row = await client
-      .from("product_images")
-      .insert({
-        product_id: productId,
-        url: publicUrl.publicUrl,
-        path,
-        alt_text: file.name.replace(/\.[^.]+$/, ""),
-        sort_order: startOrder + index,
-        is_primary: startOrder + index === 0,
-      })
-      .select("*")
-      .single();
-    if (row.error) {
-      await client.storage.from(PRODUCT_IMAGE_BUCKET).remove([path]);
-      onProgress?.({ fileName: file.name, progress: 0, status: "error" });
-      return { data: null, error: SAFE_ERROR };
-    }
-    uploaded.push(row.data);
-    onProgress?.({ fileName: file.name, progress: 100, status: "complete" });
+    files.forEach((file) =>
+      onProgress?.({ fileName: file.name, progress: 100, status: "complete" }),
+    );
+    return result;
+  } catch {
+    files.forEach((file) =>
+      onProgress?.({ fileName: file.name, progress: 0, status: "error" }),
+    );
+    return { data: null, error: SAFE_ERROR };
   }
-  return { data: uploaded, error: null };
 }
 
 export async function deleteProductImage(
