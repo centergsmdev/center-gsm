@@ -69,7 +69,7 @@ export function ProductCard({
 
       <div
         className={cn(
-          "flex flex-1 flex-col p-3 sm:p-3.5",
+          "flex flex-1 flex-col p-2.5 sm:p-3.5",
           compactMobile && "max-sm:p-2",
           denseMobile && "max-sm:p-1.5",
         )}
@@ -87,7 +87,7 @@ export function ProductCard({
 
         <h2
           className={cn(
-            "mt-1 line-clamp-2 min-h-9 text-sm font-black leading-[1.125rem] tracking-[-0.03em] text-zinc-950 sm:text-[15px]",
+            "mt-0.5 line-clamp-2 min-h-8 text-sm font-black leading-4 tracking-[-0.03em] text-zinc-950 sm:mt-1 sm:min-h-9 sm:text-[15px] sm:leading-[1.125rem]",
             denseMobile && "max-sm:min-h-8 max-sm:text-[13px] max-sm:leading-4",
           )}
         >
@@ -100,14 +100,14 @@ export function ProductCard({
         </h2>
         <p
           className={cn(
-            "mt-1 line-clamp-2 min-h-8 text-[11px] leading-4 text-zinc-500 sm:text-xs",
+            "leading-3.5 mt-0.5 line-clamp-2 min-h-7 text-[10px] text-zinc-500 sm:mt-1 sm:min-h-8 sm:text-xs sm:leading-4",
             denseMobile && "max-sm:leading-3.5 max-sm:mt-0.5 max-sm:min-h-7",
           )}
         >
           {product.description}
         </p>
 
-        <div className="mt-1.5 flex items-center gap-2 text-[10px]">
+        <div className="mt-1 flex items-center gap-1.5 text-[10px] sm:mt-1.5 sm:gap-2">
           <span
             className="flex items-center gap-1 font-bold text-zinc-800"
             aria-label={`${product.rating} puan`}
@@ -121,7 +121,9 @@ export function ProductCard({
           <span className="text-zinc-400">({product.reviewCount} yorum)</span>
         </div>
 
-        <div className={cn("mt-auto pt-2", denseMobile && "max-sm:pt-1")}>
+        <div
+          className={cn("mt-auto pt-1.5 sm:pt-2", denseMobile && "max-sm:pt-1")}
+        >
           <div className="min-h-3.5">
             {product.previousPrice ? (
               <p className="text-[11px] font-medium text-zinc-400 line-through">
@@ -129,17 +131,17 @@ export function ProductCard({
               </p>
             ) : null}
           </div>
-          <p className="text-xl font-black tracking-[-0.045em] text-zinc-950 sm:text-[22px]">
+          <p className="text-lg font-black tracking-[-0.045em] text-primary sm:text-[22px] sm:text-zinc-950">
             {formatCurrency(product.price)}
           </p>
-          <p className="mt-1 w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-600">
+          <p className="mt-0.5 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-medium text-zinc-600 sm:mt-1 sm:px-2.5 sm:py-1 sm:text-[10px]">
             <strong className="text-zinc-950">
               {product.installmentCount} ay
             </strong>{" "}
             × {formatCurrency(product.monthlyInstallment)}
           </p>
 
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="mt-1.5 flex flex-wrap gap-1 sm:mt-2">
             {product.freeShipping ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[9px] font-bold text-zinc-700">
                 <Truck className="size-3 text-primary" aria-hidden="true" />
@@ -153,7 +155,9 @@ export function ProductCard({
           </div>
 
           {footerAction ? (
-            <div className="relative z-raised mt-2">{footerAction}</div>
+            <div className="relative z-raised mt-1.5 sm:mt-2">
+              {footerAction}
+            </div>
           ) : null}
 
           <AddToCartButton
@@ -161,7 +165,7 @@ export function ProductCard({
             productId={product.id}
             productName={productName}
             className={cn(
-              "relative z-raised mt-2.5 h-9 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)]",
+              "relative z-raised mt-2 h-8 w-full shadow-[0_10px_24px_rgba(220,38,38,0.18)] transition-[transform,box-shadow] duration-200 active:scale-[0.98] group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_30px_rgba(220,38,38,0.28)] sm:mt-2.5 sm:h-9",
               compactMobile && "max-sm:mt-1.5 max-sm:h-8",
               denseMobile && "max-sm:mt-1 max-sm:h-8",
             )}

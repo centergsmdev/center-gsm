@@ -33,7 +33,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="tech-atmosphere min-h-screen pb-36 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen pb-36 pt-3 sm:pb-16 sm:pt-7">
       <Container>
         <CartBreadcrumb />
         {lines.length === 0 ? (
@@ -42,7 +42,7 @@ export default function CartPage() {
           </div>
         ) : (
           <>
-            <div className="mt-6">
+            <div className="mt-6 max-sm:hidden">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
                 Alışveriş sepeti
               </p>
@@ -53,7 +53,7 @@ export default function CartPage() {
                 Sepetinizde {itemCount} ürün bulunuyor.
               </p>
             </div>
-            <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+            <div className="mt-3 grid gap-4 sm:mt-7 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
               <section aria-label="Sepet ürünleri" className="space-y-4">
                 {lines.map((line) => (
                   <CartItemCard

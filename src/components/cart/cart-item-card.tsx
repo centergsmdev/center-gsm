@@ -26,8 +26,8 @@ export function CartItemCard({
   const maxQuantity = Math.max(1, Math.min(10, product.availableStock ?? 10));
 
   return (
-    <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-2.5 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
-      <div className="grid min-w-0 grid-cols-[78px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
+    <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-2 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
+      <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] gap-2 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
         <Link
           href={`/urun/${product.slug}`}
           aria-label={`${productName} ürün detayını aç`}
@@ -41,7 +41,7 @@ export function CartItemCard({
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted">
                 {product.brand}
               </p>
-              <h2 className="mt-1 line-clamp-2 text-sm font-black tracking-[-0.02em] sm:text-base">
+              <h2 className="mt-0.5 line-clamp-2 text-sm font-black leading-4 tracking-[-0.02em] sm:mt-1 sm:text-base sm:leading-normal">
                 <Link
                   href={`/urun/${product.slug}`}
                   className="hover:text-primary"
@@ -49,7 +49,7 @@ export function CartItemCard({
                   {product.model}
                 </Link>
               </h2>
-              <p className="mt-1 text-[10px] text-muted sm:text-xs">
+              <p className="mt-0.5 text-[9px] text-muted sm:mt-1 sm:text-xs">
                 SKU:{" "}
                 {product.sku ?? `CG-${product.id.slice(2).padStart(6, "0")}`}
               </p>
@@ -65,18 +65,18 @@ export function CartItemCard({
             </IconButton>
           </div>
 
-          <div className="mt-2.5 grid grid-cols-2 items-end gap-2 sm:mt-3 sm:gap-3">
+          <div className="mt-1.5 grid grid-cols-2 items-end gap-2 sm:mt-3 sm:gap-3">
             <div>
               {product.previousPrice ? (
-                <p className="text-[11px] text-muted line-through">
+                <p className="text-[10px] text-zinc-400 line-through sm:text-[11px]">
                   {formatCurrency(product.previousPrice)}
                 </p>
               ) : null}
-              <p className="text-base font-black tracking-tight sm:text-lg">
+              <p className="text-base font-black tracking-tight text-primary sm:text-lg sm:text-zinc-950">
                 {formatCurrency(product.price)}
               </p>
               {product.discountRate ? (
-                <Badge variant="brand" className="mt-1">
+                <Badge variant="brand" className="mt-0.5 sm:mt-1">
                   %{product.discountRate} indirim
                 </Badge>
               ) : null}
@@ -85,13 +85,13 @@ export function CartItemCard({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
                 Ara toplam
               </p>
-              <p className="mt-1 truncate text-base font-black tracking-tight sm:text-lg">
+              <p className="mt-0.5 truncate text-base font-black tracking-tight text-primary sm:mt-1 sm:text-lg sm:text-zinc-950">
                 {formatCurrency(lineTotal)}
               </p>
             </div>
           </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-border pt-1.5 sm:mt-3 sm:gap-3 sm:pt-3">
             <div className="flex h-9 w-fit items-center rounded-full border border-border bg-white shadow-xs transition-shadow focus-within:shadow-md sm:h-10">
               <IconButton
                 label={`${productName} adedini azalt`}
