@@ -21,8 +21,8 @@ import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/client";
 import type { CatalogProduct } from "@/types/product";
 
-const STORAGE_KEY = "center-gsm-demo-favorites";
-const initialFavoriteIds = ["p-003"];
+const STORAGE_KEY = "center-gsm-favorites-v1";
+const initialFavoriteIds: string[] = [];
 const safeError = "Favori işlemi tamamlanamadı. Lütfen yeniden deneyin.";
 
 type FavoritesContextValue = {

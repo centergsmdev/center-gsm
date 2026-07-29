@@ -26,8 +26,8 @@ export function CartItemCard({
   const maxQuantity = Math.max(1, Math.min(10, product.availableStock ?? 10));
 
   return (
-    <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-3 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
-      <div className="grid min-w-0 grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
+    <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-2.5 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
+      <div className="grid min-w-0 grid-cols-[78px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
         <Link
           href={`/urun/${product.slug}`}
           aria-label={`${productName} ürün detayını aç`}
@@ -65,7 +65,7 @@ export function CartItemCard({
             </IconButton>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 items-end gap-3">
+          <div className="mt-2.5 grid grid-cols-2 items-end gap-2 sm:mt-3 sm:gap-3">
             <div>
               {product.previousPrice ? (
                 <p className="text-[11px] text-muted line-through">
@@ -91,8 +91,8 @@ export function CartItemCard({
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-            <div className="flex h-10 w-fit items-center rounded-full border border-border bg-white shadow-xs transition-shadow focus-within:shadow-md">
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
+            <div className="flex h-9 w-fit items-center rounded-full border border-border bg-white shadow-xs transition-shadow focus-within:shadow-md sm:h-10">
               <IconButton
                 label={`${productName} adedini azalt`}
                 size="sm"

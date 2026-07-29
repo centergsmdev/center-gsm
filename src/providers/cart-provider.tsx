@@ -14,11 +14,8 @@ import { calculateCheckoutPricing } from "@/lib/promotions/client";
 import type { CartItem, CartLine, CartTotals } from "@/types/cart";
 import type { CatalogProduct } from "@/types/product";
 
-const STORAGE_KEY = "center-gsm-demo-cart";
-const initialItems: CartItem[] = [
-  { productId: "p-001", quantity: 1 },
-  { productId: "p-002", quantity: 1 },
-];
+const STORAGE_KEY = "center-gsm-cart-v1";
+const initialItems: CartItem[] = [];
 type CouponResult = { success: boolean; error?: string };
 type CartContextValue = {
   items: CartItem[];

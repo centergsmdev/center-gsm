@@ -1,5 +1,6 @@
 "use client";
-import { Check, PackageCheck } from "lucide-react";
+import { Check } from "lucide-react";
+import { ShippingCarrierLogo } from "@/components/checkout/shipping-carrier-logo";
 export type CheckoutCarrier = {
   providerKey: string;
   name: string;
@@ -65,8 +66,11 @@ export function ShippingCarrierSelection({
                   onChange={() => onChange(item.providerKey)}
                   className="sr-only"
                 />
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white shadow-sm">
-                  <PackageCheck className="size-5" aria-hidden="true" />
+                <span className="grid h-11 w-24 shrink-0 place-items-center rounded-xl border border-zinc-100 bg-white px-2 shadow-sm">
+                  <ShippingCarrierLogo
+                    providerKey={item.providerKey}
+                    name={item.name}
+                  />
                 </span>
                 <span className="min-w-0">
                   <span className="flex items-center gap-2 font-black">

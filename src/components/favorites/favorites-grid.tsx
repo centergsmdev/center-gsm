@@ -13,10 +13,21 @@ export function FavoritesGrid() {
   if (error && favoriteProducts.length === 0)
     return <FavoritesErrorState onRetry={retry} />;
   if (favoriteProducts.length === 0) return <FavoritesEmptyState />;
-  return <div className="space-y-6">
-    <WishlistAlertPreferences productIds={favoriteProducts.map((product) => product.id)} />
-    <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-      {favoriteProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+  return (
+    <div className="space-y-6">
+      <WishlistAlertPreferences
+        productIds={favoriteProducts.map((product) => product.id)}
+      />
+      <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {favoriteProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            compactMobile
+            denseMobile
+          />
+        ))}
+      </div>
     </div>
-  </div>;
+  );
 }

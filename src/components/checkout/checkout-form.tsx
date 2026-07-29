@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { LoaderCircle, LockKeyhole } from "lucide-react";
 
 import { CheckoutSection } from "@/components/checkout/checkout-section";
+import {
+  AgreementDocumentModal,
+  type AgreementDocument,
+} from "@/components/checkout/agreement-document-modal";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
 import { DeliveryAddressForm } from "@/components/checkout/delivery-address-form";
 import {
@@ -71,6 +75,9 @@ export function CheckoutForm() {
   const [carriersLoading, setCarriersLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState(false);
+  const [openDocument, setOpenDocument] = useState<AgreementDocument | null>(
+    null,
+  );
 
   useEffect(() => {
     if (lines.length === 0 && !processing) router.replace("/sepet");
@@ -429,10 +436,15 @@ export function CheckoutForm() {
               <Agreement
                 name="distanceAgreement"
                 error={errors.distanceAgreement}
+                onOpen={() => setOpenDocument("distance")}
               >
                 Mesafeli satış sözleşmesini okudum ve onaylıyorum.
               </Agreement>
-              <Agreement name="preInformation" error={errors.preInformation}>
+              <Agreement
+                name="preInformation"
+                error={errors.preInformation}
+                onOpen={() => setOpenDocument("preInformation")}
+              >
                 Ön bilgilendirme formunu okudum ve onaylıyorum.
               </Agreement>
             </div>
@@ -500,6 +512,10 @@ export function CheckoutForm() {
           </Button>
         </div>
       </div>
+      <AgreementDocumentModal
+        document={openDocument}
+        onClose={() => setOpenDocument(null)}
+      />
     </form>
   );
 }
@@ -508,25 +524,37 @@ function Agreement({
   name,
   error,
   children,
+  onOpen,
 }: {
   name: string;
   error?: string;
   children: React.ReactNode;
+  onOpen: () => void;
 }) {
   return (
     <div>
-      <label
-        className={`flex items-start gap-3 rounded-lg border p-4 text-sm leading-6 ${error ? "border-danger" : "border-border"}`}
+      <div
+        className={`flex items-center gap-2 rounded-lg border p-2.5 pl-4 text-sm leading-6 ${error ? "border-danger" : "border-border"}`}
       >
-        <input
-          type="checkbox"
-          name={name}
-          aria-invalid={Boolean(error) || undefined}
-          aria-describedby={error ? `${name}-error` : undefined}
-          className="mt-1 size-4 shrink-0 accent-red-700"
-        />
-        <span>{children}</span>
-      </label>
+        <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 py-1.5">
+          <input
+            type="checkbox"
+            name={name}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? `${name}-error` : undefined}
+            className="mt-1 size-4 shrink-0 accent-red-700"
+          />
+          <span>{children}</span>
+        </label>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="min-h-10 shrink-0 rounded-full border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={`${typeof children === "string" ? children : "Belge"} belgesini aç`}
+        >
+          Aç
+        </button>
+      </div>
       {error ? (
         <p
           id={`${name}-error`}
