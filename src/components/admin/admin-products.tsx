@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   Edit3,
   ImageIcon,
+  MoreHorizontal,
+  Power,
   Plus,
   Search,
   SlidersHorizontal,
@@ -25,6 +27,8 @@ import {
   deactivateAdminProduct,
   getAdminProductReferences,
   getAdminProducts,
+  permanentlyDeleteAdminProduct,
+  setAdminProductActive,
 } from "@/lib/admin/products";
 import { formatCurrency } from "@/lib/format";
 import type {
@@ -50,8 +54,11 @@ export function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [pendingDelete, setPendingDelete] = useState<AdminProduct | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [pendingDeactivate, setPendingDeactivate] =
+    useState<AdminProduct | null>(null);
+  const [pendingPermanentDelete, setPendingPermanentDelete] =
+    useState<AdminProduct | null>(null);
+  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -77,17 +84,46 @@ export function AdminProducts() {
     value: AdminProductFilters[K],
   ) => setFilters((current) => ({ ...current, [key]: value }));
   const deactivate = async () => {
-    if (!pendingDelete) return;
-    setDeleting(true);
-    const result = await deactivateAdminProduct(pendingDelete.id);
-    setDeleting(false);
+    if (!pendingDeactivate) return;
+    setBusy(true);
+    const result = await deactivateAdminProduct(pendingDeactivate.id);
+    setBusy(false);
     if (result.error) {
       setError(result.error);
-      setPendingDelete(null);
+      setPendingDeactivate(null);
       return;
     }
-    setNotice(`${pendingDelete.name} pasif duruma alındı.`);
-    setPendingDelete(null);
+    setNotice(`${pendingDeactivate.name} pasif duruma alındı.`);
+    setPendingDeactivate(null);
+    await load();
+    window.setTimeout(() => setNotice(""), 3000);
+  };
+  const activate = async (product: AdminProduct) => {
+    setBusy(true);
+    const result = await setAdminProductActive(product.id, true);
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setNotice(`${product.name} tekrar aktif duruma alındı.`);
+    await load();
+    window.setTimeout(() => setNotice(""), 3000);
+  };
+  const permanentlyDelete = async () => {
+    if (!pendingPermanentDelete) return;
+    setBusy(true);
+    const result = await permanentlyDeleteAdminProduct(
+      pendingPermanentDelete.id,
+    );
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+      setPendingPermanentDelete(null);
+      return;
+    }
+    setNotice(`${pendingPermanentDelete.name} kalıcı olarak silindi.`);
+    setPendingPermanentDelete(null);
     await load();
     window.setTimeout(() => setNotice(""), 3000);
   };
@@ -267,23 +303,15 @@ export function AdminProducts() {
                     }).format(new Date(product.created_at))}
                   </AdminTd>
                   <AdminTd>
-                    <div className="flex justify-end gap-1">
-                      <Link
-                        href={`/admin/urunler/${product.id}`}
-                        className="grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
-                        aria-label={`${product.name} ürününü düzenle`}
-                      >
-                        <Edit3 className="size-4" />
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete(product)}
-                        className="grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600"
-                        aria-label={`${product.name} ürününü pasif yap`}
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
+                    <ProductActions
+                      product={product}
+                      busy={busy}
+                      onDeactivate={() => setPendingDeactivate(product)}
+                      onActivate={() => void activate(product)}
+                      onPermanentDelete={() =>
+                        setPendingPermanentDelete(product)
+                      }
+                    />
                   </AdminTd>
                 </tr>
               ))}
@@ -297,32 +325,125 @@ export function AdminProducts() {
         )}
       </AdminCard>
       <AdminModal
-        open={Boolean(pendingDelete)}
-        onClose={() => !deleting && setPendingDelete(null)}
-        title="Ürünü pasif duruma al?"
+        open={Boolean(pendingDeactivate)}
+        onClose={() => !busy && setPendingDeactivate(null)}
+        title="Ürünü pasife al?"
         description="Ürün müşteri kataloğunda görünmeyecek, kayıt korunacaktır."
         footer={
           <>
             <Button
               variant="ghost"
-              onClick={() => setPendingDelete(null)}
-              disabled={deleting}
+              onClick={() => setPendingDeactivate(null)}
+              disabled={busy}
             >
-              Vazgeç
+              İptal
             </Button>
             <Button
               variant="danger"
               onClick={() => void deactivate()}
-              disabled={deleting}
+              disabled={busy}
             >
-              {deleting ? "İşleniyor…" : "Pasif yap"}
+              {busy ? "İşleniyor…" : "Pasife Al"}
             </Button>
           </>
         }
       >
-        {pendingDelete?.name} için soft delete işlemi uygulanacak.
+        {pendingDeactivate?.name} satıştan kaldırılacak; geçmiş kayıtları
+        korunacak ve daha sonra yeniden aktif yapılabilecek.
+      </AdminModal>
+      <AdminModal
+        open={Boolean(pendingPermanentDelete)}
+        onClose={() => !busy && setPendingPermanentDelete(null)}
+        title="Ürünü kalıcı olarak sil"
+        description="Bu işlem yalnızca sipariş geçmişi olmayan ürünlerde uygulanabilir."
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => setPendingPermanentDelete(null)}
+              disabled={busy}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => void permanentlyDelete()}
+              disabled={busy}
+            >
+              {busy ? "Siliniyor…" : "Kalıcı Olarak Sil"}
+            </Button>
+          </>
+        }
+      >
+        <p className="whitespace-pre-line text-sm font-semibold leading-6 text-zinc-700">
+          Bu ürünü kalıcı olarak silmek istediğinize emin misiniz?
+          {"\n\n"}Bu işlem geri alınamaz.
+        </p>
       </AdminModal>
     </div>
+  );
+}
+
+function ProductActions({
+  product,
+  busy,
+  onDeactivate,
+  onActivate,
+  onPermanentDelete,
+}: {
+  product: AdminProduct;
+  busy: boolean;
+  onDeactivate: () => void;
+  onActivate: () => void;
+  onPermanentDelete: () => void;
+}) {
+  const closeMenu = (event: React.MouseEvent<HTMLButtonElement>) =>
+    event.currentTarget.closest("details")?.removeAttribute("open");
+
+  return (
+    <details className="group relative ml-auto w-fit">
+      <summary
+        className="grid size-9 cursor-pointer list-none place-items-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 [&::-webkit-details-marker]:hidden"
+        aria-label={`${product.name} işlemlerini aç`}
+      >
+        <MoreHorizontal className="size-4" />
+      </summary>
+      <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 text-left shadow-xl">
+        <Link
+          href={`/admin/urunler/${product.id}`}
+          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+        >
+          <Edit3 className="size-4" />
+          Düzenle
+        </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={(event) => {
+            closeMenu(event);
+            if (product.is_active) onDeactivate();
+            else onActivate();
+          }}
+          className="flex h-10 w-full items-center gap-2 rounded-lg px-3 text-sm font-semibold text-zinc-700 transition hover:bg-amber-50 hover:text-amber-800 disabled:opacity-50"
+        >
+          <Power className="size-4" />
+          {product.is_active ? "Pasife Al" : "Aktif Yap"}
+        </button>
+        <div className="my-1 border-t border-zinc-100" />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={(event) => {
+            closeMenu(event);
+            onPermanentDelete();
+          }}
+          className="flex h-10 w-full items-center gap-2 rounded-lg px-3 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+        >
+          <Trash2 className="size-4" />
+          Kalıcı Olarak Sil
+        </button>
+      </div>
+    </details>
   );
 }
 

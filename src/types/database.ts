@@ -1161,6 +1161,10 @@ export type Database = {
       };
     };
     Functions: {
+      admin_delete_product: {
+        Args: { p_product_id: string };
+        Returns: Json;
+      };
       admin_dashboard_metrics: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

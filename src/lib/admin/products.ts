@@ -188,13 +188,40 @@ export async function updateAdminProduct(
 export async function deactivateAdminProduct(
   id: string,
 ): Promise<AdminProductResult<true>> {
-  const connection = browserClient();
-  if (!connection.data) return connection;
-  const result = await connection.data
-    .from("products")
-    .update({ is_active: false })
-    .eq("id", id);
-  return result.error
-    ? { data: null, error: SAFE_ERROR }
-    : { data: true, error: null };
+  return setAdminProductActive(id, false);
+}
+
+export async function setAdminProductActive(
+  id: string,
+  isActive: boolean,
+): Promise<AdminProductResult<true>> {
+  try {
+    const response = await fetch(`/api/admin/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
+    });
+    const result = (await response.json()) as AdminProductResult<true>;
+    return response.ok && result.data
+      ? result
+      : { data: null, error: result.error ?? SAFE_ERROR };
+  } catch {
+    return { data: null, error: SAFE_ERROR };
+  }
+}
+
+export async function permanentlyDeleteAdminProduct(
+  id: string,
+): Promise<AdminProductResult<true>> {
+  try {
+    const response = await fetch(`/api/admin/products/${id}`, {
+      method: "DELETE",
+    });
+    const result = (await response.json()) as AdminProductResult<true>;
+    return response.ok && result.data
+      ? result
+      : { data: null, error: result.error ?? SAFE_ERROR };
+  } catch {
+    return { data: null, error: SAFE_ERROR };
+  }
 }
