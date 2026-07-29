@@ -121,7 +121,7 @@ export function CartItemCard({
             <button
               type="button"
               onClick={() => {
-                addFavorite(product.id);
+                addFavorite(product);
                 removeItem(product.id);
               }}
               className="inline-flex w-fit items-center gap-2 rounded-sm text-xs font-semibold text-zinc-600 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

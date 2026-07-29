@@ -1,60 +1,118 @@
 type CarrierLogoProps = { providerKey: string; name: string };
 
-const wordmarks = {
-  yurtici: { label: "YURTİÇİ KARGO", primary: "#E30613", accent: "#111827" },
-  aras: { label: "aras KARGO", primary: "#F58220", accent: "#17365D" },
-  mng: { label: "MNG KARGO", primary: "#E30613", accent: "#123A70" },
-  surat: { label: "SÜRAT KARGO", primary: "#D71920", accent: "#D71920" },
-  ptt: { label: "PTT KARGO", primary: "#FFC400", accent: "#005596" },
-  hepsijet: { label: "hepsiJET", primary: "#FF6000", accent: "#5D2E8C" },
+function YurtiçiLogo() {
+  return (
+    <>
+      <path fill="#e30613" d="M7 10h19l-5 5H12l5 5h9l-10 10H7l10-10z" />
+      <text x="32" y="20" fill="#e30613" fontSize="11" fontWeight="900">
+        YURTİÇİ
+      </text>
+      <text x="32" y="30" fill="#27272a" fontSize="9" fontWeight="800">
+        KARGO
+      </text>
+    </>
+  );
+}
+
+function ArasLogo() {
+  return (
+    <>
+      <path
+        fill="#f58220"
+        d="M7 27 14 9h7l7 18h-6l-1.2-3.5h-7L12.5 27zm8.3-8h4l-2-6z"
+      />
+      <text x="32" y="23" fill="#f58220" fontSize="17" fontWeight="800">
+        aras
+      </text>
+      <text x="70" y="23" fill="#17365d" fontSize="9" fontWeight="900">
+        KARGO
+      </text>
+    </>
+  );
+}
+
+function MngLogo() {
+  return (
+    <>
+      <path fill="#e30613" d="M6 10h5l5 8 5-8h5v20h-5V18l-5 8-5-8v12H6z" />
+      <text x="31" y="24" fill="#123a70" fontSize="16" fontWeight="900">
+        MNG
+      </text>
+      <text x="68" y="24" fill="#e30613" fontSize="9" fontWeight="900">
+        KARGO
+      </text>
+    </>
+  );
+}
+
+function HepsijetLogo() {
+  return (
+    <>
+      <path fill="#ff6000" d="M7 9h6v7h7V9h6v22h-6v-9h-7v9H7z" />
+      <text x="32" y="24" fill="#ff6000" fontSize="14" fontWeight="800">
+        hepsi
+      </text>
+      <text x="67" y="24" fill="#5d2e8c" fontSize="14" fontWeight="900">
+        JET
+      </text>
+    </>
+  );
+}
+
+function PttLogo() {
+  return (
+    <>
+      <path fill="#ffc400" d="M6 8h25v24H6z" />
+      <path fill="#005596" d="M10 13h17v4H15v3h10v4H15v4h-5z" />
+      <text x="37" y="24" fill="#005596" fontSize="15" fontWeight="900">
+        PTT KARGO
+      </text>
+    </>
+  );
+}
+
+function SuratLogo() {
+  return (
+    <>
+      <path fill="#d71920" d="M6 11h21l-4 5H12l4 3h7l-9 10H6l9-9z" />
+      <text x="32" y="22" fill="#d71920" fontSize="14" fontWeight="900">
+        SÜRAT
+      </text>
+      <text x="32" y="30" fill="#27272a" fontSize="7" fontWeight="800">
+        KARGO
+      </text>
+    </>
+  );
+}
+
+const logos = {
+  yurtici: YurtiçiLogo,
+  aras: ArasLogo,
+  mng: MngLogo,
+  hepsijet: HepsijetLogo,
+  ptt: PttLogo,
+  surat: SuratLogo,
 } as const;
 
 export function ShippingCarrierLogo({ providerKey, name }: CarrierLogoProps) {
-  const key = providerKey.toLocaleLowerCase("tr-TR") as keyof typeof wordmarks;
-  const brand = wordmarks[key];
-  if (!brand)
+  const key = providerKey.toLocaleLowerCase("tr-TR") as keyof typeof logos;
+  const Logo = logos[key];
+  if (!Logo) {
     return (
       <span className="text-center text-[10px] font-black text-zinc-700">
         {name}
       </span>
     );
+  }
   return (
     <svg
       viewBox="0 0 120 40"
       className="h-8 w-full"
       role="img"
       aria-label={`${name} logosu`}
+      preserveAspectRatio="xMidYMid meet"
     >
-      <rect x="2" y="6" width="7" height="28" rx="3.5" fill={brand.primary} />
-      <rect
-        x="11"
-        y="10"
-        width="4"
-        height="20"
-        rx="2"
-        fill={brand.accent}
-        opacity=".9"
-      />
-      <text
-        x="20"
-        y="24"
-        fill={brand.accent}
-        fontFamily="Arial, sans-serif"
-        fontSize="12"
-        fontWeight="800"
-        letterSpacing="-.35"
-      >
-        {brand.label}
-      </text>
-      <rect
-        x="20"
-        y="28"
-        width="82"
-        height="2.4"
-        rx="1.2"
-        fill={brand.primary}
-        opacity=".92"
-      />
+      <Logo />
     </svg>
   );
 }

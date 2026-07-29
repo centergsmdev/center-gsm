@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 import { useFavorites } from "@/providers/favorites-provider";
 
 export function FavoriteButton({
+  product,
   productId,
   productName,
   size = "sm",
   showLabel = false,
   className,
 }: {
+  product: import("@/types/product").CatalogProduct;
   productId: string;
   productName: string;
   size?: "sm" | "md";
@@ -38,7 +40,7 @@ export function FavoriteButton({
         showLabel && "w-auto grid-flow-col gap-2 px-4",
         className,
       )}
-      onClick={() => toggleFavorite(productId)}
+      onClick={() => toggleFavorite(product)}
     >
       <Heart
         className={cn("size-4", active && "fill-current")}

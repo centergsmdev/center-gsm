@@ -92,6 +92,7 @@ export function PurchaseControls({
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <FavoriteButton
+            product={product}
             productId={productId}
             productName={productName}
             size="md"
@@ -99,6 +100,7 @@ export function PurchaseControls({
             className="w-full justify-center rounded-full"
           />
           <ComparisonButton
+            product={product}
             productId={productId}
             productName={productName}
             size="md"

@@ -2,10 +2,9 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { catalogProducts } from "@/data/catalog-products";
 import type { CatalogProduct } from "@/types/product";
 
-const STORAGE_KEY = "center-gsm-demo-comparison";
+const STORAGE_KEY = "center-gsm-comparison-v2";
 export const COMPARISON_LIMIT = 4;
 
 type ComparisonContextValue = {
@@ -13,28 +12,40 @@ type ComparisonContextValue = {
   comparisonProducts: CatalogProduct[];
   count: number;
   isCompared: (productId: string) => boolean;
-  toggleComparison: (productId: string) => void;
+  toggleComparison: (product: CatalogProduct) => void;
   removeComparison: (productId: string) => void;
   clearComparison: () => void;
 };
 
 const ComparisonContext = createContext<ComparisonContextValue | null>(null);
 
+function isStoredProduct(value: unknown): value is CatalogProduct {
+  if (!value || typeof value !== "object") return false;
+  const product = value as Partial<CatalogProduct>;
+  return (
+    typeof product.id === "string" &&
+    typeof product.slug === "string" &&
+    typeof product.brand === "string" &&
+    typeof product.model === "string" &&
+    typeof product.price === "number"
+  );
+}
+
 export function ComparisonProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [comparisonIds, setComparisonIds] = useState<string[]>([]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as string[];
-        setComparisonIds(parsed.slice(0, COMPARISON_LIMIT));
+      const parsed: unknown = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) {
+        setProducts(parsed.filter(isStoredProduct).slice(0, COMPARISON_LIMIT));
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -44,19 +55,13 @@ export function ComparisonProvider({
 
   useEffect(() => {
     if (storageReady) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonIds));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
     }
-  }, [comparisonIds, storageReady]);
+  }, [products, storageReady]);
 
-  const comparisonProducts = useMemo(
-    () =>
-      comparisonIds.flatMap((id) => {
-        const product = catalogProducts.find(
-          (candidate) => candidate.id === id,
-        );
-        return product ? [product] : [];
-      }),
-    [comparisonIds],
+  const comparisonIds = useMemo(
+    () => products.map((product) => product.id),
+    [products],
   );
 
   function announce(message: string) {
@@ -65,32 +70,34 @@ export function ComparisonProvider({
   }
 
   function removeComparison(productId: string) {
-    setComparisonIds((current) => current.filter((id) => id !== productId));
+    setProducts((current) =>
+      current.filter((product) => product.id !== productId),
+    );
     announce("Ürün karşılaştırma listesinden kaldırıldı.");
   }
 
-  function toggleComparison(productId: string) {
-    if (comparisonIds.includes(productId)) {
-      removeComparison(productId);
+  function toggleComparison(product: CatalogProduct) {
+    if (comparisonIds.includes(product.id)) {
+      removeComparison(product.id);
       return;
     }
-    if (comparisonIds.length >= COMPARISON_LIMIT) {
+    if (products.length >= COMPARISON_LIMIT) {
       announce("En fazla 4 ürün karşılaştırabilirsiniz.");
       return;
     }
-    setComparisonIds((current) => [...current, productId]);
+    setProducts((current) => [...current, product]);
     announce("Ürün karşılaştırma listesine eklendi.");
   }
 
   const value: ComparisonContextValue = {
     comparisonIds,
-    comparisonProducts,
-    count: comparisonIds.length,
+    comparisonProducts: products,
+    count: products.length,
     isCompared: (productId) => comparisonIds.includes(productId),
     toggleComparison,
     removeComparison,
     clearComparison: () => {
-      setComparisonIds([]);
+      setProducts([]);
       announce("Karşılaştırma listesi temizlendi.");
     },
   };

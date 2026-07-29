@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
+import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { getCategories } from "@/lib/catalog/data";
 
 function BrandLogo() {
@@ -49,39 +50,7 @@ export async function Header() {
 
       <Container>
         <div className="flex h-14 items-center gap-2 sm:h-16 lg:gap-6">
-          <details className="group relative lg:hidden">
-            <summary className="flex size-10 cursor-pointer list-none items-center justify-center rounded-md text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
-              <span className="sr-only">Ana menüyü aç</span>
-              <Menu className="size-5" aria-hidden="true" />
-            </summary>
-            <nav
-              id="mobile-navigation"
-              aria-label="Mobil ürün kategorileri"
-              className="absolute left-0 top-12 z-dropdown w-64 rounded-lg border border-border bg-white p-2 shadow-xl"
-            >
-              <Link
-                href="/urunler"
-                className="block rounded-md px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                Tüm Kategoriler
-              </Link>
-              {navigationCategories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/kategori/${category.slug}`}
-                  className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  {category.name}
-                </Link>
-              ))}
-              <Link
-                href="/#deals"
-                className="block rounded-md px-3 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                Kampanyalar
-              </Link>
-            </nav>
-          </details>
+          <MobileNavigation categories={navigationCategories} />
           <BrandLogo />
 
           <div className="hidden flex-1 md:block">

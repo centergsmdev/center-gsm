@@ -10,7 +10,6 @@ import {
   useState,
 } from "react";
 
-import { catalogProducts } from "@/data/catalog-products";
 import {
   addUserFavorite,
   getUserFavorites,
@@ -21,8 +20,7 @@ import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/client";
 import type { CatalogProduct } from "@/types/product";
 
-const STORAGE_KEY = "center-gsm-favorites-v1";
-const initialFavoriteIds: string[] = [];
+const STORAGE_KEY = "center-gsm-favorites-v2";
 const safeError = "Favori işlemi tamamlanamadı. Lütfen yeniden deneyin.";
 
 type FavoritesContextValue = {
@@ -33,36 +31,49 @@ type FavoritesContextValue = {
   error: string | null;
   retry: () => void;
   isFavorite: (productId: string) => boolean;
-  addFavorite: (productId: string) => void;
+  addFavorite: (product: CatalogProduct) => void;
   removeFavorite: (productId: string) => void;
-  toggleFavorite: (productId: string) => void;
+  toggleFavorite: (product: CatalogProduct) => void;
   clearFavorites: () => void;
 };
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
-function readGuestFavorites() {
+function isStoredProduct(value: unknown): value is CatalogProduct {
+  if (!value || typeof value !== "object") return false;
+  const product = value as Partial<CatalogProduct>;
+  return (
+    typeof product.id === "string" &&
+    typeof product.slug === "string" &&
+    typeof product.brand === "string" &&
+    typeof product.model === "string" &&
+    typeof product.price === "number"
+  );
+}
+
+function readGuestFavorites(): CatalogProduct[] {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return initialFavoriteIds;
-    const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) && parsed.every((id) => typeof id === "string")
-      ? [...new Set(parsed)]
-      : initialFavoriteIds;
+    const parsed: unknown = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed.filter(isStoredProduct) : [];
   } catch {
-    return initialFavoriteIds;
+    return [];
   }
 }
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favoriteIds, setFavoriteIds] = useState<string[]>(initialFavoriteIds);
-  const [remoteProducts, setRemoteProducts] = useState<CatalogProduct[]>([]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const activeUserRef = useRef<string | null>(null);
+
+  const favoriteIds = useMemo(
+    () => products.map((product) => product.id),
+    [products],
+  );
 
   const announce = useCallback((message: string) => {
     setAnnouncement("");
@@ -76,8 +87,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setError(safeError);
       return false;
     }
-    setRemoteProducts(result.data);
-    setFavoriteIds(result.data.map((product) => product.id));
+    setProducts(result.data);
     setError(null);
     return true;
   }, []);
@@ -89,22 +99,21 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       if (!active) return;
       activeUserRef.current = null;
       setUserId(null);
-      setRemoteProducts([]);
-      setFavoriteIds(readGuestFavorites());
+      setProducts(readGuestFavorites());
       setError(null);
       setLoading(false);
     };
     const enterUserMode = async (currentUserId: string) => {
       activeUserRef.current = currentUserId;
       setUserId(currentUserId);
-      setFavoriteIds([]);
-      setRemoteProducts([]);
       setLoading(true);
       setError(null);
-      const guestIds = readGuestFavorites();
-      const hadGuestStorage = window.localStorage.getItem(STORAGE_KEY) !== null;
-      if (hadGuestStorage && guestIds.length) {
-        const sync = await syncLocalFavoritesToUser(currentUserId, guestIds);
+      const guestProducts = readGuestFavorites();
+      if (guestProducts.length) {
+        const sync = await syncLocalFavoritesToUser(
+          currentUserId,
+          guestProducts.map((product) => product.id),
+        );
         if (!active || activeUserRef.current !== currentUserId) return;
         if (sync.success) window.localStorage.removeItem(STORAGE_KEY);
         else setError(safeError);
@@ -112,6 +121,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       await loadRemoteFavorites(currentUserId);
       if (active && activeUserRef.current === currentUserId) setLoading(false);
     };
+
     if (!client) {
       enterGuestMode();
       return () => {
@@ -127,15 +137,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     const { data } = auth.onAuthStateChange((event, session) => {
       const id = session?.user.id;
       if (id && id !== activeUserRef.current) void enterUserMode(id);
-      if (!id && activeUserRef.current !== null) {
-        window.localStorage.removeItem(STORAGE_KEY);
-        activeUserRef.current = null;
-        setUserId(null);
-        setRemoteProducts([]);
-        setFavoriteIds([]);
-        setError(null);
-        setLoading(false);
-      }
+      if (!id && activeUserRef.current !== null) enterGuestMode();
       if (event === "SIGNED_OUT") window.localStorage.removeItem(STORAGE_KEY);
     });
     return () => {
@@ -146,36 +148,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || userId) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(favoriteIds));
-  }, [favoriteIds, isLoading, userId]);
-
-  const favoriteProducts = useMemo(() => {
-    if (userId) {
-      const products = new Map(remoteProducts.map((item) => [item.id, item]));
-      for (const id of favoriteIds) {
-        const fallback = catalogProducts.find((item) => item.id === id);
-        if (fallback && !products.has(id)) products.set(id, fallback);
-      }
-      return favoriteIds.flatMap((id) => {
-        const product = products.get(id);
-        return product ? [product] : [];
-      });
-    }
-    return favoriteIds.flatMap((id) => {
-      const product = catalogProducts.find((item) => item.id === id);
-      return product ? [product] : [];
-    });
-  }, [favoriteIds, remoteProducts, userId]);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }, [isLoading, products, userId]);
 
   const mutateRemote = useCallback(
-    async (productId: string, adding: boolean, previous: string[]) => {
+    async (productId: string, adding: boolean, previous: CatalogProduct[]) => {
       if (!userId) return;
       const result = adding
         ? await addUserFavorite(userId, productId)
         : await removeUserFavorite(userId, productId);
       if (activeUserRef.current !== userId) return;
       if (!result.success) {
-        setFavoriteIds(previous);
+        setProducts(previous);
         setError(safeError);
         announce("Favori işlemi geri alındı.");
         return;
@@ -187,57 +171,58 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addFavorite = useCallback(
-    (productId: string) => {
-      const previous = favoriteIds;
-      if (previous.includes(productId)) return;
-      setFavoriteIds([...previous, productId]);
+    (product: CatalogProduct) => {
+      if (favoriteIds.includes(product.id)) return;
+      const previous = products;
+      setProducts([...previous, product]);
       announce("Ürün favorilere eklendi.");
-      void mutateRemote(productId, true, previous);
+      void mutateRemote(product.id, true, previous);
     },
-    [announce, favoriteIds, mutateRemote],
+    [announce, favoriteIds, mutateRemote, products],
   );
+
   const removeFavorite = useCallback(
     (productId: string) => {
-      const previous = favoriteIds;
-      if (!previous.includes(productId)) return;
-      setFavoriteIds(previous.filter((id) => id !== productId));
+      if (!favoriteIds.includes(productId)) return;
+      const previous = products;
+      setProducts(previous.filter((product) => product.id !== productId));
       announce("Ürün favorilerden kaldırıldı.");
       void mutateRemote(productId, false, previous);
     },
-    [announce, favoriteIds, mutateRemote],
+    [announce, favoriteIds, mutateRemote, products],
   );
+
   const clearFavorites = useCallback(() => {
-    const previous = favoriteIds;
-    setFavoriteIds([]);
+    const previous = products;
+    setProducts([]);
     if (!userId) return;
-    void Promise.all(previous.map((id) => removeUserFavorite(userId, id))).then(
-      (results) => {
-        if (activeUserRef.current !== userId) return;
-        if (results.some((result) => !result.success)) {
-          setFavoriteIds(previous);
-          setError(safeError);
-        } else {
-          setRemoteProducts([]);
-          setError(null);
-        }
-      },
-    );
-  }, [favoriteIds, userId]);
+    void Promise.all(
+      previous.map((product) => removeUserFavorite(userId, product.id)),
+    ).then((results) => {
+      if (activeUserRef.current !== userId) return;
+      if (results.some((result) => !result.success)) {
+        setProducts(previous);
+        setError(safeError);
+      } else {
+        setError(null);
+      }
+    });
+  }, [products, userId]);
 
   const value: FavoritesContextValue = {
     favoriteIds,
-    favoriteProducts,
-    count: favoriteIds.length,
+    favoriteProducts: products,
+    count: products.length,
     isLoading,
     error,
     retry: () => setReloadKey((key) => key + 1),
     isFavorite: (productId) => favoriteIds.includes(productId),
     addFavorite,
     removeFavorite,
-    toggleFavorite: (productId) =>
-      favoriteIds.includes(productId)
-        ? removeFavorite(productId)
-        : addFavorite(productId),
+    toggleFavorite: (product) =>
+      favoriteIds.includes(product.id)
+        ? removeFavorite(product.id)
+        : addFavorite(product),
     clearFavorites,
   };
 
@@ -253,7 +238,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
 export function useFavorites() {
   const context = useContext(FavoritesContext);
-  if (!context)
+  if (!context) {
     throw new Error("useFavorites must be used within FavoritesProvider");
+  }
   return context;
 }

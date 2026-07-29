@@ -50,11 +50,13 @@ export function ProductCard({
         ) : null}
         <div className="absolute right-2.5 top-2.5 z-raised flex flex-col gap-1.5 sm:right-3 sm:top-3">
           <FavoriteButton
+            product={product}
             productId={product.id}
             productName={productName}
             className="size-9 border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"
           />
           <ComparisonButton
+            product={product}
             productId={product.id}
             productName={productName}
             className="size-9 border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"

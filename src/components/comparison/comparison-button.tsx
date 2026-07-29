@@ -10,12 +10,14 @@ import {
 } from "@/providers/comparison-provider";
 
 export function ComparisonButton({
+  product,
   productId,
   productName,
   size = "sm",
   showLabel = false,
   className,
 }: {
+  product: import("@/types/product").CatalogProduct;
   productId: string;
   productName: string;
   size?: "sm" | "md";
@@ -41,7 +43,7 @@ export function ComparisonButton({
       variant="outline"
       size={size}
       aria-pressed={active}
-      onClick={() => toggleComparison(productId)}
+      onClick={() => toggleComparison(product)}
       className={cn(
         "relative z-raised",
         active && "border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800",

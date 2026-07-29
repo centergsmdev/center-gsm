@@ -209,7 +209,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value: CartContextValue = {
     items,
     lines,
-    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    itemCount: lines.reduce((sum, line) => sum + line.quantity, 0),
     totals,
     couponCode,
     promotionLoading,
