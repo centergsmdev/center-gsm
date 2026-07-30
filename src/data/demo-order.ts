@@ -83,6 +83,8 @@ export function trackedOrderFromCheckout(order: DemoOrder): TrackedOrder {
       name: line.name,
       quantity: line.quantity,
       unitPrice: line.lineTotal / line.quantity,
+      sku: line.sku,
+      variantLabel: line.variantLabel,
     })),
     subtotal: order.subtotal,
     discount: order.discount,

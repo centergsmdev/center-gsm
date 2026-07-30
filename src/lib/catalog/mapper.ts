@@ -107,6 +107,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
         id: variant.id,
         name: variant.name,
         sku: variant.sku,
+        barcode: variant.barcode ?? undefined,
         price: Number(variant.price),
         previousPrice:
           variant.old_price === null ? undefined : Number(variant.old_price),

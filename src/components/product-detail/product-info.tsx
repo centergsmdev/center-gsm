@@ -18,6 +18,7 @@ import type {
   CatalogProductColor,
   CatalogProductVariant,
 } from "@/types/product";
+import type { CartVariant } from "@/types/cart";
 
 type ProductInfoProps = {
   product: CatalogProduct;
@@ -30,6 +31,7 @@ type ProductInfoProps = {
   selectionComplete: boolean;
   onColorChange: (colorId: string) => void;
   onStorageChange: (storageKey: string) => void;
+  cartVariant?: CartVariant;
 };
 
 function storageKey(variant: CatalogProductVariant) {
@@ -47,6 +49,7 @@ export function ProductInfo({
   selectionComplete,
   onColorChange,
   onStorageChange,
+  cartVariant,
 }: ProductInfoProps) {
   const productName = `${product.brand} ${product.model}`;
   const stockLabel =
@@ -243,6 +246,7 @@ export function ProductInfo({
         productName={productName}
         selectionRequired={selectionRequired}
         selectionComplete={selectionComplete}
+        variant={cartVariant}
       />
     </section>
   );

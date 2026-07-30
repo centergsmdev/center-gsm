@@ -16,7 +16,13 @@ import { getOrderByReference } from "@/lib/orders/client";
 import { mapOrderDetail } from "@/lib/orders/mapper";
 import { formatCurrency } from "@/lib/format";
 import type { TrackedOrder } from "@/types/order-tracking";
-const OrderActionModal = dynamic(() => import("@/components/order-tracking/order-action-modal").then((module) => module.OrderActionModal), { ssr: false });
+const OrderActionModal = dynamic(
+  () =>
+    import("@/components/order-tracking/order-action-modal").then(
+      (module) => module.OrderActionModal,
+    ),
+  { ssr: false },
+);
 
 export function OrderDetails({ orderNumber }: { orderNumber: string }) {
   const [order, setOrder] = useState<TrackedOrder | null>(null);
@@ -256,8 +262,13 @@ function OrderItems({ order }: { order: TrackedOrder }) {
                     {item.name}
                   </Link>
                   <p className="mt-1 text-[10px] text-muted">
-                    SKU: {item.id.toUpperCase()}
+                    SKU: {item.sku ?? item.id.toUpperCase()}
                   </p>
+                  {item.variantLabel ? (
+                    <p className="mt-1 text-[10px] font-semibold text-muted">
+                      {item.variantLabel}
+                    </p>
+                  ) : null}
                 </td>
                 <td className="py-4 text-center">{item.quantity}</td>
                 <td className="py-4 text-right">

@@ -16,12 +16,14 @@ export function PurchaseControls({
   productName,
   selectionRequired = false,
   selectionComplete = true,
+  variant,
 }: {
   product: import("@/types/product").CatalogProduct;
   productId: string;
   productName: string;
   selectionRequired?: boolean;
   selectionComplete?: boolean;
+  variant?: import("@/types/cart").CartVariant;
 }) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
@@ -76,11 +78,11 @@ export function PurchaseControls({
             size="lg"
             className="w-full shadow-[0_10px_24px_rgba(220,38,38,0.22)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(220,38,38,0.3)] active:scale-[0.99]"
             aria-label={`${quantity} adet ${productName} ürününü sepete ekle`}
-            onClick={() => addItem(productId, quantity, product)}
+            onClick={() => addItem(productId, quantity, product, variant)}
             disabled={purchaseDisabled}
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
-            {unavailable ? "Tükendi" : "Sepete Ekle"}
+            {unavailable ? "Stokta Yok" : "Sepete Ekle"}
           </Button>
           <Button
             size="lg"
@@ -88,7 +90,7 @@ export function PurchaseControls({
             className="transition-premium w-full active:scale-[0.99]"
             disabled={purchaseDisabled}
             onClick={() => {
-              addItem(productId, quantity, product);
+              addItem(productId, quantity, product, variant);
               router.push("/odeme");
             }}
           >

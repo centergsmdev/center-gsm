@@ -19,7 +19,7 @@ export function CartItemCard({
   line: CartLine;
   onRemove: () => void;
 }) {
-  const { product, quantity, lineTotal } = line;
+  const { product, quantity, lineTotal, variant } = line;
   const { updateQuantity, removeItem } = useCart();
   const { addFavorite } = useFavorites();
   const productName = `${product.brand} ${product.model}`;
@@ -51,8 +51,23 @@ export function CartItemCard({
               </h2>
               <p className="mt-0.5 text-[9px] text-muted sm:mt-1 sm:text-xs">
                 SKU:{" "}
-                {product.sku ?? `CG-${product.id.slice(2).padStart(6, "0")}`}
+                {variant?.sku ??
+                  product.sku ??
+                  `CG-${product.id.slice(2).padStart(6, "0")}`}
               </p>
+              {variant ? (
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-zinc-600 sm:text-xs">
+                  {variant.colorName ? (
+                    <span>Renk: {variant.colorName}</span>
+                  ) : null}
+                  {variant.storageValue ? (
+                    <span>
+                      Depolama: {variant.storageValue} {variant.storageUnit}
+                    </span>
+                  ) : null}
+                  <span>Stok: {variant.stockQuantity}</span>
+                </div>
+              ) : null}
             </div>
             <IconButton
               label={`${productName} ürününü sepetten sil`}
@@ -96,7 +111,7 @@ export function CartItemCard({
               <IconButton
                 label={`${productName} adedini azalt`}
                 size="sm"
-                onClick={() => updateQuantity(product.id, quantity - 1)}
+                onClick={() => updateQuantity(line.id, quantity - 1)}
                 disabled={quantity === 1}
               >
                 <Minus className="size-3.5" aria-hidden="true" />
@@ -112,7 +127,7 @@ export function CartItemCard({
               <IconButton
                 label={`${productName} adedini artır`}
                 size="sm"
-                onClick={() => updateQuantity(product.id, quantity + 1)}
+                onClick={() => updateQuantity(line.id, quantity + 1)}
                 disabled={quantity >= maxQuantity}
               >
                 <Plus className="size-3.5" aria-hidden="true" />
@@ -122,7 +137,7 @@ export function CartItemCard({
               type="button"
               onClick={() => {
                 addFavorite(product);
-                removeItem(product.id);
+                removeItem(line.id);
               }}
               className="inline-flex w-fit items-center gap-2 rounded-sm text-xs font-semibold text-zinc-600 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >

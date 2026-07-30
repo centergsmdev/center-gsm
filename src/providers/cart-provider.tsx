@@ -16,12 +16,14 @@ import {
   subscribeToUnavailableProducts,
 } from "@/lib/catalog/deleted-products";
 import { calculateCheckoutPricing } from "@/lib/promotions/client";
-import type { CartItem, CartLine, CartTotals } from "@/types/cart";
+import type { CartItem, CartLine, CartTotals, CartVariant } from "@/types/cart";
 import type { CatalogProduct } from "@/types/product";
 
 const STORAGE_KEY = "center-gsm-cart-v1";
 const initialItems: CartItem[] = [];
 type CouponResult = { success: boolean; error?: string };
+const itemKey = (productId: string, variantId?: string) =>
+  variantId ? `${productId}:${variantId}` : productId;
 type CartContextValue = {
   items: CartItem[];
   lines: CartLine[];
@@ -34,10 +36,11 @@ type CartContextValue = {
     productId: string,
     quantity?: number,
     product?: CatalogProduct,
+    variant?: CartVariant,
   ) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
-  moveToFavorites: (productId: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
+  removeItem: (lineId: string) => void;
+  moveToFavorites: (lineId: string) => void;
   clearCart: () => void;
   applyCoupon: (code: string) => Promise<CouponResult>;
   removeCoupon: () => void;
@@ -113,9 +116,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return product
           ? [
               {
+                id: itemKey(item.productId, item.variant?.id),
                 product,
                 quantity: item.quantity,
                 lineTotal: product.price * item.quantity,
+                variant: item.variant,
               },
             ]
           : [];
@@ -125,8 +130,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const quoteItems = useMemo(
     () =>
       lines.map((line) => ({
-        sku: line.product.sku ?? fallbackSkus[line.product.slug] ?? "",
+        sku:
+          line.variant?.sku ??
+          line.product.sku ??
+          fallbackSkus[line.product.slug] ??
+          "",
         quantity: line.quantity,
+        variant_id: line.variant?.id,
       })),
     [lines],
   );
@@ -202,39 +212,61 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     productId: string,
     quantity = 1,
     product?: CatalogProduct,
+    variant?: CartVariant,
   ) => {
-    if (product?.stockStatus === "out-of-stock") return;
+    if (
+      product?.stockStatus === "out-of-stock" ||
+      (variant && variant.stockQuantity <= 0)
+    )
+      return;
     setItems((current) => {
-      const existing = current.find((item) => item.productId === productId);
+      const key = itemKey(productId, variant?.id);
+      const existing = current.find(
+        (item) => itemKey(item.productId, item.variant?.id) === key,
+      );
       const max = Math.min(
         10,
-        product?.availableStock ?? existing?.product?.availableStock ?? 10,
+        variant?.stockQuantity ??
+          product?.availableStock ??
+          existing?.variant?.stockQuantity ??
+          existing?.product?.availableStock ??
+          10,
       );
       return existing
         ? current.map((item) =>
-            item.productId === productId
+            itemKey(item.productId, item.variant?.id) === key
               ? { ...item, quantity: Math.min(max, item.quantity + quantity) }
               : item,
           )
         : [
             ...current,
-            { productId, quantity: Math.min(max, quantity), product },
+            {
+              productId,
+              quantity: Math.min(max, quantity),
+              product,
+              variant,
+            },
           ];
     });
     persistMessage("Ürün sepete eklendi.");
   };
-  const updateQuantity = (productId: string, quantity: number) =>
+  const updateQuantity = (lineId: string, quantity: number) =>
     setItems((current) =>
       current.map((item) => {
-        const max = Math.min(10, item.product?.availableStock ?? 10);
-        return item.productId === productId
+        const max = Math.min(
+          10,
+          item.variant?.stockQuantity ?? item.product?.availableStock ?? 10,
+        );
+        return itemKey(item.productId, item.variant?.id) === lineId
           ? { ...item, quantity: Math.max(1, Math.min(max, quantity)) }
           : item;
       }),
     );
-  const removeItem = (productId: string) => {
+  const removeItem = (lineId: string) => {
     setItems((current) =>
-      current.filter((item) => item.productId !== productId),
+      current.filter(
+        (item) => itemKey(item.productId, item.variant?.id) !== lineId,
+      ),
     );
     persistMessage("Ürün sepetten çıkarıldı.");
   };

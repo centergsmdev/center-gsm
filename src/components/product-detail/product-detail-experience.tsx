@@ -137,11 +137,29 @@ export function ProductDetailExperience({
               ? "limited"
               : "in-stock",
         sku: selectedVariant.sku,
+        mainImageUrl: selectedColor?.imageUrls[0] ?? product.mainImageUrl,
+        imageUrls: selectedColor?.imageUrls.length
+          ? selectedColor.imageUrls
+          : product.imageUrls,
       }
     : product;
   const galleryImages = selectedColor?.imageUrls.length
     ? selectedColor.imageUrls
     : product.imageUrls;
+  const cartVariant = selectedVariant
+    ? {
+        id: selectedVariant.id,
+        colorName: selectedColor?.displayName ?? selectedColor?.name,
+        colorHex: selectedColor?.hexCode,
+        storageValue: selectedVariant.storageValue,
+        storageUnit: selectedVariant.storageUnit,
+        sku: selectedVariant.sku,
+        barcode: selectedVariant.barcode,
+        price: selectedVariant.price,
+        previousPrice: selectedVariant.previousPrice,
+        stockQuantity: selectedVariant.stockQuantity,
+      }
+    : undefined;
 
   return (
     <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:items-start lg:gap-12">
@@ -161,6 +179,7 @@ export function ProductDetailExperience({
         selectionComplete={selectionComplete}
         onColorChange={selectColor}
         onStorageChange={selectStorage}
+        cartVariant={cartVariant}
       />
     </div>
   );

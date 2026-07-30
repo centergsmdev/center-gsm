@@ -8,7 +8,7 @@ const record = (value: Json): Record<string, Json | undefined> | null =>
   value && typeof value === "object" && !Array.isArray(value) ? value : null;
 
 export async function calculateCheckoutPricing(
-  items: { sku: string; quantity: number }[],
+  items: { sku: string; quantity: number; variant_id?: string }[],
   couponCode?: string | null,
 ): Promise<{ data: PromotionQuote | null; error: string | null }> {
   const client = createClient();

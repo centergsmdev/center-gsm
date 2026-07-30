@@ -37,11 +37,13 @@ export async function createOrder(
     }
     return {
       data: null,
-      error: result.error.message.includes("insufficient_inventory")
-        ? "Seçtiğiniz ürünlerden biri için yeterli kullanılabilir stok kalmadı. Sepetinizi güncelleyip tekrar deneyin."
-        : result.error.message.includes("bank_account_unavailable")
-          ? "Havale/EFT şu anda kullanılamıyor. Lütfen telefon ile onay yöntemini seçin."
-          : SAFE_ERROR,
+      error:
+        result.error.message.includes("insufficient_inventory") ||
+        result.error.message.includes("insufficient_variant_inventory")
+          ? "Seçtiğiniz ürünlerden biri için yeterli kullanılabilir stok kalmadı. Sepetinizi güncelleyip tekrar deneyin."
+          : result.error.message.includes("bank_account_unavailable")
+            ? "Havale/EFT şu anda kullanılamıyor. Lütfen telefon ile onay yöntemini seçin."
+            : SAFE_ERROR,
     };
   }
   if (!object(result.data)) return { data: null, error: SAFE_ERROR };

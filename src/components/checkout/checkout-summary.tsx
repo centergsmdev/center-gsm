@@ -54,7 +54,7 @@ export function CheckoutSummary({
         </div>
         <ul className="mt-4 max-h-64 space-y-3 overflow-y-auto pr-1">
           {lines.map((line) => (
-            <li key={line.product.id} className="flex gap-3">
+            <li key={line.id} className="flex gap-3">
               <div className="size-16 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-white [&_span]:hidden">
                 <ProductVisual product={line.product} />
               </div>
@@ -65,6 +65,17 @@ export function CheckoutSummary({
                 <p className="mt-1 text-[11px] text-muted">
                   Adet: {line.quantity}
                 </p>
+                {line.variant ? (
+                  <p className="mt-1 text-[10px] leading-4 text-muted">
+                    {line.variant.colorName
+                      ? `${line.variant.colorName} · `
+                      : ""}
+                    {line.variant.storageValue
+                      ? `${line.variant.storageValue} ${line.variant.storageUnit} · `
+                      : ""}
+                    SKU: {line.variant.sku}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-xs font-bold">
                   {formatCurrency(line.lineTotal)}
                 </p>

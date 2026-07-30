@@ -37,7 +37,17 @@ export type OrderCreatePayload = {
   coupon_code: string | null;
   selected_shipping_provider: string;
   shipping_note: string;
-  items: { sku: string; quantity: number; image_url?: string }[];
+  items: {
+    sku: string;
+    quantity: number;
+    image_url?: string;
+    variant_id?: string;
+    color_name?: string;
+    color_hex?: string;
+    storage_value?: number;
+    storage_unit?: "GB" | "TB";
+    barcode?: string;
+  }[];
   loyalty_points?: number;
   gift_card_code?: string;
   gift_card_amount?: number;

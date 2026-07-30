@@ -17,6 +17,8 @@ export type TrackedOrder = {
     name: string;
     quantity: number;
     unitPrice: number;
+    sku?: string;
+    variantLabel?: string;
   }[];
   subtotal: number;
   discount: number;

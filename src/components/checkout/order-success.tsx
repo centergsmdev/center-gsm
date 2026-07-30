@@ -79,6 +79,11 @@ export function OrderSuccess() {
                   <p className="mt-1 text-xs text-muted">
                     {line.quantity} adet
                   </p>
+                  {line.variantLabel ? (
+                    <p className="mt-1 text-xs text-muted">
+                      {line.variantLabel} · SKU: {line.sku}
+                    </p>
+                  ) : null}
                 </div>
                 <strong>{formatCurrency(line.lineTotal)}</strong>
               </li>

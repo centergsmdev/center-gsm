@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Clock3, MapPin, MessageCircle, PhoneCall } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Clock3,
+  MapPin,
+  MessageCircle,
+  PhoneCall,
+} from "lucide-react";
 import { AdminBadge } from "./admin-badge";
 import { AdminCard, AdminCardHeader } from "./admin-card";
 import { AdminErrorState, AdminLoadingState } from "./admin-states";
@@ -162,6 +169,7 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
                       <p className="mt-1 text-xs text-zinc-500">
                         SKU: {item.sku} · {item.quantity} adet
                       </p>
+                      <OrderItemVariant snapshot={item.product_snapshot} />
                     </div>
                     <p className="font-bold">
                       {formatCurrency(item.line_total)}
@@ -230,10 +238,18 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
             </dl>
             {phoneHref ? (
               <div className="flex flex-wrap gap-3 border-t border-zinc-100 px-5 pb-5 pt-4 sm:px-6">
-                <a href={`tel:${phoneHref}`} className={buttonVariants({ variant: "outline" })}>
+                <a
+                  href={`tel:${phoneHref}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
                   <PhoneCall className="size-4" /> Ara
                 </a>
-                <a href={`https://wa.me/${phoneHref.replace(/^\+/, "")}`} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline" })}>
+                <a
+                  href={`https://wa.me/${phoneHref.replace(/^\+/, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={buttonVariants({ variant: "outline" })}
+                >
                   <MessageCircle className="size-4" /> WhatsApp
                 </a>
               </div>
@@ -335,10 +351,37 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
                 </select>
               </label>
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                <Button type="button" disabled={paymentAction !== null} onClick={() => void runPaymentAction("paid")}>Ödeme Alındı</Button>
-                <Button type="button" variant="danger" disabled={paymentAction !== null} onClick={() => void runPaymentAction("rejected")}>Ödeme Reddedildi</Button>
-                <Button type="button" variant="outline" disabled={paymentAction !== null} onClick={() => void runPaymentAction("unreachable")}>Müşteriye Ulaşılamadı</Button>
-                <Button type="button" variant="outline" disabled={paymentAction !== null} onClick={() => void runPaymentAction("waiting")}>Ödeme Bekleniyor</Button>
+                <Button
+                  type="button"
+                  disabled={paymentAction !== null}
+                  onClick={() => void runPaymentAction("paid")}
+                >
+                  Ödeme Alındı
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={paymentAction !== null}
+                  onClick={() => void runPaymentAction("rejected")}
+                >
+                  Ödeme Reddedildi
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={paymentAction !== null}
+                  onClick={() => void runPaymentAction("unreachable")}
+                >
+                  Müşteriye Ulaşılamadı
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={paymentAction !== null}
+                  onClick={() => void runPaymentAction("waiting")}
+                >
+                  Ödeme Bekleniyor
+                </Button>
               </div>
               <label className="block">
                 <span className="mb-2 block text-sm font-bold">
@@ -360,6 +403,35 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
         </aside>
       </div>
     </div>
+  );
+}
+function OrderItemVariant({
+  snapshot,
+}: {
+  snapshot: import("@/types/database").Json;
+}) {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot))
+    return null;
+  const color =
+    typeof snapshot.color_name === "string" ? snapshot.color_name : null;
+  const storage =
+    typeof snapshot.storage_value === "number" &&
+    typeof snapshot.storage_unit === "string"
+      ? `${snapshot.storage_value} ${snapshot.storage_unit}`
+      : null;
+  const barcode =
+    typeof snapshot.barcode === "string" ? snapshot.barcode : null;
+  if (!color && !storage && !barcode) return null;
+  return (
+    <p className="mt-1 text-xs font-semibold text-zinc-600">
+      {[
+        color ? `Renk: ${color}` : null,
+        storage ? `Depolama: ${storage}` : null,
+        barcode ? `Barkod: ${barcode}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
+    </p>
   );
 }
 function Summary({

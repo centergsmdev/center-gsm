@@ -22,13 +22,18 @@ export default function CartPage() {
   }, [lastRemoved]);
 
   function removeLine(line: CartLine) {
-    removeItem(line.product.id);
+    removeItem(line.id);
     setLastRemoved(line);
   }
 
   function undoRemove() {
     if (!lastRemoved) return;
-    addItem(lastRemoved.product.id, lastRemoved.quantity, lastRemoved.product);
+    addItem(
+      lastRemoved.product.id,
+      lastRemoved.quantity,
+      lastRemoved.product,
+      lastRemoved.variant,
+    );
     setLastRemoved(null);
   }
 
@@ -57,7 +62,7 @@ export default function CartPage() {
               <section aria-label="Sepet ürünleri" className="space-y-4">
                 {lines.map((line) => (
                   <CartItemCard
-                    key={line.product.id}
+                    key={line.id}
                     line={line}
                     onRemove={() => removeLine(line)}
                   />

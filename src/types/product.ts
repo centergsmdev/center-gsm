@@ -41,6 +41,7 @@ export type CatalogProductVariant = {
   id: string;
   name: string;
   sku: string;
+  barcode?: string;
   price: number;
   previousPrice?: number;
   stockQuantity: number;

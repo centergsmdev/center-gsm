@@ -279,6 +279,12 @@ export function CheckoutForm() {
         sku: line.product.sku ?? fallbackSkus[line.product.slug] ?? "",
         quantity: line.quantity,
         image_url: line.product.mainImageUrl,
+        variant_id: line.variant?.id,
+        color_name: line.variant?.colorName,
+        color_hex: line.variant?.colorHex,
+        storage_value: line.variant?.storageValue,
+        storage_unit: line.variant?.storageUnit,
+        barcode: line.variant?.barcode,
       })),
     });
     if (!created.data) {
@@ -299,6 +305,17 @@ export function CheckoutForm() {
         name: `${line.product.brand} ${line.product.model}`,
         quantity: line.quantity,
         lineTotal: line.lineTotal,
+        variantLabel: line.variant
+          ? [
+              line.variant.colorName,
+              line.variant.storageValue
+                ? `${line.variant.storageValue} ${line.variant.storageUnit}`
+                : undefined,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : undefined,
+        sku: line.variant?.sku ?? line.product.sku,
       })),
       subtotal: created.data.subtotal,
       discount: created.data.discountTotal,

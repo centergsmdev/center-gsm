@@ -15,6 +15,8 @@ export type DemoOrder = {
     name: string;
     quantity: number;
     lineTotal: number;
+    variantLabel?: string;
+    sku?: string;
   }[];
   subtotal: number;
   discount: number;

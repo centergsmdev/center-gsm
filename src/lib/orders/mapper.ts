@@ -64,6 +64,19 @@ export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
         name: item.product_name,
         quantity: item.quantity,
         unitPrice: item.unit_price,
+        sku: item.sku,
+        variantLabel:
+          [
+            typeof snapshot.color_name === "string"
+              ? snapshot.color_name
+              : null,
+            typeof snapshot.storage_value === "number" &&
+            typeof snapshot.storage_unit === "string"
+              ? `${snapshot.storage_value} ${snapshot.storage_unit}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
       };
     }),
     subtotal: detail.order.subtotal,
