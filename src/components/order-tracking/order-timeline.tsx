@@ -37,7 +37,7 @@ export function OrderTimeline({ currentStage }: { currentStage: OrderStage }) {
       <h2 id="timeline-title" className="text-lg font-black">
         Sipariş Durumu
       </h2>
-      <ol className="mt-6 grid gap-0 sm:grid-cols-5">
+      <ol className="mt-5 grid min-w-0 gap-0 sm:mt-6 sm:grid-cols-5">
         {stages.map((stage, index) => {
           const complete = index <= currentIndex;
           const current = index === currentIndex;
@@ -59,9 +59,9 @@ export function OrderTimeline({ currentStage }: { currentStage: OrderStage }) {
                   <span className="size-2 rounded-full bg-current" />
                 )}
               </span>
-              <div className="pt-0.5 sm:mt-3">
+              <div className="min-w-0 pt-0.5 sm:mt-3">
                 <p
-                  className={`text-xs font-black ${current ? "text-success" : complete ? "text-foreground" : "text-muted"}`}
+                  className={`break-words text-xs font-black ${current ? "text-success" : complete ? "text-foreground" : "text-muted"}`}
                 >
                   {stage.label}
                 </p>

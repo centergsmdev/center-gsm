@@ -21,10 +21,10 @@ export default async function OrderDetailPage({
   const { siparisNo } = await params;
   const decoded = decodeURIComponent(siparisNo);
   return (
-    <main className="min-h-screen bg-surface-subtle/50 pb-16 pt-6 sm:pb-20 sm:pt-8">
+    <main className="min-h-screen max-w-full overflow-x-clip bg-surface-subtle/50 pb-12 pt-4 sm:pb-20 sm:pt-8">
       <Container>
         <OrderTrackingBreadcrumb current={decoded} />
-        <div className="mt-7">
+        <div className="mt-5 min-w-0 max-w-full sm:mt-7">
           <OrderDetails orderNumber={siparisNo} />
         </div>
       </Container>

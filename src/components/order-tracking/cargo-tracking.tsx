@@ -11,7 +11,7 @@ export function CargoTracking({
   shipped: boolean;
 }) {
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="max-w-full overflow-hidden p-4 sm:p-6">
       <div className="flex items-start gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-red-50 text-primary">
           <Truck className="size-5" aria-hidden="true" />
@@ -23,7 +23,7 @@ export function CargoTracking({
           </p>
         </div>
       </div>
-      <dl className="mt-5 grid gap-3 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-3">
+      <dl className="mt-4 grid gap-0 overflow-hidden rounded-lg bg-surface-subtle px-3 text-sm sm:mt-5 sm:grid-cols-3 sm:gap-3 sm:p-4">
         <Info label="Kargo firması" value={cargo.company} />
         <Info label="Takip numarası" value={cargo.trackingNumber} />
         <Info label="Tahmini teslimat" value={cargo.estimatedDelivery} />
@@ -44,7 +44,7 @@ export function CargoTracking({
           {cargo.events.map((event, index) => (
             <li
               key={`${event.date}-${event.location}`}
-              className="relative flex gap-4"
+              className="relative flex min-w-0 gap-3 sm:gap-4"
             >
               <span className="relative z-raised mt-1 grid size-7 shrink-0 place-items-center rounded-full bg-zinc-950 text-white">
                 {index === 0 ? (
@@ -59,9 +59,11 @@ export function CargoTracking({
                   aria-hidden="true"
                 />
               ) : null}
-              <div>
-                <p className="text-sm font-bold">{event.description}</p>
-                <p className="mt-1 text-xs text-muted">
+              <div className="min-w-0 pt-0.5">
+                <p className="break-words text-sm font-bold">
+                  {event.description}
+                </p>
+                <p className="mt-1 break-words text-xs text-muted">
                   {event.location} · {event.date}
                 </p>
               </div>
@@ -80,11 +82,13 @@ export function CargoTracking({
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0 border-b border-border py-3 last:border-b-0 sm:border-0 sm:py-0">
       <dt className="text-[10px] font-bold uppercase tracking-wider text-muted">
         {label}
       </dt>
-      <dd className="mt-1 break-words text-xs font-black">{value}</dd>
+      <dd className="mt-1 break-all text-xs font-black sm:break-words">
+        {value}
+      </dd>
     </div>
   );
 }

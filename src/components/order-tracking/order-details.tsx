@@ -71,13 +71,13 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
     order.stage === "preparing";
   const canReturn = order.stage === "delivered";
   return (
-    <div>
+    <div className="min-w-0 max-w-full overflow-x-clip">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="min-w-0 max-w-full">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
             Sipariş detayı
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] sm:text-4xl">
+          <h1 className="mt-2 break-all text-2xl font-black tracking-[-0.045em] min-[360px]:text-3xl sm:break-normal sm:text-4xl">
             {order.orderNumber}
           </h1>
           <p className="mt-2 text-sm text-muted">{order.orderDate}</p>
@@ -86,7 +86,7 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
           {stageLabels[order.stage]}
         </span>
       </div>
-      <Card className="mt-7 p-5 shadow-sm sm:p-7">
+      <Card className="mt-5 max-w-full p-4 shadow-sm sm:mt-7 sm:p-7">
         <OrderTimeline currentStage={order.stage} />
       </Card>
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
@@ -165,14 +165,16 @@ function ShipmentCards({
   return (
     <section className="space-y-4" aria-label="Kargo gönderileri">
       {shipments.map((s) => (
-        <Card key={s.id} className="p-5">
+        <Card key={s.id} className="max-w-full overflow-hidden p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0 max-w-full">
               <p className="text-xs font-black uppercase text-primary">
                 {s.carrier}
               </p>
-              <h2 className="mt-1 text-lg font-black">{s.number}</h2>
-              <p className="mt-1 text-sm text-zinc-600">
+              <h2 className="mt-1 break-all text-base font-black sm:text-lg">
+                {s.number}
+              </h2>
+              <p className="mt-1 break-all text-sm text-zinc-600">
                 Takip: {s.trackingNumber ?? "Bekleniyor"}
               </p>
             </div>
@@ -181,7 +183,7 @@ function ShipmentCards({
                 href={s.trackingUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-bold text-primary"
+                className="max-w-full break-words text-sm font-bold text-primary"
               >
                 Kargo firmasında takip et
               </a>
@@ -210,7 +212,7 @@ function ShipmentCards({
           </div>
           <div className="mt-4 border-t pt-4">
             {s.items.map((x, i) => (
-              <p key={`${x.name}-${i}`} className="text-sm">
+              <p key={`${x.name}-${i}`} className="break-words text-sm">
                 {x.name} · <strong>{x.quantity} adet</strong>
               </p>
             ))}
@@ -219,10 +221,10 @@ function ShipmentCards({
             {s.events.map((e, i) => (
               <li
                 key={`${e.date}-${i}`}
-                className="border-l-2 border-primary pl-3 text-sm"
+                className="min-w-0 border-l-2 border-primary pl-3 text-sm"
               >
-                <strong>{e.description}</strong>
-                <p className="text-xs text-zinc-500">
+                <strong className="break-words">{e.description}</strong>
+                <p className="mt-1 break-words text-xs text-zinc-500">
                   {e.location} · {new Date(e.date).toLocaleString("tr-TR")}
                 </p>
               </li>
@@ -236,12 +238,47 @@ function ShipmentCards({
 
 function OrderItems({ order }: { order: TrackedOrder }) {
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="max-w-full overflow-hidden p-4 sm:p-6">
       <div className="flex items-center gap-3">
         <FileText className="size-5 text-primary" aria-hidden="true" />
         <h2 className="text-lg font-black">Ürünler ve Tutarlar</h2>
       </div>
-      <div className="mt-5 overflow-x-auto">
+      <div className="mt-4 space-y-3 md:hidden">
+        {order.items.map((item) => (
+          <article
+            key={item.id}
+            className="min-w-0 rounded-xl border border-border bg-white p-3.5 shadow-sm"
+          >
+            <Link
+              href={`/urun/${item.slug}`}
+              className="block break-words text-sm font-black leading-5 hover:text-primary"
+            >
+              {item.name}
+            </Link>
+            <p className="mt-1 break-all text-[10px] text-muted">
+              SKU: {item.sku ?? item.id.toUpperCase()}
+            </p>
+            {item.variantLabel ? (
+              <p className="mt-1 break-words text-[10px] font-semibold text-muted">
+                {item.variantLabel}
+              </p>
+            ) : null}
+            <dl className="mt-3 divide-y divide-border border-t border-border">
+              <MobileItemValue label="Adet" value={String(item.quantity)} />
+              <MobileItemValue
+                label="Birim fiyat"
+                value={formatCurrency(item.unitPrice)}
+              />
+              <MobileItemValue
+                label="Toplam"
+                value={formatCurrency(item.unitPrice * item.quantity)}
+                strong
+              />
+            </dl>
+          </article>
+        ))}
+      </div>
+      <div className="mt-5 hidden overflow-x-auto md:block">
         <table className="w-full min-w-[560px] text-left">
           <thead>
             <tr className="border-b border-border text-[10px] font-black uppercase tracking-wider text-muted">
@@ -282,7 +319,7 @@ function OrderItems({ order }: { order: TrackedOrder }) {
           </tbody>
         </table>
       </div>
-      <dl className="ml-auto mt-5 max-w-sm space-y-3 text-sm">
+      <dl className="mt-4 space-y-2.5 rounded-xl border border-border bg-surface-subtle p-3.5 text-sm md:ml-auto md:mt-5 md:max-w-sm md:space-y-3 md:border-0 md:bg-transparent md:p-0">
         <Summary label="Ara toplam" value={formatCurrency(order.subtotal)} />
         <Summary label="İndirim" value={`−${formatCurrency(order.discount)}`} />
         {order.appliedDiscounts.map((label) => (
@@ -306,7 +343,7 @@ function OrderItems({ order }: { order: TrackedOrder }) {
 
 function OrderInformation({ order }: { order: TrackedOrder }) {
   return (
-    <Card className="p-5">
+    <Card className="max-w-full overflow-hidden p-4 sm:p-5">
       <h2 className="font-black">Sipariş Bilgileri</h2>
       <dl className="mt-4 space-y-4">
         <Info label="Ödeme yöntemi" value={order.paymentMethod} />
@@ -339,7 +376,27 @@ function Info({ label, value }: { label: string; value: string }) {
       <dt className="text-[10px] font-bold uppercase tracking-wider text-muted">
         {label}
       </dt>
-      <dd className="mt-1 text-xs font-black">{value}</dd>
+      <dd className="mt-1 break-words text-xs font-black">{value}</dd>
+    </div>
+  );
+}
+function MobileItemValue({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 py-2.5">
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd
+        className={`min-w-0 break-words text-right text-xs ${strong ? "font-black text-primary" : "font-bold"}`}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
