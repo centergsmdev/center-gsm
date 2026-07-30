@@ -15,6 +15,26 @@ type CombinationVariant = {
   sort_order: number;
 };
 
+export type BulkVariantAction =
+  "add-tax" | "adjust-price" | "set-old-price" | "set-stock";
+
+export function applyBulkVariantUpdate<T extends CombinationVariant>(
+  variants: T[],
+  action: BulkVariantAction,
+  value: number,
+): T[] {
+  const money = (amount: number) => Math.max(0, Math.round(amount * 100) / 100);
+  return variants.map((variant) => {
+    if (action === "add-tax")
+      return { ...variant, price: money(variant.price * (1 + value / 100)) };
+    if (action === "adjust-price")
+      return { ...variant, price: money(variant.price + value) };
+    if (action === "set-old-price")
+      return { ...variant, old_price: value > 0 ? money(value) : null };
+    return { ...variant, stock_quantity: Math.max(0, Math.trunc(value)) };
+  });
+}
+
 export function buildVariantCombinations(
   colors: CombinationColor[],
   storages: CombinationStorage[],
