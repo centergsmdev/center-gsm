@@ -23,6 +23,8 @@ export function ProductGallery({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const mainTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressMainClick = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const galleryItems = imageUrls?.length
     ? imageUrls.map((url, index) => ({
@@ -79,12 +81,42 @@ export function ProductGallery({
   const selectedItem = galleryItems[selectedView];
 
   return (
-    <section aria-label="Ürün galerisi" className="min-w-0">
+    <section aria-label="Ürün galerisi" className="-mb-3 min-w-0 lg:mb-0">
       <button
         id="product-main-image"
         type="button"
-        onClick={() => setIsLightboxOpen(true)}
-        className="group relative block aspect-square w-full overflow-hidden rounded-xl border border-border bg-white shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        onClick={() => {
+          if (suppressMainClick.current) {
+            suppressMainClick.current = false;
+            return;
+          }
+          setIsLightboxOpen(true);
+        }}
+        onTouchStart={(event) => {
+          const touch = event.touches[0];
+          mainTouchStart.current = touch
+            ? { x: touch.clientX, y: touch.clientY }
+            : null;
+          suppressMainClick.current = false;
+        }}
+        onTouchEnd={(event) => {
+          const start = mainTouchStart.current;
+          const touch = event.changedTouches[0];
+          mainTouchStart.current = null;
+          if (!start || !touch || galleryItems.length < 2) return;
+          const deltaX = touch.clientX - start.x;
+          const deltaY = touch.clientY - start.y;
+          if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY))
+            return;
+          suppressMainClick.current = true;
+          if (deltaX > 0) showPrevious();
+          else showNext();
+        }}
+        onTouchCancel={() => {
+          mainTouchStart.current = null;
+          suppressMainClick.current = false;
+        }}
+        className="group relative block aspect-square w-full touch-pan-y overflow-hidden rounded-xl border border-border bg-white shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label={`${selectedItem?.label} görselini tam ekran aç`}
         aria-haspopup="dialog"
       >
@@ -101,13 +133,10 @@ export function ProductGallery({
         <span className="absolute right-4 top-4 z-raised inline-grid size-11 place-items-center rounded-full border border-border bg-white/90 text-zinc-700 shadow-xs backdrop-blur">
           <Maximize2 className="size-4" aria-hidden="true" />
         </span>
-        <span className="absolute bottom-4 left-4 z-raised rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-semibold text-zinc-600 backdrop-blur">
-          Tam ekran görüntüle
-        </span>
       </button>
 
       <div
-        className="mt-3 flex snap-x gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-4 sm:overflow-visible"
+        className="mt-2 flex snap-x gap-1.5 overflow-x-auto pb-1 sm:mt-3 sm:grid sm:grid-cols-4 sm:gap-2 sm:overflow-visible sm:pb-2"
         role="tablist"
         aria-label="Ürün görünümleri"
       >
@@ -120,7 +149,7 @@ export function ProductGallery({
             aria-controls="product-main-image"
             onClick={() => setSelectedView(index)}
             className={cn(
-              "relative aspect-square min-w-20 snap-start overflow-hidden rounded-md border bg-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-w-0",
+              "relative aspect-square min-w-16 snap-start overflow-hidden rounded-md border bg-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-w-0",
               selectedView === index
                 ? "border-primary shadow-[0_0_0_2px_rgba(220,38,38,0.12)]"
                 : "border-border hover:border-border-strong",
