@@ -5,13 +5,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
-import type { CatalogProduct, CatalogProductVariant } from "@/types/product";
-
-function storageKey(variant: CatalogProductVariant) {
-  return variant.storageValue && variant.storageUnit
-    ? `${variant.storageValue}-${variant.storageUnit}`
-    : undefined;
-}
+import {
+  resolveSelectedVariant,
+  storageKeyFromParam,
+  variantStorageKey,
+} from "@/lib/catalog/variants";
+import type { CatalogProduct } from "@/types/product";
 
 export function ProductDetailExperience({
   product,
@@ -32,27 +31,19 @@ export function ProductDetailExperience({
   const initialColor = colors.find(
     (color) => color.name === searchParams.get("color"),
   );
-  const initialStorage = variants.find(
-    (variant) =>
-      variant.storageValue &&
-      `${variant.storageValue}` === searchParams.get("storage"),
-  );
   const [selectedColorId, setSelectedColorId] = useState(initialColor?.id);
   const [selectedStorageKey, setSelectedStorageKey] = useState(
-    initialStorage ? storageKey(initialStorage) : undefined,
+    storageKeyFromParam(variants, searchParams.get("storage")),
   );
 
   useEffect(() => {
     const color = colors.find(
       (item) => item.name === searchParams.get("color"),
     );
-    const storage = variants.find(
-      (variant) =>
-        variant.storageValue &&
-        `${variant.storageValue}` === searchParams.get("storage"),
-    );
     setSelectedColorId(color?.id);
-    setSelectedStorageKey(storage ? storageKey(storage) : undefined);
+    setSelectedStorageKey(
+      storageKeyFromParam(variants, searchParams.get("storage")),
+    );
   }, [colors, searchParams, variants]);
 
   const storageOptions = useMemo(
@@ -60,7 +51,7 @@ export function ProductDetailExperience({
       Array.from(
         new Map(
           variants.flatMap((variant) => {
-            const key = storageKey(variant);
+            const key = variantStorageKey(variant);
             return key ? [[key, variant] as const] : [];
           }),
         ).values(),
@@ -69,10 +60,10 @@ export function ProductDetailExperience({
   );
   const requiresColor = colors.length > 0;
   const requiresStorage = storageOptions.length > 0;
-  const selectedVariant = variants.find(
-    (variant) =>
-      (!requiresColor || variant.colorId === selectedColorId) &&
-      (!requiresStorage || storageKey(variant) === selectedStorageKey),
+  const selectedVariant = resolveSelectedVariant(
+    variants,
+    requiresColor ? selectedColorId : undefined,
+    requiresStorage ? selectedStorageKey : undefined,
   );
   const selectedColor = colors.find((color) => color.id === selectedColorId);
   const selectionComplete =
@@ -83,13 +74,9 @@ export function ProductDetailExperience({
   function updateUrl(colorId?: string, storage?: string) {
     const next = new URLSearchParams(searchParams.toString());
     const color = colors.find((item) => item.id === colorId);
-    const storageVariant = variants.find(
-      (variant) => storageKey(variant) === storage,
-    );
     if (color) next.set("color", color.name);
     else next.delete("color");
-    if (storageVariant?.storageValue)
-      next.set("storage", `${storageVariant.storageValue}`);
+    if (storage) next.set("storage", storage);
     else next.delete("storage");
     const query = next.toString();
     router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -100,7 +87,7 @@ export function ProductDetailExperience({
     const combinationExists = variants.some(
       (variant) =>
         variant.colorId === colorId &&
-        storageKey(variant) === selectedStorageKey,
+        variantStorageKey(variant) === selectedStorageKey,
     );
     const nextStorage = combinationExists ? selectedStorageKey : undefined;
     if (!combinationExists) setSelectedStorageKey(undefined);
@@ -137,13 +124,13 @@ export function ProductDetailExperience({
               ? "limited"
               : "in-stock",
         sku: selectedVariant.sku,
-        mainImageUrl: selectedColor
-          ? selectedColor.imageUrls[0]
-          : product.mainImageUrl,
-        imageUrls: selectedColor ? selectedColor.imageUrls : product.imageUrls,
+        mainImageUrl: selectedColor?.imageUrls[0] ?? product.mainImageUrl,
+        imageUrls: selectedColor?.imageUrls.length
+          ? selectedColor.imageUrls
+          : product.imageUrls,
       }
     : product;
-  const galleryImages = selectedColor
+  const galleryImages = selectedColor?.imageUrls.length
     ? selectedColor.imageUrls
     : product.imageUrls;
   const cartVariant = selectedVariant

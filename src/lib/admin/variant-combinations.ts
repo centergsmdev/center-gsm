@@ -16,23 +16,60 @@ type CombinationVariant = {
 };
 
 export type BulkVariantAction =
-  "add-tax" | "adjust-price" | "set-old-price" | "set-stock";
+  "add-tax" | "adjust-price" | "set-old-price" | "set-stock" | "apply-discount";
+
+export function roundMoney(amount: number) {
+  return Math.max(0, Math.round((amount + Number.EPSILON) * 100) / 100);
+}
 
 export function applyBulkVariantUpdate<T extends CombinationVariant>(
   variants: T[],
   action: BulkVariantAction,
   value: number,
 ): T[] {
-  const money = (amount: number) => Math.max(0, Math.round(amount * 100) / 100);
   return variants.map((variant) => {
     if (action === "add-tax")
-      return { ...variant, price: money(variant.price * (1 + value / 100)) };
+      return {
+        ...variant,
+        price: roundMoney(variant.price * (1 + value / 100)),
+      };
     if (action === "adjust-price")
-      return { ...variant, price: money(variant.price + value) };
+      return { ...variant, price: roundMoney(variant.price + value) };
     if (action === "set-old-price")
-      return { ...variant, old_price: value > 0 ? money(value) : null };
+      return { ...variant, old_price: value > 0 ? roundMoney(value) : null };
+    if (action === "apply-discount")
+      return variant.is_active && variant.old_price && variant.old_price > 0
+        ? {
+            ...variant,
+            price: roundMoney(variant.old_price * (1 - value / 100)),
+          }
+        : variant;
     return { ...variant, stock_quantity: Math.max(0, Math.trunc(value)) };
   });
+}
+
+export function discountApplicationSummary(variants: CombinationVariant[]) {
+  const activeVariants = variants.filter((variant) => variant.is_active);
+  const applied = variants.filter(
+    (variant) =>
+      variant.is_active && variant.old_price && variant.old_price > 0,
+  ).length;
+  return { applied, skipped: activeVariants.length - applied };
+}
+
+export function normalizeVariantDraft<T extends CombinationVariant>(
+  variant: T,
+): T {
+  return {
+    ...variant,
+    sku: String(variant.sku ?? "")
+      .trim()
+      .replace(/\s+/g, " "),
+    barcode:
+      String(variant.barcode ?? "")
+        .trim()
+        .replace(/\s+/g, " ") || null,
+  };
 }
 
 export function buildVariantCombinations(
@@ -89,7 +126,9 @@ export function validateVariantSetup(
   );
   if (new Set(combinations).size !== combinations.length)
     return "Aynı renk ve depolama kombinasyonu tekrar eklenemez.";
-  const skus = variants.map((item) => item.sku.trim()).filter(Boolean);
+  const skus = variants
+    .map((item) => String(item.sku ?? "").trim())
+    .filter(Boolean);
   if (skus.length !== variants.length || new Set(skus).size !== skus.length)
     return "Her varyantın benzersiz bir SKU değeri olmalıdır.";
   const barcodes = variants.map((item) => item.barcode?.trim()).filter(Boolean);

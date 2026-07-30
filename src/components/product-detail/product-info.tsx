@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { formatCurrency } from "@/lib/format";
+import { variantStorageKey } from "@/lib/catalog/variants";
 import { cn } from "@/lib/utils";
 import type {
   CatalogProduct,
@@ -34,10 +35,6 @@ type ProductInfoProps = {
   cartVariant?: CartVariant;
 };
 
-function storageKey(variant: CatalogProductVariant) {
-  return `${variant.storageValue}-${variant.storageUnit}`;
-}
-
 export function ProductInfo({
   product,
   colors,
@@ -54,9 +51,9 @@ export function ProductInfo({
   const productName = `${product.brand} ${product.model}`;
   const stockLabel =
     product.stockStatus === "in-stock"
-      ? "Stokta"
+      ? `Stokta${product.availableStock !== undefined ? ` · ${product.availableStock} adet` : ""}`
       : product.stockStatus === "limited"
-        ? "Son birkaç ürün"
+        ? `Son birkaç ürün${product.availableStock !== undefined ? ` · ${product.availableStock} adet` : ""}`
         : "Tükendi";
   const stockVariant =
     product.stockStatus === "in-stock"
@@ -154,11 +151,11 @@ export function ProductInfo({
           </legend>
           <div className="mt-3 flex flex-wrap gap-2">
             {storageOptions.map((option) => {
-              const key = storageKey(option);
+              const key = variantStorageKey(option)!;
               const selected = key === selectedStorageKey;
               const available = variants.some(
                 (variant) =>
-                  storageKey(variant) === key &&
+                  variantStorageKey(variant) === key &&
                   (!selectedColorId || variant.colorId === selectedColorId),
               );
               return (

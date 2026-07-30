@@ -122,14 +122,25 @@ export async function saveAdminVariantSetup(
       },
     };
   });
-  const saved = await client.rpc("admin_save_product_variant_setup", {
-    p_product_id: productId,
-    p_colors: colors,
-    p_variants: payload,
-  });
-  if (saved.error) {
-    reportVariantFailure("save", saved.error);
-    return { data: null, error: variantError(saved.error) };
+  let saved: { data: unknown; error: string | null; code?: string };
+  try {
+    const response = await fetch("/api/admin/product-variants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, colors, variants: payload }),
+    });
+    saved = (await response.json()) as typeof saved;
+    if (!response.ok || saved.error) {
+      const failure = {
+        code: saved.code,
+        message: saved.error ?? "Varyant bilgileri kaydedilemedi.",
+      };
+      reportVariantFailure("save", failure);
+      return { data: null, error: variantError(failure) };
+    }
+  } catch (error) {
+    reportVariantFailure("save", error);
+    return { data: null, error: "Varyant bilgileri kaydedilemedi." };
   }
   const refreshed = await getAdminVariantSetup(productId);
   if (!refreshed.data)

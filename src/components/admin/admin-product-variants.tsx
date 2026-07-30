@@ -24,6 +24,8 @@ import {
 import {
   applyBulkVariantUpdate,
   buildVariantCombinations,
+  discountApplicationSummary,
+  normalizeVariantDraft,
   type BulkVariantAction,
   validateVariantSetup,
 } from "@/lib/admin/variant-combinations";
@@ -51,6 +53,7 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
   const [variantSearch, setVariantSearch] = useState("");
   const [bulkAction, setBulkAction] = useState<BulkVariantAction>("add-tax");
   const [bulkValue, setBulkValue] = useState("18");
+  const [discountPreset, setDiscountPreset] = useState("10");
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
@@ -146,15 +149,27 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
   }, [colors, variantSearch, variants]);
 
   const applyBulk = () => {
-    const value = Number(bulkValue);
-    if (!Number.isFinite(value)) {
+    const value = Number(
+      bulkAction === "apply-discount" && discountPreset !== "custom"
+        ? discountPreset
+        : bulkValue,
+    );
+    if (
+      !Number.isFinite(value) ||
+      (bulkAction === "apply-discount" && (value <= 0 || value >= 100))
+    ) {
       setMessage("Toplu işlem için geçerli bir sayı girin.");
       return;
     }
+    const discountSummary = discountApplicationSummary(variants);
     setVariants((current) =>
       applyBulkVariantUpdate(current, bulkAction, value),
     );
-    setMessage(`${variants.length} varyanta toplu işlem uygulandı.`);
+    setMessage(
+      bulkAction === "apply-discount"
+        ? `%${value} indirim ${discountSummary.applied} aktif varyanta uygulandı; eski fiyatı olmayan ${discountSummary.skipped} satır atlandı.`
+        : `${variants.length} varyanta toplu işlem uygulandı.`,
+    );
   };
 
   const validationError = useMemo(
@@ -165,7 +180,16 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
     if (!productId || validationError)
       return setMessage(validationError || "Önce ürünü kaydedin.");
     setSaving(true);
-    const result = await saveAdminVariantSetup(productId, colors, variants);
+    const normalizedVariants = variants.map(normalizeVariantDraft);
+    const result = await saveAdminVariantSetup(
+      productId,
+      colors.map((color) => ({
+        ...color,
+        name: color.name.trim().replace(/\s+/g, " "),
+        display_name: color.display_name?.trim().replace(/\s+/g, " ") || null,
+      })),
+      normalizedVariants,
+    );
     if (!result.data) {
       setSaving(false);
       return setMessage(result.error);
@@ -364,6 +388,8 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
               onAction={setBulkAction}
               value={bulkValue}
               onValue={setBulkValue}
+              discountPreset={discountPreset}
+              onDiscountPreset={setDiscountPreset}
               onApply={applyBulk}
             />
             <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
@@ -419,6 +445,7 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
                           current.filter((item) => item.id !== variant.id),
                         )
                       }
+                      skuError={variantSkuError(variant, variants)}
                       index={index}
                     />
                   ))}
@@ -481,6 +508,21 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
       </div>
     </div>
   );
+}
+
+function variantSkuError(variant: VariantDraft, variants: VariantDraft[]) {
+  const normalized = String(variant.sku ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!normalized) return "SKU zorunludur.";
+  const duplicate = variants.some(
+    (item) =>
+      item.id !== variant.id &&
+      String(item.sku ?? "")
+        .trim()
+        .replace(/\s+/g, " ") === normalized,
+  );
+  return duplicate ? "Bu SKU başka bir varyantta kullanılıyor." : undefined;
 }
 
 function ColorRow({
@@ -617,6 +659,8 @@ function BulkVariantToolbar({
   onAction,
   value,
   onValue,
+  discountPreset,
+  onDiscountPreset,
   onApply,
 }: {
   search: string;
@@ -625,6 +669,8 @@ function BulkVariantToolbar({
   onAction: (value: BulkVariantAction) => void;
   value: string;
   onValue: (value: string) => void;
+  discountPreset: string;
+  onDiscountPreset: (value: string) => void;
   onApply: () => void;
 }) {
   return (
@@ -649,17 +695,50 @@ function BulkVariantToolbar({
         <option value="adjust-price">Fiyat artır / azalt</option>
         <option value="set-old-price">Eski fiyat belirle</option>
         <option value="set-stock">Stok belirle</option>
+        <option value="apply-discount">İndirim uygula</option>
       </select>
-      <input
-        type="number"
-        step={action === "set-stock" ? 1 : "0.01"}
-        value={value}
-        onChange={(event) => onValue(event.target.value)}
-        className={adminControlClass}
-        aria-label="Toplu işlem değeri"
-      />
+      {action === "apply-discount" ? (
+        <div className="flex gap-2">
+          <select
+            value={discountPreset}
+            onChange={(event) => onDiscountPreset(event.target.value)}
+            className={adminControlClass}
+            aria-label="İndirim yüzdesi"
+          >
+            {[5, 10, 15, 20, 25, 30].map((rate) => (
+              <option key={rate} value={rate}>
+                %{rate}
+              </option>
+            ))}
+            <option value="custom">Özel yüzde</option>
+          </select>
+          {discountPreset === "custom" ? (
+            <input
+              type="number"
+              min="0.01"
+              max="99.99"
+              step="0.01"
+              value={value}
+              onChange={(event) => onValue(event.target.value)}
+              className={adminControlClass}
+              aria-label="Özel indirim yüzdesi"
+            />
+          ) : null}
+        </div>
+      ) : (
+        <input
+          type="number"
+          step={action === "set-stock" ? 1 : "0.01"}
+          value={value}
+          onChange={(event) => onValue(event.target.value)}
+          className={adminControlClass}
+          aria-label="Toplu işlem değeri"
+        />
+      )}
       <Button type="button" variant="outline" onClick={onApply}>
-        Tümüne uygula
+        {action === "apply-discount"
+          ? "İndirimi tüm varyantlara uygula"
+          : "Tümüne uygula"}
       </Button>
     </div>
   );
@@ -671,6 +750,7 @@ function VariantTableRow({
   onChange,
   onDefault,
   onDelete,
+  skuError,
   index,
 }: {
   variant: VariantDraft;
@@ -678,6 +758,7 @@ function VariantTableRow({
   onChange: (value: VariantDraft) => void;
   onDefault: () => void;
   onDelete: () => void;
+  skuError?: string;
   index: number;
 }) {
   const input = (
@@ -696,7 +777,9 @@ function VariantTableRow({
               ? event.target.value === ""
                 ? null
                 : Number(event.target.value)
-              : event.target.value || null,
+              : field === "sku"
+                ? event.target.value
+                : event.target.value || null,
         })
       }
       className="h-9 w-full min-w-24 rounded-lg border border-zinc-200 bg-white px-2 text-xs outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
@@ -720,7 +803,14 @@ function VariantTableRow({
       <td className="whitespace-nowrap px-3 py-2 font-semibold">
         {variant.storage_value} {variant.storage_unit}
       </td>
-      <td className="px-2 py-2">{input("sku")}</td>
+      <td className="px-2 py-2">
+        {input("sku")}
+        {skuError ? (
+          <p className="mt-1 max-w-40 text-[10px] font-semibold text-red-600">
+            {skuError}
+          </p>
+        ) : null}
+      </td>
       <td className="px-2 py-2">{input("barcode")}</td>
       <td className="px-2 py-2">{input("price", "number")}</td>
       <td className="px-2 py-2">{input("old_price", "number")}</td>
