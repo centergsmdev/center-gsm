@@ -39,6 +39,9 @@ type Product = Timestamps & {
   sku: string;
   description: string | null;
   short_description: string | null;
+  technical_specifications: string | null;
+  box_contents: string | null;
+  delivery_returns: string | null;
   category_id: string;
   brand_id: string;
   price: number;

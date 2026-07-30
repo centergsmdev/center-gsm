@@ -11,6 +11,7 @@ import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
 import { catalogProducts } from "@/data/catalog-products";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/data";
+import { sanitizeRichText } from "@/lib/content/rich-text";
 import { generateSeoMetadata, plainText } from "@/lib/seo/seo";
 import {
   JsonLd,
@@ -101,8 +102,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </main>
     );
   if (!result.data) notFound();
-  const product = result.data;
+  const product = {
+    ...result.data,
+    technicalSpecifications: sanitizeRichText(
+      result.data.technicalSpecifications,
+    ),
+    boxContents: sanitizeRichText(result.data.boxContents),
+    deliveryReturns: sanitizeRichText(result.data.deliveryReturns),
+  };
   const related = await getRelatedProducts(product, 4);
+  const hasManagedContent = Boolean(
+    product.description ||
+    product.technicalSpecifications ||
+    product.boxContents ||
+    product.deliveryReturns,
+  );
   return (
     <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
       <JsonLd id="product-schema" data={createProductSchema(product)} />
@@ -137,9 +151,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery product={product} />
           <ProductInfo product={product} />
         </div>
-        <div className="mt-12 sm:mt-16">
-          <ProductTabs product={product} />
-        </div>
+        {hasManagedContent ? (
+          <div className="mt-12 sm:mt-16">
+            <ProductTabs product={product} />
+          </div>
+        ) : null}
         {related.error ? (
           <ProductDetailErrorState />
         ) : (

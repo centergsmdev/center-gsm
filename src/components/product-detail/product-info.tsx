@@ -43,7 +43,11 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
       >
         {product.model}
       </h1>
-      <p className="mt-3 text-sm leading-6 text-muted">{product.description}</p>
+      {product.shortDescription ? (
+        <p className="mt-3 text-sm leading-6 text-muted">
+          {product.shortDescription}
+        </p>
+      ) : null}
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
         <span className="inline-flex items-center gap-1 font-bold">
           <Star

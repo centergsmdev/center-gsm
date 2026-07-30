@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import type { AdminProductResult } from "@/types/admin-product";
 import type { Tables } from "@/types/database";
+import type { ProductImageTransform } from "@/lib/images/product-image-transform";
 
 export const PRODUCT_IMAGE_BUCKET = "product-images";
 export const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -18,6 +19,11 @@ export type UploadProgress = {
   fileName: string;
   progress: number;
   status: "uploading" | "complete" | "error";
+};
+export type PendingProductImage = {
+  id: string;
+  file: File;
+  transform: ProductImageTransform;
 };
 
 export function validateProductImages(files: File[]): ImageValidation {
@@ -84,10 +90,11 @@ export async function deleteStorageImageByUrl(url: string | null) {
 
 export async function uploadProductImages(
   productId: string,
-  files: File[],
+  images: PendingProductImage[],
   _startOrder: number,
   onProgress?: (progress: UploadProgress) => void,
 ): Promise<AdminProductResult<Tables<"product_images">[]>> {
+  const files = images.map((image) => image.file);
   const validation = validateProductImages(files);
   if (validation.errors.length)
     return { data: null, error: validation.errors.join(" ") };
@@ -98,6 +105,10 @@ export async function uploadProductImages(
   const body = new FormData();
   body.set("productId", productId);
   files.forEach((file) => body.append("files", file));
+  body.set(
+    "transforms",
+    JSON.stringify(images.map((image) => image.transform)),
+  );
 
   try {
     const response = await fetch("/api/admin/product-images", {

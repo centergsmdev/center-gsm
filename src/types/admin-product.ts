@@ -21,6 +21,9 @@ export type AdminProductFormValues = Pick<
   | "category_id"
   | "description"
   | "short_description"
+  | "technical_specifications"
+  | "box_contents"
+  | "delivery_returns"
   | "price"
   | "old_price"
   | "stock_quantity"
@@ -39,5 +42,4 @@ export type AdminProductFilters = {
 };
 
 export type AdminProductResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: string };
+  { data: T; error: null } | { data: null; error: string };

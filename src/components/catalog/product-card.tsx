@@ -104,7 +104,7 @@ export function ProductCard({
             denseMobile && "max-sm:leading-3.5 max-sm:mt-0.5 max-sm:min-h-7",
           )}
         >
-          {product.description}
+          {product.shortDescription ?? ""}
         </p>
 
         <div className="mt-1 flex items-center gap-1.5 text-[10px] sm:mt-1.5 sm:gap-2">

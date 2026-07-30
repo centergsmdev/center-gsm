@@ -9,13 +9,19 @@ import { Button } from "@/components/ui/button";
 import { AdminField, AdminFormSection, adminControlClass } from "./admin-form";
 import { AdminErrorState, AdminLoadingState } from "./admin-states";
 import { AdminProductImages } from "./admin-product-images";
+import { RichTextEditor } from "./rich-text-editor";
 import {
   createAdminProduct,
   getAdminProduct,
   getAdminProductReferences,
+  setAdminProductActive,
   updateAdminProduct,
 } from "@/lib/admin/products";
-import { uploadProductImages } from "@/lib/admin/product-images";
+import {
+  uploadProductImages,
+  type PendingProductImage,
+} from "@/lib/admin/product-images";
+import { sanitizeRichText } from "@/lib/content/rich-text";
 import { getAdminWarehouses, updateReorderLevel } from "@/lib/admin/inventory";
 import type {
   AdminProductFormValues,
@@ -31,6 +37,9 @@ type FormState = {
   category_id: string;
   description: string;
   short_description: string;
+  technical_specifications: string;
+  box_contents: string;
+  delivery_returns: string;
   price: string;
   old_price: string;
   stock_quantity: string;
@@ -48,6 +57,9 @@ const emptyForm: FormState = {
   category_id: "",
   description: "",
   short_description: "",
+  technical_specifications: "",
+  box_contents: "",
+  delivery_returns: "",
   price: "",
   old_price: "",
   stock_quantity: "0",
@@ -71,7 +83,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   const [brands, setBrands] = useState<AdminProductReference[]>([]);
   const [categories, setCategories] = useState<AdminProductReference[]>([]);
   const [images, setImages] = useState<Tables<"product_images">[]>([]);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingImages, setPendingImages] = useState<PendingProductImage[]>([]);
   const [currentProductId, setCurrentProductId] = useState(productId);
   const [errors, setErrors] = useState<FormErrors>({});
   const [pageError, setPageError] = useState("");
@@ -105,6 +117,9 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           category_id: item.category_id,
           description: item.description ?? "",
           short_description: item.short_description ?? "",
+          technical_specifications: item.technical_specifications ?? "",
+          box_contents: item.box_contents ?? "",
+          delivery_returns: item.delivery_returns ?? "",
           price: String(item.price),
           old_price: item.old_price === null ? "" : String(item.old_price),
           stock_quantity: String(item.stock_quantity),
@@ -159,6 +174,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       category_id: form.category_id,
       description: form.description.trim() || null,
       short_description: form.short_description.trim() || null,
+      technical_specifications:
+        sanitizeRichText(form.technical_specifications) || null,
+      box_contents: sanitizeRichText(form.box_contents) || null,
+      delivery_returns: sanitizeRichText(form.delivery_returns) || null,
       price: Number(form.price),
       old_price: form.old_price ? Number(form.old_price) : null,
       stock_quantity: Number(form.stock_quantity),
@@ -176,15 +195,20 @@ export function AdminProductForm({ productId }: { productId?: string }) {
     }
     setCurrentProductId(result.data.id);
     const warehouses = await getAdminWarehouses();
-    const defaultWarehouse = warehouses.data?.find((item) => item.is_default) ?? warehouses.data?.[0];
+    const defaultWarehouse =
+      warehouses.data?.find((item) => item.is_default) ?? warehouses.data?.[0];
     if (defaultWarehouse) {
-      const reorder = await updateReorderLevel(defaultWarehouse.id, result.data.id, Number(form.reorder_level));
+      const reorder = await updateReorderLevel(
+        defaultWarehouse.id,
+        result.data.id,
+        Number(form.reorder_level),
+      );
       if (!reorder.data) setPageError(reorder.error);
     }
-    if (pendingFiles.length) {
+    if (pendingImages.length) {
       const upload = await uploadProductImages(
         result.data.id,
-        pendingFiles,
+        pendingImages,
         images.length,
         (item) => setImageUploadProgress(item.progress),
       );
@@ -196,8 +220,19 @@ export function AdminProductForm({ productId }: { productId?: string }) {
         return;
       }
       setImages((current) => [...current, ...upload.data]);
-      setPendingFiles([]);
+      setPendingImages([]);
       setImageUploadProgress(100);
+    }
+    const cacheRefresh = await setAdminProductActive(
+      result.data.id,
+      form.is_active,
+    );
+    if (!cacheRefresh.data) {
+      setSaving(false);
+      setPageError(
+        `Ürün kaydedildi ancak katalog önbelleği yenilenemedi. ${cacheRefresh.error ?? "Tekrar deneyin."}`,
+      );
+      return;
     }
     setSaving(false);
     setSaved(true);
@@ -284,7 +319,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               />
             </AdminField>
             <AdminField
-              label="Açıklama"
+              label="Detaylı Açıklama"
               htmlFor="description"
               className="sm:col-span-2"
             >
@@ -298,7 +333,48 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             </AdminField>
           </div>
         </AdminFormSection>
-        <AdminFormSection title="Fiyat ve stok" description={productId ? "Mevcut stok yalnızca Stok Yönetimi ekranındaki güvenli hareketlerle değiştirilebilir." : "Başlangıç stoğu varsayılan depoya kaydedilir."}>
+        <AdminFormSection
+          title="Ürün içeriği"
+          description="Bu alanlar ürün detayındaki bilgi sekmelerinde aynen gösterilir. Boş alanlar müşteri tarafında gösterilmez."
+        >
+          <div className="space-y-6">
+            <AdminField
+              label="Teknik Özellikler"
+              htmlFor="technical_specifications"
+            >
+              <RichTextEditor
+                id="technical_specifications"
+                ariaLabel="Teknik Özellikler"
+                value={form.technical_specifications}
+                onChange={(value) => set("technical_specifications", value)}
+              />
+            </AdminField>
+            <AdminField label="Kutu İçeriği" htmlFor="box_contents">
+              <RichTextEditor
+                id="box_contents"
+                ariaLabel="Kutu İçeriği"
+                value={form.box_contents}
+                onChange={(value) => set("box_contents", value)}
+              />
+            </AdminField>
+            <AdminField label="Teslimat ve İade" htmlFor="delivery_returns">
+              <RichTextEditor
+                id="delivery_returns"
+                ariaLabel="Teslimat ve İade"
+                value={form.delivery_returns}
+                onChange={(value) => set("delivery_returns", value)}
+              />
+            </AdminField>
+          </div>
+        </AdminFormSection>
+        <AdminFormSection
+          title="Fiyat ve stok"
+          description={
+            productId
+              ? "Mevcut stok yalnızca Stok Yönetimi ekranındaki güvenli hareketlerle değiştirilebilir."
+              : "Başlangıç stoğu varsayılan depoya kaydedilir."
+          }
+        >
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <Field
               label="Fiyat (₺)"
@@ -327,7 +403,15 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               required
               disabled={Boolean(productId)}
             />
-            <Field label="Kritik stok seviyesi" name="reorder_level" type="number" form={form} errors={errors} set={set} required />
+            <Field
+              label="Kritik stok seviyesi"
+              name="reorder_level"
+              type="number"
+              form={form}
+              errors={errors}
+              set={set}
+              required
+            />
             <Field
               label="Garanti (ay)"
               name="warranty_months"
@@ -346,8 +430,8 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             productId={currentProductId}
             images={images}
             onImagesChange={setImages}
-            pendingFiles={pendingFiles}
-            onPendingFilesChange={setPendingFiles}
+            pendingImages={pendingImages}
+            onPendingImagesChange={setPendingImages}
           />
         </AdminFormSection>
       </div>

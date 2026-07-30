@@ -6,6 +6,10 @@ import {
   MAX_PRODUCT_IMAGE_SIZE,
   PRODUCT_IMAGE_BUCKET,
 } from "@/lib/admin/product-images";
+import {
+  DEFAULT_PRODUCT_IMAGE_TRANSFORM,
+  type ProductImageTransform,
+} from "@/lib/images/product-image-transform";
 import { processProductImage } from "@/lib/images/product-image-pipeline";
 import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/server";
@@ -42,6 +46,7 @@ export async function POST(request: Request) {
   const files = formData
     .getAll("files")
     .filter((entry): entry is File => entry instanceof File);
+  const transforms = parseTransforms(formData.get("transforms"), files.length);
   if (typeof productId !== "string" || !productId)
     return errorResponse("Ürün bilgisi eksik.", 400);
   if (!files.length || files.length > MAX_FILES_PER_REQUEST)
@@ -81,6 +86,7 @@ export async function POST(request: Request) {
     for (const [index, file] of files.entries()) {
       const processed = await processProductImage(
         Buffer.from(await file.arrayBuffer()),
+        transforms[index],
       );
       const path = `${productId}/${randomUUID()}.webp`;
       const storage = await db.storage
@@ -123,4 +129,33 @@ export async function POST(request: Request) {
       422,
     );
   }
+}
+
+function parseTransforms(value: FormDataEntryValue | null, count: number) {
+  if (typeof value !== "string")
+    return Array.from({ length: count }, () => DEFAULT_PRODUCT_IMAGE_TRANSFORM);
+  try {
+    const parsed = JSON.parse(value) as Array<Partial<ProductImageTransform>>;
+    return Array.from({ length: count }, (_, index) => ({
+      zoom: finiteNumber(
+        parsed[index]?.zoom,
+        DEFAULT_PRODUCT_IMAGE_TRANSFORM.zoom,
+      ),
+      offsetX: finiteNumber(
+        parsed[index]?.offsetX,
+        DEFAULT_PRODUCT_IMAGE_TRANSFORM.offsetX,
+      ),
+      offsetY: finiteNumber(
+        parsed[index]?.offsetY,
+        DEFAULT_PRODUCT_IMAGE_TRANSFORM.offsetY,
+      ),
+    }));
+  } catch {
+    return Array.from({ length: count }, () => DEFAULT_PRODUCT_IMAGE_TRANSFORM);
+  }
+}
+
+function finiteNumber(value: unknown, fallback: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
 }

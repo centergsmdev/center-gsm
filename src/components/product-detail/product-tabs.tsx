@@ -1,20 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
 
-const tabs = [
-  "Açıklama",
-  "Teknik Özellikler",
-  "Kutu İçeriği",
-  "Teslimat ve İade",
-] as const;
-type TabName = (typeof tabs)[number];
+type ProductTab = {
+  id: "description" | "technical" | "box" | "delivery";
+  label: string;
+  content: string;
+  rich: boolean;
+};
 
 export function ProductTabs({ product }: { product: CatalogProduct }) {
-  const [activeTab, setActiveTab] = useState<TabName>("Açıklama");
+  const tabs = useMemo(
+    () =>
+      [
+        product.description
+          ? {
+              id: "description" as const,
+              label: "Açıklama",
+              content: product.description,
+              rich: false,
+            }
+          : null,
+        product.technicalSpecifications
+          ? {
+              id: "technical" as const,
+              label: "Teknik Özellikler",
+              content: product.technicalSpecifications,
+              rich: true,
+            }
+          : null,
+        product.boxContents
+          ? {
+              id: "box" as const,
+              label: "Kutu İçeriği",
+              content: product.boxContents,
+              rich: true,
+            }
+          : null,
+        product.deliveryReturns
+          ? {
+              id: "delivery" as const,
+              label: "Teslimat ve İade",
+              content: product.deliveryReturns,
+              rich: true,
+            }
+          : null,
+      ].filter((tab): tab is ProductTab => Boolean(tab)),
+    [product],
+  );
+  const [selectedId, setSelectedId] = useState<ProductTab["id"]>(
+    tabs[0]?.id ?? "description",
+  );
+  const activeTab = tabs.find((tab) => tab.id === selectedId) ?? tabs[0];
+
+  if (!activeTab) return null;
+
   return (
     <section
       aria-label="Ürün detayları"
@@ -27,102 +70,53 @@ export function ProductTabs({ product }: { product: CatalogProduct }) {
       >
         {tabs.map((tab) => (
           <button
-            key={tab}
+            key={tab.id}
             type="button"
             role="tab"
-            id={`tab-${tab}`}
-            aria-selected={activeTab === tab}
+            id={`tab-${tab.id}`}
+            aria-selected={activeTab.id === tab.id}
             aria-controls="product-tab-panel"
-            onClick={() => setActiveTab(tab)}
+            onClick={() => setSelectedId(tab.id)}
             className={cn(
               "relative min-h-14 shrink-0 px-3 text-xs font-bold text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-5 sm:text-sm",
-              activeTab === tab &&
+              activeTab.id === tab.id &&
                 "text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary",
             )}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
       <div
         id="product-tab-panel"
         role="tabpanel"
-        aria-labelledby={`tab-${activeTab}`}
+        aria-labelledby={`tab-${activeTab.id}`}
         className="p-5 sm:p-8"
       >
-        <TabContent tab={activeTab} product={product} />
+        {activeTab.rich ? (
+          <RichProductContent html={activeTab.content} />
+        ) : (
+          <p className="max-w-4xl whitespace-pre-line text-sm leading-7 text-muted">
+            {activeTab.content}
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-function TabContent({
-  tab,
-  product,
-}: {
-  tab: TabName;
-  product: CatalogProduct;
-}) {
-  if (tab === "Açıklama")
-    return (
-      <div className="max-w-3xl">
-        <h2 className="text-xl font-bold">
-          Günlük teknoloji deneyimini yükseltin
-        </h2>
-        <p className="mt-4 text-sm leading-7 text-muted">
-          {product.description} Premium malzeme kalitesi, dengeli performans ve
-          kullanıcı odaklı detaylarla uzun süreli bir deneyim sunar.
-        </p>
-      </div>
-    );
-  if (tab === "Teknik Özellikler")
-    return (
-      <dl className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
-        {[
-          ["Kategori", product.category],
-          ["Model", product.model],
-          ["Garanti", "2 yıl"],
-          ["Bağlantı", "Yeni nesil kablosuz bağlantı"],
-          ["Renk", product.accent],
-          ["Menşei", "İthal"],
-        ].map(([term, value]) => (
-          <div
-            key={term}
-            className="flex justify-between gap-4 border-b border-border pb-3 text-sm"
-          >
-            <dt className="text-muted">{term}</dt>
-            <dd className="text-right font-semibold text-foreground">
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    );
-  if (tab === "Kutu İçeriği")
-    return (
-      <ul className="grid gap-3 text-sm text-muted sm:grid-cols-2">
-        <li>
-          • {product.brand} {product.model}
-        </li>
-        <li>• Şarj kablosu</li>
-        <li>• Hızlı başlangıç kılavuzu</li>
-        <li>• Garanti belgesi</li>
-      </ul>
-    );
+function RichProductContent({ html }: { html: string }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <div>
-        <h2 className="font-bold">Teslimat</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Stoktaki ürünler özenle paketlenerek anlaşmalı kargo ile gönderilir.
-        </p>
-      </div>
-      <div>
-        <h2 className="font-bold">İade</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Teslimattan itibaren 14 gün içinde iade talebi oluşturabilirsiniz.
-        </p>
-      </div>
-    </div>
+    <div
+      className={cn(
+        "max-w-4xl text-sm leading-7 text-muted",
+        "[&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4",
+        "[&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-foreground",
+        "[&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-foreground",
+        "[&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6",
+        "[&_p]:my-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6",
+      )}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
