@@ -70,6 +70,7 @@ export function ShippingCarrierSelection({
                   <ShippingCarrierLogo
                     providerKey={item.providerKey}
                     name={item.name}
+                    logoUrl={item.logoUrl}
                   />
                 </span>
                 <span className="min-w-0">

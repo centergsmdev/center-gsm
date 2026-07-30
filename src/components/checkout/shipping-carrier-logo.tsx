@@ -1,4 +1,12 @@
-type CarrierLogoProps = { providerKey: string; name: string };
+"use client";
+
+import { useState } from "react";
+
+type CarrierLogoProps = {
+  providerKey: string;
+  name: string;
+  logoUrl?: string | null;
+};
 
 function YurtiçiLogo() {
   return (
@@ -94,7 +102,29 @@ const logos = {
   surat: SuratLogo,
 } as const;
 
-export function ShippingCarrierLogo({ providerKey, name }: CarrierLogoProps) {
+export function ShippingCarrierLogo({
+  providerKey,
+  name,
+  logoUrl,
+}: CarrierLogoProps) {
+  const normalizedLogoUrl = logoUrl?.trim() || null;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+  if (normalizedLogoUrl && failedUrl !== normalizedLogoUrl) {
+    return (
+      // The URL is admin-managed and can use any HTTPS image host.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={normalizedLogoUrl}
+        alt={`${name} logosu`}
+        loading="lazy"
+        decoding="async"
+        className="h-8 w-full object-contain"
+        onError={() => setFailedUrl(normalizedLogoUrl)}
+      />
+    );
+  }
+
   const key = providerKey.toLocaleLowerCase("tr-TR") as keyof typeof logos;
   const Logo = logos[key];
   if (!Logo) {
