@@ -43,6 +43,9 @@ export async function POST(request: Request) {
   }
 
   const productId = formData.get("productId");
+  const colorIdValue = formData.get("colorId");
+  const colorId =
+    typeof colorIdValue === "string" && colorIdValue ? colorIdValue : null;
   const files = formData
     .getAll("files")
     .filter((entry): entry is File => entry instanceof File);
@@ -68,11 +71,16 @@ export async function POST(request: Request) {
       );
   }
 
-  const existing = await db
+  let existingQuery = db
     .from("product_images")
     .select("sort_order,is_primary")
-    .eq("product_id", productId)
-    .order("sort_order", { ascending: false });
+    .eq("product_id", productId);
+  existingQuery = colorId
+    ? existingQuery.eq("color_id", colorId)
+    : existingQuery.is("color_id", null);
+  const existing = await existingQuery.order("sort_order", {
+    ascending: false,
+  });
   if (existing.error)
     return errorResponse("Ürün görselleri doğrulanamadı.", 400);
 
@@ -106,6 +114,7 @@ export async function POST(request: Request) {
         .from("product_images")
         .insert({
           product_id: productId,
+          color_id: colorId,
           url: publicUrl.publicUrl,
           path,
           alt_text: file.name.replace(/\.[^.]+$/, ""),

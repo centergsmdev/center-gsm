@@ -6,8 +6,7 @@ import type { Tables } from "@/types/database";
 import type { CatalogProduct } from "@/types/product";
 
 type FavoriteResult<T> =
-  | { success: true; data: T }
-  | { success: false; data: T };
+  { success: true; data: T } | { success: false; data: T };
 type BrowserClient = NonNullable<ReturnType<typeof createClient>>;
 
 async function resolveProductId(
@@ -58,7 +57,9 @@ async function hydrateProducts(
         availableStock: product.stock_quantity,
         category,
         brand,
-        images: images.data.filter((item) => item.product_id === product.id),
+        images: images.data.filter(
+          (item) => item.product_id === product.id && item.color_id == null,
+        ),
         variants: variants.data.filter(
           (item) => item.product_id === product.id,
         ),
@@ -107,10 +108,12 @@ export async function addUserFavorite(userId: string, productId: string) {
   if (!client) return { success: false } as const;
   const resolvedId = await resolveProductId(client, productId);
   if (!resolvedId) return { success: false } as const;
-  const result = await client.from("favorites").upsert(
-    { user_id: userId, product_id: resolvedId },
-    { onConflict: "user_id,product_id", ignoreDuplicates: true },
-  );
+  const result = await client
+    .from("favorites")
+    .upsert(
+      { user_id: userId, product_id: resolvedId },
+      { onConflict: "user_id,product_id", ignoreDuplicates: true },
+    );
   return { success: !result.error } as const;
 }
 

@@ -41,6 +41,7 @@ type Props = {
   onImagesChange: (images: ImageRow[]) => void;
   pendingImages: PendingProductImage[];
   onPendingImagesChange: (images: PendingProductImage[]) => void;
+  colorId?: string | null;
 };
 
 export function AdminProductImages({
@@ -49,6 +50,7 @@ export function AdminProductImages({
   onImagesChange,
   pendingImages,
   onPendingImagesChange,
+  colorId = null,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -112,7 +114,7 @@ export function AdminProductImages({
   const makePrimary = async (image: ImageRow) => {
     if (!productId || image.is_primary) return;
     setBusy(true);
-    const result = await setPrimaryProductImage(productId, image.id);
+    const result = await setPrimaryProductImage(productId, image.id, colorId);
     setBusy(false);
     if (!result.data) {
       setMessage({

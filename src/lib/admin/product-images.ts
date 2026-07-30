@@ -93,6 +93,7 @@ export async function uploadProductImages(
   images: PendingProductImage[],
   _startOrder: number,
   onProgress?: (progress: UploadProgress) => void,
+  colorId?: string | null,
 ): Promise<AdminProductResult<Tables<"product_images">[]>> {
   const files = images.map((image) => image.file);
   const validation = validateProductImages(files);
@@ -104,6 +105,7 @@ export async function uploadProductImages(
   );
   const body = new FormData();
   body.set("productId", productId);
+  if (colorId) body.set("colorId", colorId);
   files.forEach((file) => body.append("files", file));
   body.set(
     "transforms",
@@ -154,13 +156,14 @@ export async function deleteProductImage(
     .eq("id", image.id);
   if (result.error) return { data: null, error: SAFE_ERROR };
   if (image.is_primary) {
-    const next = await client
+    let nextQuery = client
       .from("product_images")
       .select("id")
-      .eq("product_id", image.product_id)
-      .order("sort_order")
-      .limit(1)
-      .maybeSingle();
+      .eq("product_id", image.product_id);
+    nextQuery = image.color_id
+      ? nextQuery.eq("color_id", image.color_id)
+      : nextQuery.is("color_id", null);
+    const next = await nextQuery.order("sort_order").limit(1).maybeSingle();
     if (next.data)
       await client
         .from("product_images")
@@ -173,14 +176,19 @@ export async function deleteProductImage(
 export async function setPrimaryProductImage(
   productId: string,
   imageId: string,
+  colorId: string | null = null,
 ): Promise<AdminProductResult<true>> {
   const client = createClient();
   if (!client)
     return { data: null, error: "Supabase bağlantısı yapılandırılmamış." };
-  const clear = await client
+  let clearQuery = client
     .from("product_images")
     .update({ is_primary: false })
     .eq("product_id", productId);
+  clearQuery = colorId
+    ? clearQuery.eq("color_id", colorId)
+    : clearQuery.is("color_id", null);
+  const clear = await clearQuery;
   if (clear.error) return { data: null, error: SAFE_ERROR };
   const result = await client
     .from("product_images")

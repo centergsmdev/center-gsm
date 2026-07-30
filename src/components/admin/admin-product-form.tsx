@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AdminField, AdminFormSection, adminControlClass } from "./admin-form";
 import { AdminErrorState, AdminLoadingState } from "./admin-states";
 import { AdminProductImages } from "./admin-product-images";
+import { AdminProductVariants } from "./admin-product-variants";
 import { RichTextEditor } from "./rich-text-editor";
 import { RichProductContent } from "@/components/product-detail/rich-product-content";
 import {
@@ -391,6 +392,12 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             pendingImages={pendingImages}
             onPendingImagesChange={setPendingImages}
           />
+        </AdminFormSection>
+        <AdminFormSection
+          title="Varyantlar"
+          description="Renk, depolama, fiyat, stok ve renk bazlı ortak görselleri yönetin. Varyant kullanımı isteğe bağlıdır."
+        >
+          <AdminProductVariants productId={currentProductId} />
         </AdminFormSection>
         <AdminFormSection
           title="SEO"

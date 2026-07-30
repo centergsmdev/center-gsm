@@ -141,7 +141,7 @@ async function hydrateProducts(
         category,
         brand,
         images: imagesResult.data.filter(
-          (image) => image.product_id === product.id,
+          (image) => image.product_id === product.id && image.color_id == null,
         ),
         variants: variantsResult.data.filter(
           (variant) => variant.product_id === product.id,

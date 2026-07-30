@@ -1,10 +1,7 @@
 import { mapSupabaseProduct } from "@/lib/catalog/mapper";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/database";
-import type {
-  SearchDataSource,
-  SearchSuggestionGroups,
-} from "@/types/search";
+import type { SearchDataSource, SearchSuggestionGroups } from "@/types/search";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
 import { normalizeSearchTerm } from "@/lib/search/normalize-search";
 type BrowserCatalogClient = NonNullable<ReturnType<typeof createClient>>;
@@ -90,7 +87,8 @@ async function browserProducts(client: BrowserCatalogClient, query: string) {
               category,
               brand,
               images: images.data.filter(
-                (item) => item.product_id === product.id,
+                (item) =>
+                  item.product_id === product.id && item.color_id == null,
               ),
               variants: variants.data.filter(
                 (item) => item.product_id === product.id,

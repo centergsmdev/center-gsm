@@ -95,7 +95,7 @@ async function composeProducts(
     const category = categoryMap.get(product.category_id);
     if (!brand || !category) return [];
     const productImages = images.data.filter(
-      (image) => image.product_id === product.id,
+      (image) => image.product_id === product.id && image.color_id == null,
     );
     return [
       {

@@ -58,6 +58,16 @@ type ProductImage = Timestamps & {
   alt_text: string | null;
   sort_order: number;
   is_primary: boolean;
+  color_id: string | null;
+};
+type ProductColor = Timestamps & {
+  id: string;
+  product_id: string;
+  name: string;
+  display_name: string | null;
+  hex_code: string;
+  is_active: boolean;
+  sort_order: number;
 };
 type ProductVariant = Timestamps & {
   id: string;
@@ -69,6 +79,12 @@ type ProductVariant = Timestamps & {
   old_price: number | null;
   stock_quantity: number;
   is_active: boolean;
+  color_id: string | null;
+  storage_value: number | null;
+  storage_unit: "GB" | "TB" | null;
+  barcode: string | null;
+  sort_order: number;
+  is_default: boolean;
 };
 type Profile = Timestamps & {
   id: string;
@@ -945,6 +961,11 @@ export type Database = {
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">
       >;
+      product_colors: Table<
+        ProductColor,
+        Partial<ProductColor> &
+          Pick<ProductColor, "product_id" | "name" | "hex_code">
+      >;
       product_variants: Table<
         ProductVariant,
         Partial<ProductVariant> &
@@ -1160,6 +1181,10 @@ export type Database = {
       };
     };
     Functions: {
+      admin_save_product_variant_setup: {
+        Args: { p_product_id: string; p_colors: Json; p_variants: Json };
+        Returns: Json;
+      };
       admin_delete_product: {
         Args: { p_product_id: string };
         Returns: Json;
