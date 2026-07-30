@@ -1,62 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
 
-type ProductTab = {
-  id: "description" | "technical" | "box" | "delivery";
-  label: string;
-  content: string;
-  rich: boolean;
-};
-
 export function ProductTabs({ product }: { product: CatalogProduct }) {
-  const tabs = useMemo(
-    () =>
-      [
-        product.description
-          ? {
-              id: "description" as const,
-              label: "Açıklama",
-              content: product.description,
-              rich: false,
-            }
-          : null,
-        product.technicalSpecifications
-          ? {
-              id: "technical" as const,
-              label: "Teknik Özellikler",
-              content: product.technicalSpecifications,
-              rich: true,
-            }
-          : null,
-        product.boxContents
-          ? {
-              id: "box" as const,
-              label: "Kutu İçeriği",
-              content: product.boxContents,
-              rich: true,
-            }
-          : null,
-        product.deliveryReturns
-          ? {
-              id: "delivery" as const,
-              label: "Teslimat ve İade",
-              content: product.deliveryReturns,
-              rich: true,
-            }
-          : null,
-      ].filter((tab): tab is ProductTab => Boolean(tab)),
-    [product],
-  );
-  const [selectedId, setSelectedId] = useState<ProductTab["id"]>(
-    tabs[0]?.id ?? "description",
-  );
-  const activeTab = tabs.find((tab) => tab.id === selectedId) ?? tabs[0];
-
-  if (!activeTab) return null;
+  if (!product.description) return null;
 
   return (
     <section
@@ -68,38 +16,23 @@ export function ProductTabs({ product }: { product: CatalogProduct }) {
         role="tablist"
         aria-label="Ürün bilgi sekmeleri"
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={activeTab.id === tab.id}
-            aria-controls="product-tab-panel"
-            onClick={() => setSelectedId(tab.id)}
-            className={cn(
-              "relative min-h-14 shrink-0 px-3 text-xs font-bold text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-5 sm:text-sm",
-              activeTab.id === tab.id &&
-                "text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <div
+          role="tab"
+          id="tab-description"
+          aria-selected="true"
+          aria-controls="product-tab-panel"
+          className="relative min-h-14 px-3 py-5 text-xs font-bold text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary sm:px-5 sm:text-sm"
+        >
+          Açıklama
+        </div>
       </div>
       <div
         id="product-tab-panel"
         role="tabpanel"
-        aria-labelledby={`tab-${activeTab.id}`}
+        aria-labelledby="tab-description"
         className="p-5 sm:p-8"
       >
-        {activeTab.rich ? (
-          <RichProductContent html={activeTab.content} />
-        ) : (
-          <p className="max-w-4xl whitespace-pre-line text-sm leading-7 text-muted">
-            {activeTab.content}
-          </p>
-        )}
+        <RichProductContent html={product.description} />
       </div>
     </section>
   );

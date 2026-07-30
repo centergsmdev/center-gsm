@@ -104,19 +104,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!result.data) notFound();
   const product = {
     ...result.data,
-    technicalSpecifications: sanitizeRichText(
-      result.data.technicalSpecifications,
-    ),
-    boxContents: sanitizeRichText(result.data.boxContents),
-    deliveryReturns: sanitizeRichText(result.data.deliveryReturns),
+    description: sanitizeRichText(result.data.description),
   };
   const related = await getRelatedProducts(product, 4);
-  const hasManagedContent = Boolean(
-    product.description ||
-    product.technicalSpecifications ||
-    product.boxContents ||
-    product.deliveryReturns,
-  );
+  const hasManagedContent = Boolean(product.description);
   return (
     <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
       <JsonLd id="product-schema" data={createProductSchema(product)} />

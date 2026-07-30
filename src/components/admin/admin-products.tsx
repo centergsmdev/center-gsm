@@ -31,6 +31,7 @@ import {
   setAdminProductActive,
 } from "@/lib/admin/products";
 import { formatCurrency } from "@/lib/format";
+import { plainText } from "@/lib/seo/seo";
 import type {
   AdminProduct,
   AdminProductFilters,
@@ -270,7 +271,9 @@ export function AdminProducts() {
                           {product.name}
                         </p>
                         <p className="mt-0.5 max-w-64 truncate text-xs text-zinc-500">
-                          {product.short_description ?? "Kısa açıklama yok"}
+                          {product.description
+                            ? plainText(product.description)
+                            : "Açıklama yok"}
                         </p>
                       </div>
                     </div>

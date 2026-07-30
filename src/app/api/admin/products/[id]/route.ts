@@ -137,8 +137,20 @@ export async function DELETE(_request: Request, context: RouteContext) {
   );
 
   const deleted = await db.rpc("admin_delete_product", { p_product_id: id });
-  if (deleted.error)
-    return responseError("Ürün kalıcı olarak silinemedi.", 400);
+  if (deleted.error) {
+    console.error("Permanent product deletion failed", {
+      productId: id,
+      code: deleted.error.code,
+      message: deleted.error.message,
+      details: deleted.error.details,
+      hint: deleted.error.hint,
+    });
+    const message =
+      deleted.error.code === "23503"
+        ? "Ürüne bağlı kayıtlar temizlenemedi. Veritabanı ilişkilerini kontrol edin."
+        : `Ürün kalıcı olarak silinemedi: ${deleted.error.message}`;
+    return responseError(message, 400);
+  }
   const result = deleted.data as { deleted?: boolean; reason?: string } | null;
   if (!result?.deleted) {
     if (result?.reason === "order_history")
@@ -159,5 +171,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   await revalidateProductSurfaces(db, product.data);
-  return NextResponse.json({ data: true, error: null });
+  revalidatePath("/", "layout");
+  revalidatePath("/sitemap-products.xml");
+  return NextResponse.json({
+    data: true,
+    error: null,
+    deletedProduct: { id, slug: product.data.slug },
+  });
 }

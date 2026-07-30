@@ -19,6 +19,10 @@ import {
 import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/client";
 import type { CatalogProduct } from "@/types/product";
+import {
+  PRODUCT_DELETED_EVENT,
+  removeDeletedProducts,
+} from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-favorites-v2";
 const safeError = "Favori işlemi tamamlanamadı. Lütfen yeniden deneyin.";
@@ -55,7 +59,9 @@ function readGuestFavorites(): CatalogProduct[] {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     const parsed: unknown = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? parsed.filter(isStoredProduct) : [];
+    return Array.isArray(parsed)
+      ? removeDeletedProducts(parsed.filter(isStoredProduct))
+      : [];
   } catch {
     return [];
   }
@@ -150,6 +156,22 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (isLoading || userId) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   }, [isLoading, products, userId]);
+
+  useEffect(() => {
+    const removeDeleted = (event: Event) => {
+      const deleted = (event as CustomEvent<{ id: string; slug: string }>)
+        .detail;
+      setProducts((current) =>
+        current.filter(
+          (product) =>
+            product.id !== deleted.id && product.slug !== deleted.slug,
+        ),
+      );
+    };
+    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    return () =>
+      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+  }, []);
 
   const mutateRemote = useCallback(
     async (productId: string, adding: boolean, previous: CatalogProduct[]) => {

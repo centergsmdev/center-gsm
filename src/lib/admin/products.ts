@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
+import { markProductDeleted } from "@/lib/catalog/deleted-products";
 import type {
   AdminProduct,
   AdminProductFilters,
@@ -217,10 +218,14 @@ export async function permanentlyDeleteAdminProduct(
     const response = await fetch(`/api/admin/products/${id}`, {
       method: "DELETE",
     });
-    const result = (await response.json()) as AdminProductResult<true>;
-    return response.ok && result.data
-      ? result
-      : { data: null, error: result.error ?? SAFE_ERROR };
+    const result = (await response.json()) as AdminProductResult<true> & {
+      deletedProduct?: { id: string; slug: string };
+    };
+    if (response.ok && result.data) {
+      if (result.deletedProduct) markProductDeleted(result.deletedProduct);
+      return result;
+    }
+    return { data: null, error: result.error ?? SAFE_ERROR };
   } catch {
     return { data: null, error: SAFE_ERROR };
   }

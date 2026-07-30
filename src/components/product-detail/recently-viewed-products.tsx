@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 
 import { ProductRecommendations } from "@/components/product-detail/product-recommendations";
 import type { CatalogProduct } from "@/types/product";
+import {
+  PRODUCT_DELETED_EVENT,
+  removeDeletedProducts,
+} from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-recently-viewed-products";
 const MAX_STORED_PRODUCTS = 8;
@@ -21,12 +25,14 @@ export function RecentlyViewedProducts({
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       if (Array.isArray(parsed)) {
-        storedProducts = parsed.filter(
-          (item): item is CatalogProduct =>
-            typeof item === "object" &&
-            item !== null &&
-            "id" in item &&
-            "slug" in item,
+        storedProducts = removeDeletedProducts(
+          parsed.filter(
+            (item): item is CatalogProduct =>
+              typeof item === "object" &&
+              item !== null &&
+              "id" in item &&
+              "slug" in item,
+          ),
         );
       }
     } catch {
@@ -45,6 +51,18 @@ export function RecentlyViewedProducts({
     } catch {
       // Ürün sayfası, tarayıcı depolaması kullanılamadığında da çalışır.
     }
+    const removeDeleted = (event: Event) => {
+      const deleted = (event as CustomEvent<{ id: string; slug: string }>)
+        .detail;
+      setRecentProducts((current) =>
+        current.filter(
+          (item) => item.id !== deleted.id && item.slug !== deleted.slug,
+        ),
+      );
+    };
+    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    return () =>
+      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
   }, [product]);
 
   return (

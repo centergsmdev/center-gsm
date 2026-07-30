@@ -8,9 +8,6 @@ export type CatalogProduct = {
   model: string;
   description: string;
   shortDescription?: string;
-  technicalSpecifications?: string;
-  boxContents?: string;
-  deliveryReturns?: string;
   category: ProductCategory;
   price: number;
   previousPrice?: number;

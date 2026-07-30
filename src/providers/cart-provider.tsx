@@ -10,6 +10,10 @@ import {
 } from "react";
 import { catalogProducts } from "@/data/catalog-products";
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
+import {
+  PRODUCT_DELETED_EVENT,
+  removeDeletedProducts,
+} from "@/lib/catalog/deleted-products";
 import { calculateCheckoutPricing } from "@/lib/promotions/client";
 import type { CartItem, CartLine, CartTotals } from "@/types/cart";
 import type { CatalogProduct } from "@/types/product";
@@ -52,11 +56,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) setItems(JSON.parse(stored) as CartItem[]);
+      if (stored) {
+        const parsed = JSON.parse(stored) as CartItem[];
+        const products = removeDeletedProducts(
+          parsed.flatMap((item) =>
+            item.product
+              ? [item.product]
+              : catalogProducts.filter(
+                  (product) => product.id === item.productId,
+                ),
+          ),
+        );
+        const activeIds = new Set(products.map((product) => product.id));
+        setItems(parsed.filter((item) => activeIds.has(item.productId)));
+      }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
     setStorageReady(true);
+    const removeDeleted = (event: Event) => {
+      const deleted = (event as CustomEvent<{ id: string; slug: string }>)
+        .detail;
+      setItems((current) =>
+        current.filter(
+          (item) =>
+            item.productId !== deleted.id &&
+            item.product?.slug !== deleted.slug,
+        ),
+      );
+    };
+    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    return () =>
+      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
   }, []);
   useEffect(() => {
     if (storageReady)

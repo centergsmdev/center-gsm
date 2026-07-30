@@ -1,5 +1,6 @@
 import { catalogProducts } from "@/data/catalog-products";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
+import { plainText } from "@/lib/seo/seo";
 import type { Json } from "@/types/database";
 import type {
   CatalogProduct,
@@ -56,15 +57,12 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     ? row.name.slice(row.brand.name.length).trim()
     : row.name;
   return {
-    id: fallback?.id ?? row.id,
+    id: row.id,
     slug: row.slug,
     brand: row.brand.name,
     model,
     description: row.description ?? "",
-    shortDescription: row.short_description ?? undefined,
-    technicalSpecifications: row.technical_specifications ?? undefined,
-    boxContents: row.box_contents ?? undefined,
-    deliveryReturns: row.delivery_returns ?? undefined,
+    shortDescription: row.description ? plainText(row.description) : undefined,
     category,
     price,
     previousPrice: oldPrice,

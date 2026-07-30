@@ -36,15 +36,10 @@ type FormState = {
   brand_id: string;
   category_id: string;
   description: string;
-  short_description: string;
-  technical_specifications: string;
-  box_contents: string;
-  delivery_returns: string;
   price: string;
   old_price: string;
   stock_quantity: string;
   reorder_level: string;
-  warranty_months: string;
   is_active: boolean;
   is_featured: boolean;
 };
@@ -56,15 +51,10 @@ const emptyForm: FormState = {
   brand_id: "",
   category_id: "",
   description: "",
-  short_description: "",
-  technical_specifications: "",
-  box_contents: "",
-  delivery_returns: "",
   price: "",
   old_price: "",
   stock_quantity: "0",
   reorder_level: "5",
-  warranty_months: "24",
   is_active: true,
   is_featured: false,
 };
@@ -116,15 +106,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           brand_id: item.brand_id,
           category_id: item.category_id,
           description: item.description ?? "",
-          short_description: item.short_description ?? "",
-          technical_specifications: item.technical_specifications ?? "",
-          box_contents: item.box_contents ?? "",
-          delivery_returns: item.delivery_returns ?? "",
           price: String(item.price),
           old_price: item.old_price === null ? "" : String(item.old_price),
           stock_quantity: String(item.stock_quantity),
           reorder_level: "5",
-          warranty_months: String(item.warranty_months),
           is_active: item.is_active,
           is_featured: item.is_featured,
         });
@@ -172,16 +157,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       sku: form.sku.trim(),
       brand_id: form.brand_id,
       category_id: form.category_id,
-      description: form.description.trim() || null,
-      short_description: form.short_description.trim() || null,
-      technical_specifications:
-        sanitizeRichText(form.technical_specifications) || null,
-      box_contents: sanitizeRichText(form.box_contents) || null,
-      delivery_returns: sanitizeRichText(form.delivery_returns) || null,
+      description: sanitizeRichText(form.description) || null,
       price: Number(form.price),
       old_price: form.old_price ? Number(form.old_price) : null,
       stock_quantity: Number(form.stock_quantity),
-      warranty_months: Number(form.warranty_months),
       is_active: form.is_active,
       is_featured: form.is_featured,
     };
@@ -274,14 +253,6 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               className="sm:col-span-2"
             />
             <Field
-              label="Slug"
-              name="slug"
-              form={form}
-              errors={errors}
-              set={set}
-              required
-            />
-            <Field
               label="SKU"
               name="sku"
               form={form}
@@ -305,77 +276,26 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               onChange={(value) => set("category_id", value)}
               items={categories}
             />
-            <AdminField
-              label="Kısa açıklama"
-              htmlFor="short_description"
-              className="sm:col-span-2"
-            >
-              <input
-                id="short_description"
-                value={form.short_description}
-                onChange={(e) => set("short_description", e.target.value)}
-                maxLength={220}
-                className={adminControlClass}
-              />
-            </AdminField>
-            <AdminField
-              label="Detaylı Açıklama"
-              htmlFor="description"
-              className="sm:col-span-2"
-            >
-              <textarea
-                id="description"
-                value={form.description}
-                onChange={(e) => set("description", e.target.value)}
-                rows={6}
-                className={`${adminControlClass} h-auto py-3`}
-              />
-            </AdminField>
           </div>
         </AdminFormSection>
         <AdminFormSection
-          title="Ürün içeriği"
-          description="Bu alanlar ürün detayındaki bilgi sekmelerinde aynen gösterilir. Boş alanlar müşteri tarafında gösterilmez."
+          title="Açıklama"
+          description="Ürün detayında eksiksiz gösterilecek içeriği yazın. Kart özeti bu metinden otomatik ve güvenli biçimde oluşturulur."
         >
-          <div className="space-y-6">
-            <AdminField
-              label="Teknik Özellikler"
-              htmlFor="technical_specifications"
-            >
-              <RichTextEditor
-                id="technical_specifications"
-                ariaLabel="Teknik Özellikler"
-                value={form.technical_specifications}
-                onChange={(value) => set("technical_specifications", value)}
-              />
-            </AdminField>
-            <AdminField label="Kutu İçeriği" htmlFor="box_contents">
-              <RichTextEditor
-                id="box_contents"
-                ariaLabel="Kutu İçeriği"
-                value={form.box_contents}
-                onChange={(value) => set("box_contents", value)}
-              />
-            </AdminField>
-            <AdminField label="Teslimat ve İade" htmlFor="delivery_returns">
-              <RichTextEditor
-                id="delivery_returns"
-                ariaLabel="Teslimat ve İade"
-                value={form.delivery_returns}
-                onChange={(value) => set("delivery_returns", value)}
-              />
-            </AdminField>
-          </div>
+          <AdminField label="Ürün açıklaması" htmlFor="description">
+            <RichTextEditor
+              id="description"
+              ariaLabel="Ürün açıklaması"
+              value={form.description}
+              onChange={(value) => set("description", value)}
+            />
+          </AdminField>
         </AdminFormSection>
         <AdminFormSection
-          title="Fiyat ve stok"
-          description={
-            productId
-              ? "Mevcut stok yalnızca Stok Yönetimi ekranındaki güvenli hareketlerle değiştirilebilir."
-              : "Başlangıç stoğu varsayılan depoya kaydedilir."
-          }
+          title="Fiyat"
+          description="Satış ve varsa karşılaştırmalı eski fiyatı yönetin."
         >
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field
               label="Fiyat (₺)"
               name="price"
@@ -393,6 +313,17 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               errors={errors}
               set={set}
             />
+          </div>
+        </AdminFormSection>
+        <AdminFormSection
+          title="Stok"
+          description={
+            productId
+              ? "Mevcut stok yalnızca Stok Yönetimi ekranındaki güvenli hareketlerle değiştirilebilir."
+              : "Başlangıç stoğu varsayılan depoya kaydedilir."
+          }
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field
               label={productId ? "Kullanılabilir stok" : "Başlangıç stoğu"}
               name="stock_quantity"
@@ -412,14 +343,6 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               set={set}
               required
             />
-            <Field
-              label="Garanti (ay)"
-              name="warranty_months"
-              type="number"
-              form={form}
-              errors={errors}
-              set={set}
-            />
           </div>
         </AdminFormSection>
         <AdminFormSection
@@ -432,6 +355,19 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             onImagesChange={setImages}
             pendingImages={pendingImages}
             onPendingImagesChange={setPendingImages}
+          />
+        </AdminFormSection>
+        <AdminFormSection
+          title="SEO"
+          description="Ürünün arama motorları ve paylaşılabilir adresi için kalıcı URL bilgisini yönetin."
+        >
+          <Field
+            label="Slug"
+            name="slug"
+            form={form}
+            errors={errors}
+            set={set}
+            required
           />
         </AdminFormSection>
       </div>

@@ -3,6 +3,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import type { CatalogProduct } from "@/types/product";
+import {
+  PRODUCT_DELETED_EVENT,
+  removeDeletedProducts,
+} from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-comparison-v2";
 export const COMPARISON_LIMIT = 4;
@@ -45,12 +49,30 @@ export function ComparisonProvider({
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       if (Array.isArray(parsed)) {
-        setProducts(parsed.filter(isStoredProduct).slice(0, COMPARISON_LIMIT));
+        setProducts(
+          removeDeletedProducts(parsed.filter(isStoredProduct)).slice(
+            0,
+            COMPARISON_LIMIT,
+          ),
+        );
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
     setStorageReady(true);
+    const removeDeleted = (event: Event) => {
+      const deleted = (event as CustomEvent<{ id: string; slug: string }>)
+        .detail;
+      setProducts((current) =>
+        current.filter(
+          (product) =>
+            product.id !== deleted.id && product.slug !== deleted.slug,
+        ),
+      );
+    };
+    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    return () =>
+      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
   }, []);
 
   useEffect(() => {
