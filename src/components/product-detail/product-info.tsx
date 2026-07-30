@@ -201,13 +201,15 @@ export function ProductInfo({
         <p className="text-4xl font-black tracking-[-0.045em] text-foreground">
           {formatCurrency(product.price)}
         </p>
-        <p className="mt-2 text-sm text-muted">
-          <strong className="text-foreground">
-            {product.installmentCount} ay ×{" "}
-            {formatCurrency(product.monthlyInstallment)}
-          </strong>{" "}
-          taksit imkânı
-        </p>
+        {product.showInstallments ? (
+          <p className="mt-2 text-sm text-muted">
+            <strong className="text-foreground">
+              {product.installmentCount} ×{" "}
+              {formatCurrency(product.monthlyInstallment)}
+            </strong>
+            {product.installmentNote ? ` · ${product.installmentNote}` : ""}
+          </p>
+        ) : null}
       </div>
 
       <Card className="mt-5 grid gap-2 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">

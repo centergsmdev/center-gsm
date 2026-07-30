@@ -24,6 +24,9 @@ export type AdminProductFormValues = Pick<
   | "old_price"
   | "stock_quantity"
   | "warranty_months"
+  | "show_installments"
+  | "installment_count"
+  | "installment_note"
   | "is_active"
   | "is_featured"
 >;

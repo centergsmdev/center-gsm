@@ -46,6 +46,9 @@ type Product = Timestamps & {
   is_active: boolean;
   is_featured: boolean;
   warranty_months: number;
+  show_installments: boolean;
+  installment_count: number;
+  installment_note: string | null;
   rating: number;
   review_count: number;
   search_text: string;

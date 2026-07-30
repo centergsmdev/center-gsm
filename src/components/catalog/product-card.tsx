@@ -134,12 +134,14 @@ export function ProductCard({
           <p className="text-lg font-black tracking-[-0.045em] text-primary sm:text-[22px] sm:text-zinc-950">
             {formatCurrency(product.price)}
           </p>
-          <p className="mt-0.5 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-medium text-zinc-600 sm:mt-1 sm:px-2.5 sm:py-1 sm:text-[10px]">
-            <strong className="text-zinc-950">
-              {product.installmentCount} ay
-            </strong>{" "}
-            × {formatCurrency(product.monthlyInstallment)}
-          </p>
+          {product.showInstallments ? (
+            <p className="mt-0.5 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-medium text-zinc-600 sm:mt-1 sm:px-2.5 sm:py-1 sm:text-[10px]">
+              <strong className="text-zinc-950">
+                {product.installmentCount} ay
+              </strong>{" "}
+              × {formatCurrency(product.monthlyInstallment)}
+            </p>
+          ) : null}
 
           <div className="mt-1.5 flex flex-wrap gap-1 sm:mt-2">
             {product.freeShipping ? (

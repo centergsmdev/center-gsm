@@ -24,6 +24,12 @@ import {
   type PendingProductImage,
 } from "@/lib/admin/product-images";
 import { sanitizeRichText } from "@/lib/content/rich-text";
+import { formatCurrency } from "@/lib/format";
+import {
+  calculateMonthlyInstallment,
+  INSTALLMENT_COUNTS,
+  isInstallmentCount,
+} from "@/lib/catalog/installments";
 import { getAdminWarehouses, updateReorderLevel } from "@/lib/admin/inventory";
 import type {
   AdminProductFormValues,
@@ -43,6 +49,9 @@ type FormState = {
   stock_quantity: string;
   reorder_level: string;
   warranty_months: string;
+  show_installments: boolean;
+  installment_count: string;
+  installment_note: string;
   is_active: boolean;
   is_featured: boolean;
 };
@@ -59,6 +68,9 @@ const emptyForm: FormState = {
   stock_quantity: "0",
   reorder_level: "5",
   warranty_months: "24",
+  show_installments: false,
+  installment_count: "3",
+  installment_note: "",
   is_active: true,
   is_featured: false,
 };
@@ -121,6 +133,9 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             stock_quantity: String(item.stock_quantity),
             reorder_level: "5",
             warranty_months: String(item.warranty_months),
+            show_installments: item.show_installments ?? false,
+            installment_count: String(item.installment_count ?? 3),
+            installment_note: item.installment_note ?? "",
             is_active: item.is_active,
             is_featured: item.is_featured,
           });
@@ -151,6 +166,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
     const stock = Number(form.stock_quantity);
     const reorderLevel = Number(form.reorder_level);
     const oldPrice = form.old_price ? Number(form.old_price) : null;
+    const installmentCount = Number(form.installment_count);
     if (!form.name.trim()) next.name = "Ürün adı zorunludur.";
     if (!form.slug.trim()) next.slug = "Slug zorunludur.";
     if (!form.sku.trim()) next.sku = "SKU zorunludur.";
@@ -164,6 +180,8 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       next.reorder_level = "Kritik stok seviyesi negatif olamaz.";
     if (oldPrice !== null && (!Number.isFinite(oldPrice) || oldPrice < price))
       next.old_price = "Eski fiyat güncel fiyattan düşük olamaz.";
+    if (form.show_installments && !isInstallmentCount(installmentCount))
+      next.installment_count = "Geçerli bir taksit sayısı seçin.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -184,6 +202,9 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       old_price: form.old_price ? Number(form.old_price) : null,
       stock_quantity: Number(form.stock_quantity),
       warranty_months: Number(form.warranty_months),
+      show_installments: form.show_installments,
+      installment_count: Number(form.installment_count),
+      installment_note: form.installment_note.trim() || null,
       is_active: form.is_active,
       is_featured: form.is_featured,
     };
@@ -391,6 +412,64 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               errors={errors}
               set={set}
               required
+            />
+          </div>
+        </AdminFormSection>
+        <AdminFormSection
+          title="Taksit Ayarları"
+          description="Müşteri tarafındaki ürün bazlı taksit gösterimini yönetin."
+        >
+          <div className="space-y-5">
+            <Toggle
+              label="Taksit göster"
+              description="Kapalı olduğunda müşteri tarafında taksit bilgisi gösterilmez."
+              checked={form.show_installments}
+              onChange={(value) => set("show_installments", value)}
+            />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <AdminField label="Taksit Sayısı" htmlFor="installment_count">
+                <select
+                  id="installment_count"
+                  value={form.installment_count}
+                  onChange={(event) =>
+                    set("installment_count", event.target.value)
+                  }
+                  className={adminControlClass}
+                  disabled={!form.show_installments}
+                >
+                  {INSTALLMENT_COUNTS.map((count) => (
+                    <option key={count} value={count}>
+                      {count}
+                    </option>
+                  ))}
+                </select>
+              </AdminField>
+              <AdminField
+                label="Aylık Taksit Tutarı"
+                htmlFor="monthly_installment_preview"
+              >
+                <output
+                  id="monthly_installment_preview"
+                  className={`${adminControlClass} flex items-center bg-zinc-50`}
+                >
+                  {form.show_installments && Number(form.price) > 0
+                    ? formatCurrency(
+                        calculateMonthlyInstallment(
+                          Number(form.price),
+                          Number(form.installment_count),
+                        ),
+                      )
+                    : "—"}
+                </output>
+              </AdminField>
+            </div>
+            <Field
+              label="İsteğe bağlı açıklama"
+              name="installment_note"
+              form={form}
+              errors={errors}
+              set={set}
+              disabled={!form.show_installments}
             />
           </div>
         </AdminFormSection>

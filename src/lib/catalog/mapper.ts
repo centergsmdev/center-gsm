@@ -1,5 +1,6 @@
 import { catalogProducts } from "@/data/catalog-products";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
+import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import { plainText } from "@/lib/seo/seo";
 import type { Json } from "@/types/database";
 import type {
@@ -46,6 +47,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     );
   const oldPrice = row.old_price === null ? undefined : Number(row.old_price);
   const price = Number(row.price);
+  const installmentCount = row.installment_count ?? 3;
   const discountRate =
     oldPrice && oldPrice > price
       ? Math.round(((oldPrice - price) / oldPrice) * 100)
@@ -69,8 +71,10 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     price,
     previousPrice: oldPrice,
     discountRate,
-    monthlyInstallment: Math.round(price / 3),
-    installmentCount: 3,
+    monthlyInstallment: calculateMonthlyInstallment(price, installmentCount),
+    installmentCount,
+    showInstallments: row.show_installments === true,
+    installmentNote: row.installment_note ?? undefined,
     stockStatus:
       row.availableStock === 0
         ? "out-of-stock"

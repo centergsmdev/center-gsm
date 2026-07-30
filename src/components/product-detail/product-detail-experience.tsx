@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
+import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import {
   resolveSelectedVariant,
   storageKeyFromParam,
@@ -113,8 +114,9 @@ export function ProductDetailExperience({
                   100,
               )
             : undefined,
-        monthlyInstallment: Math.round(
-          selectedVariant.price / product.installmentCount,
+        monthlyInstallment: calculateMonthlyInstallment(
+          selectedVariant.price,
+          product.installmentCount,
         ),
         availableStock: selectedVariant.stockQuantity,
         stockStatus:

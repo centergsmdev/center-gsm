@@ -14,6 +14,8 @@ export type CatalogProduct = {
   discountRate?: number;
   monthlyInstallment: number;
   installmentCount: number;
+  showInstallments?: boolean;
+  installmentNote?: string;
   stockStatus: "in-stock" | "limited" | "out-of-stock";
   availableStock?: number;
   sameDayShipping: boolean;
