@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { AuthShell } from "@/components/account/auth-shell";
 import { LoginForm } from "@/components/account/login-form";
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const requestedReturnUrl =
+    typeof params.returnUrl === "string" ? params.returnUrl : "/hesabim";
+  const returnUrl =
+    requestedReturnUrl.startsWith("/") && !requestedReturnUrl.startsWith("//")
+      ? requestedReturnUrl
+      : "/hesabim";
   return (
     <AuthShell
       eyebrow="Tekrar hoş geldiniz"
@@ -16,7 +27,11 @@ export default function LoginPage() {
         </>
       }
     >
-      <LoginForm />
+      <LoginForm
+        registrationPending={params.kayit === "onay"}
+        callbackError={Boolean(params.hata)}
+        returnUrl={returnUrl}
+      />
     </AuthShell>
   );
 }

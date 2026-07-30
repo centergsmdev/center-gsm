@@ -9,9 +9,15 @@ export type AuthError = {
   message: string;
   code?: string;
   status?: number;
+  details?: string;
+  hint?: string;
+  stack?: string;
 } | null;
 export type BrowserAuthApi = {
-  getSession: () => Promise<{ data: { session: AuthSession } }>;
+  getSession: () => Promise<{
+    data: { session: AuthSession };
+    error?: AuthError;
+  }>;
   getUser: () => Promise<{ data: { user: AuthUser | null }; error: AuthError }>;
   onAuthStateChange: (
     callback: (event: string, session: AuthSession) => void,

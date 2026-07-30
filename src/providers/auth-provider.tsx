@@ -9,7 +9,11 @@ import {
   useState,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authApi, type AuthUser } from "@/lib/supabase/auth-api";
+import {
+  authApi,
+  type AuthError,
+  type AuthUser,
+} from "@/lib/supabase/auth-api";
 import type {
   DemoAddress,
   DemoUser,
@@ -54,6 +58,53 @@ type AuthContextValue = {
   updatePreferences: (preferences: NotificationPreferences) => void;
 };
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function reportAuthFailure(operation: string, error: AuthError | unknown) {
+  if (process.env.NODE_ENV === "production" || !error) return;
+  const failure = error as {
+    code?: string;
+    message?: string;
+    details?: string;
+    hint?: string;
+    stack?: string;
+  };
+  console.error(`Customer auth ${operation} failed`, {
+    code: failure.code,
+    message: failure.message ?? String(error),
+    details: failure.details,
+    hint: failure.hint,
+    stack: failure.stack ?? new Error().stack,
+  });
+}
+
+function loginError(error: NonNullable<AuthError>) {
+  if (error.code === "email_not_confirmed")
+    return "Giriş yapmadan önce e-posta adresinizi doğrulayın.";
+  if (error.code === "too_many_requests" || error.status === 429)
+    return "Çok fazla giriş denemesi yapıldı. Lütfen kısa süre sonra tekrar deneyin.";
+  if (
+    error.code === "invalid_credentials" ||
+    error.message
+      .toLocaleLowerCase("en-US")
+      .includes("invalid login credentials")
+  )
+    return "E-posta veya şifre hatalı.";
+  return "Giriş işlemi tamamlanamadı. Lütfen tekrar deneyin.";
+}
+
+function registerError(error: NonNullable<AuthError>) {
+  if (error.code === "email_address_invalid")
+    return "Geçerli bir e-posta adresi girin.";
+  if (error.code === "user_already_exists")
+    return "Bu e-posta adresiyle daha önce hesap oluşturulmuş.";
+  if (error.code === "over_email_send_rate_limit" || error.status === 429)
+    return "Çok fazla doğrulama e-postası gönderildi. Lütfen kısa süre sonra tekrar deneyin.";
+  if (error.code === "weak_password") return "Daha güçlü bir şifre belirleyin.";
+  return "Kayıt oluşturulamadı. Bilgilerinizi kontrol edip tekrar deneyin.";
+}
+
+const normalizeEmail = (email: string) =>
+  email.trim().toLocaleLowerCase("en-US");
 
 const mapAddress = (item: Tables<"addresses">): DemoAddress => ({
   id: item.id,
@@ -101,7 +152,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .order("is_default", { ascending: false })
         .order("created_at"),
     ]);
-    const row = profile.data;
+    if (profile.error) reportAuthFailure("profile load", profile.error);
+    if (addressRows.error) reportAuthFailure("address load", addressRows.error);
+    let row = profile.data;
+    if (!row && !profile.error) {
+      const created = await client
+        .from("profiles")
+        .insert({
+          id: current.id,
+          first_name: String(current.user_metadata.first_name ?? "") || null,
+          last_name: String(current.user_metadata.last_name ?? "") || null,
+          phone: String(current.user_metadata.phone ?? "") || null,
+        })
+        .select("*")
+        .single();
+      if (created.error?.code === "23505") {
+        const existing = await client
+          .from("profiles")
+          .select("*")
+          .eq("id", current.id)
+          .maybeSingle();
+        row = existing.data;
+      } else if (created.error) {
+        reportAuthFailure("profile recovery", created.error);
+      } else row = created.data;
+    }
     setUser({
       firstName:
         row?.first_name ?? String(current.user_metadata.first_name ?? ""),
@@ -120,9 +195,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const auth = authApi(client);
-    void auth
-      .getSession()
-      .then(({ data }) => loadAccount(data.session?.user ?? null));
+    void auth.getSession().then(({ data, error }) => {
+      if (error) reportAuthFailure("session restore", error);
+      return loadAccount(data.session?.user ?? null);
+    });
     const { data } = auth.onAuthStateChange(
       (_event, session) => void loadAccount(session?.user ?? null),
     );
@@ -134,15 +210,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!client)
         return { success: false, error: "Supabase Auth yapılandırılmamış." };
       const result = await authApi(client).signInWithPassword({
-        email: email.trim(),
+        email: normalizeEmail(email),
         password,
       });
-      if (result.error)
-        return { success: false, error: "E-posta veya şifre hatalı." };
-      await client.rpc("record_customer_login", {});
+      if (result.error) {
+        reportAuthFailure("login", result.error);
+        return { success: false, error: loginError(result.error) };
+      }
+      await loadAccount(result.data.user);
+      const activity = await client.rpc("record_customer_login", {});
+      if (activity.error) reportAuthFailure("login activity", activity.error);
       return { success: true };
     },
-    [],
+    [loadAccount],
   );
   const register = useCallback(
     async (
@@ -156,25 +236,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!client)
         return { success: false, error: "Supabase Auth yapılandırılmamış." };
       const result = await authApi(client).signUp({
-        email: email.trim(),
+        email: normalizeEmail(email),
         password,
         options: {
           data: { first_name: firstName, last_name: lastName, phone },
-          emailRedirectTo: `${window.location.origin}/hesabim`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup&next=/hesabim`,
         },
       });
-      if (result.error)
+      if (result.error) {
+        reportAuthFailure("registration", result.error);
         return {
           success: false,
-          error: "Kayıt oluşturulamadı. E-posta adresini kontrol edin.",
+          error: registerError(result.error),
         };
+      }
+      if (result.data.session) await loadAccount(result.data.session.user);
       return { success: true, requiresEmailConfirmation: !result.data.session };
     },
-    [],
+    [loadAccount],
   );
   const logout = useCallback(async () => {
     const client = createClient();
-    if (client) await authApi(client).signOut();
+    if (client) {
+      const result = await authApi(client).signOut();
+      if (result.error) reportAuthFailure("logout", result.error);
+    }
     await loadAccount(null);
   }, [loadAccount]);
   const updateProfile = useCallback(

@@ -9,7 +9,15 @@ import { CheckoutField } from "@/components/checkout/checkout-field";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
 
-export function LoginForm() {
+export function LoginForm({
+  registrationPending = false,
+  callbackError = false,
+  returnUrl = "/hesabim",
+}: {
+  registrationPending?: boolean;
+  callbackError?: boolean;
+  returnUrl?: string;
+}) {
   const router = useRouter();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +32,7 @@ export function LoginForm() {
     setLoading(true);
     const result = await login(email, password);
     if (result.success) {
-      router.push("/hesabim");
+      router.push(returnUrl);
       router.refresh();
     } else {
       setLoading(false);
@@ -33,6 +41,24 @@ export function LoginForm() {
   }
   return (
     <form onSubmit={submit} noValidate>
+      {registrationPending ? (
+        <p
+          className="mb-4 rounded-md bg-emerald-50 p-3 text-xs font-semibold text-emerald-700"
+          role="status"
+        >
+          Hesabınız oluşturuldu. Giriş yapmadan önce e-posta adresinize
+          gönderilen doğrulama bağlantısını açın.
+        </p>
+      ) : null}
+      {callbackError ? (
+        <p
+          className="mb-4 rounded-md bg-amber-50 p-3 text-xs font-semibold text-amber-800"
+          role="alert"
+        >
+          Doğrulama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeniden kayıt
+          olmayı ya da şifre yenilemeyi deneyin.
+        </p>
+      ) : null}
       <div className="space-y-4">
         <CheckoutField
           label="E-posta"
