@@ -10,14 +10,22 @@ import type { CatalogProduct } from "@/types/product";
 
 const views = ["Ön görünüm", "Arka görünüm", "Yan görünüm", "Detay görünümü"];
 
-export function ProductGallery({ product }: { product: CatalogProduct }) {
+export function ProductGallery({
+  product,
+  imageUrls,
+  galleryKey = "default",
+}: {
+  product: CatalogProduct;
+  imageUrls?: string[];
+  galleryKey?: string;
+}) {
   const [selectedView, setSelectedView] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const galleryItems = product.imageUrls?.length
-    ? product.imageUrls.map((url, index) => ({
+  const galleryItems = imageUrls?.length
+    ? imageUrls.map((url, index) => ({
         label: `${product.brand} ${product.model} görsel ${index + 1}`,
         url,
       }))
@@ -34,6 +42,11 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
     setSelectedView((current) => (current + 1) % galleryItems.length);
     setIsZoomed(false);
   }
+
+  useEffect(() => {
+    setSelectedView(0);
+    setIsZoomed(false);
+  }, [galleryKey]);
 
   useEffect(() => {
     if (!isLightboxOpen) return;
@@ -76,8 +89,8 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
         aria-haspopup="dialog"
       >
         <div
-          key={selectedItem?.url ?? selectedView}
-          className="animate-in fade-in size-full duration-300"
+          key={`${galleryKey}-${selectedItem?.url ?? selectedView}`}
+          className="animate-in fade-in zoom-in-95 size-full duration-300"
         >
           <ProductVisual
             product={product}

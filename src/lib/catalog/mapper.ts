@@ -37,11 +37,13 @@ function attributes(value: Json): CatalogProductVariant["attributes"] {
 
 export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
   const fallback = catalogProducts.find((product) => product.slug === row.slug);
-  const sortedImages = [...row.images].sort(
-    (a, b) =>
-      Number(b.is_primary) - Number(a.is_primary) ||
-      a.sort_order - b.sort_order,
-  );
+  const sortedImages = row.images
+    .filter((image) => image.color_id == null)
+    .sort(
+      (a, b) =>
+        Number(b.is_primary) - Number(a.is_primary) ||
+        a.sort_order - b.sort_order,
+    );
   const oldPrice = row.old_price === null ? undefined : Number(row.old_price);
   const price = Number(row.price);
   const discountRate =
@@ -85,6 +87,20 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     warrantyMonths: row.warranty_months,
     mainImageUrl: sortedImages[0]?.url,
     imageUrls: sortedImages.map((image) => image.url),
+    colors: (row.colors ?? []).map((color) => ({
+      id: color.id,
+      name: color.name,
+      displayName: color.display_name ?? color.name,
+      hexCode: color.hex_code,
+      imageUrls: row.images
+        .filter((image) => image.color_id === color.id)
+        .sort(
+          (a, b) =>
+            Number(b.is_primary) - Number(a.is_primary) ||
+            a.sort_order - b.sort_order,
+        )
+        .map((image) => image.url),
+    })),
     variants: row.variants
       .filter((variant) => variant.is_active)
       .map((variant) => ({
@@ -92,7 +108,14 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
         name: variant.name,
         sku: variant.sku,
         price: Number(variant.price),
+        previousPrice:
+          variant.old_price === null ? undefined : Number(variant.old_price),
         stockQuantity: variant.stock_quantity,
+        colorId: variant.color_id ?? undefined,
+        storageValue: variant.storage_value ?? undefined,
+        storageUnit: variant.storage_unit ?? undefined,
+        isDefault: variant.is_default,
+        sortOrder: variant.sort_order,
         attributes: attributes(variant.attributes),
       })),
   };

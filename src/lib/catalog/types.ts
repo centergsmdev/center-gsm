@@ -36,12 +36,15 @@ export type CatalogCollectionResult<T> = {
 export type CatalogTaxonomy = Pick<
   Tables<"categories">,
   "id" | "name" | "slug"
-> & Partial<Pick<Tables<"categories">,"image_url">>;
-export type BrandTaxonomy = Pick<Tables<"brands">, "id" | "name" | "slug"> & Partial<Pick<Tables<"brands">,"logo_url">>;
+> &
+  Partial<Pick<Tables<"categories">, "image_url">>;
+export type BrandTaxonomy = Pick<Tables<"brands">, "id" | "name" | "slug"> &
+  Partial<Pick<Tables<"brands">, "logo_url">>;
 export type SupabaseCatalogRow = Tables<"products"> & {
   availableStock: number;
   category: CatalogTaxonomy;
   brand: BrandTaxonomy;
   images: Tables<"product_images">[];
+  colors?: Tables<"product_colors">[];
   variants: Tables<"product_variants">[];
 };

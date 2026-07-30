@@ -25,7 +25,16 @@ export type CatalogProduct = {
   warrantyMonths?: number;
   mainImageUrl?: string;
   imageUrls?: string[];
+  colors?: CatalogProductColor[];
   variants?: CatalogProductVariant[];
+};
+
+export type CatalogProductColor = {
+  id: string;
+  name: string;
+  displayName: string;
+  hexCode: string;
+  imageUrls: string[];
 };
 
 export type CatalogProductVariant = {
@@ -33,6 +42,12 @@ export type CatalogProductVariant = {
   name: string;
   sku: string;
   price: number;
+  previousPrice?: number;
   stockQuantity: number;
+  colorId?: string;
+  storageValue?: number;
+  storageUnit?: "GB" | "TB";
+  isDefault?: boolean;
+  sortOrder?: number;
   attributes: Record<string, string | number | boolean>;
 };

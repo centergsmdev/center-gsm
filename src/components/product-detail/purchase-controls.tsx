@@ -14,16 +14,22 @@ export function PurchaseControls({
   product,
   productId,
   productName,
+  selectionRequired = false,
+  selectionComplete = true,
 }: {
   product: import("@/types/product").CatalogProduct;
   productId: string;
   productName: string;
+  selectionRequired?: boolean;
+  selectionComplete?: boolean;
 }) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const { addItem } = useCart();
   const maxQuantity = Math.min(10, product.availableStock ?? 10);
   const unavailable = product.stockStatus === "out-of-stock";
+  const selectionMissing = selectionRequired && !selectionComplete;
+  const purchaseDisabled = unavailable || selectionMissing;
 
   return (
     <div className="mt-5">
@@ -71,7 +77,7 @@ export function PurchaseControls({
             className="w-full shadow-[0_10px_24px_rgba(220,38,38,0.22)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(220,38,38,0.3)] active:scale-[0.99]"
             aria-label={`${quantity} adet ${productName} ürününü sepete ekle`}
             onClick={() => addItem(productId, quantity, product)}
-            disabled={unavailable}
+            disabled={purchaseDisabled}
           >
             <ShoppingBag className="size-4" aria-hidden="true" />
             {unavailable ? "Tükendi" : "Sepete Ekle"}
@@ -80,7 +86,7 @@ export function PurchaseControls({
             size="lg"
             variant="secondary"
             className="transition-premium w-full active:scale-[0.99]"
-            disabled={unavailable}
+            disabled={purchaseDisabled}
             onClick={() => {
               addItem(productId, quantity, product);
               router.push("/odeme");
@@ -90,6 +96,14 @@ export function PurchaseControls({
             Hemen Satın Al
           </Button>
         </div>
+        {selectionMissing ? (
+          <p
+            className="mt-2 text-center text-xs font-semibold text-amber-700"
+            role="status"
+          >
+            Lütfen önce renk ve depolama seçiniz.
+          </p>
+        ) : null}
         <div className="mt-2 grid grid-cols-2 gap-2">
           <FavoriteButton
             product={product}

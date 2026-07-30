@@ -3,8 +3,7 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
-import { ProductGallery } from "@/components/product-detail/product-gallery";
-import { ProductInfo } from "@/components/product-detail/product-info";
+import { ProductDetailExperience } from "@/components/product-detail/product-detail-experience";
 import { RecentlyViewedProducts } from "@/components/product-detail/recently-viewed-products";
 import { ProductDetailErrorState } from "@/components/product-detail/product-detail-states";
 import { Container } from "@/components/ui/container";
@@ -138,10 +137,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
       <Container>
         <ProductDetailBreadcrumb product={product} />
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:items-start lg:gap-12">
-          <ProductGallery product={product} />
-          <ProductInfo product={product} />
-        </div>
+        <ProductDetailExperience product={product} />
         {hasManagedContent ? (
           <div className="mt-12 sm:mt-16">
             <ProductTabs product={product} />

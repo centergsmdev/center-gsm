@@ -96,6 +96,7 @@ async function hydrateProducts(
     brandsResult,
     imagesResult,
     variantsResult,
+    colorsResult,
     stockResult,
   ] = await Promise.all([
     client.from("categories").select("*").in("id", categoryIds),
@@ -112,6 +113,12 @@ async function hydrateProducts(
       .eq("is_active", true)
       .order("created_at", { ascending: true }),
     client
+      .from("product_colors")
+      .select("*")
+      .in("product_id", productIds)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    client
       .from("product_available_stock")
       .select("*")
       .in("product_id", productIds),
@@ -121,6 +128,7 @@ async function hydrateProducts(
     brandsResult.error ||
     imagesResult.error ||
     variantsResult.error ||
+    colorsResult.error ||
     stockResult.error
   )
     return null;
@@ -141,7 +149,10 @@ async function hydrateProducts(
         category,
         brand,
         images: imagesResult.data.filter(
-          (image) => image.product_id === product.id && image.color_id == null,
+          (image) => image.product_id === product.id,
+        ),
+        colors: colorsResult.data.filter(
+          (color) => color.product_id === product.id,
         ),
         variants: variantsResult.data.filter(
           (variant) => variant.product_id === product.id,

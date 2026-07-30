@@ -12,9 +12,42 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { formatCurrency } from "@/lib/format";
-import type { CatalogProduct } from "@/types/product";
+import { cn } from "@/lib/utils";
+import type {
+  CatalogProduct,
+  CatalogProductColor,
+  CatalogProductVariant,
+} from "@/types/product";
 
-export function ProductInfo({ product }: { product: CatalogProduct }) {
+type ProductInfoProps = {
+  product: CatalogProduct;
+  colors: CatalogProductColor[];
+  variants: CatalogProductVariant[];
+  storageOptions: CatalogProductVariant[];
+  selectedColorId?: string;
+  selectedStorageKey?: string;
+  selectionRequired: boolean;
+  selectionComplete: boolean;
+  onColorChange: (colorId: string) => void;
+  onStorageChange: (storageKey: string) => void;
+};
+
+function storageKey(variant: CatalogProductVariant) {
+  return `${variant.storageValue}-${variant.storageUnit}`;
+}
+
+export function ProductInfo({
+  product,
+  colors,
+  variants,
+  storageOptions,
+  selectedColorId,
+  selectedStorageKey,
+  selectionRequired,
+  selectionComplete,
+  onColorChange,
+  onStorageChange,
+}: ProductInfoProps) {
   const productName = `${product.brand} ${product.model}`;
   const stockLabel =
     product.stockStatus === "in-stock"
@@ -64,6 +97,92 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
       </div>
 
       <Divider className="my-5" />
+      {colors.length ? (
+        <fieldset>
+          <legend className="text-sm font-black text-foreground">
+            Renk
+            {selectedColorId ? (
+              <span className="ml-2 font-medium text-muted">
+                {
+                  colors.find((color) => color.id === selectedColorId)
+                    ?.displayName
+                }
+              </span>
+            ) : null}
+          </legend>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {colors.map((color) => {
+              const selected = color.id === selectedColorId;
+              const available = variants.some(
+                (variant) => variant.colorId === color.id,
+              );
+              return (
+                <button
+                  key={color.id}
+                  type="button"
+                  onClick={() => onColorChange(color.id)}
+                  disabled={!available}
+                  aria-pressed={selected}
+                  aria-label={`${color.displayName} rengini seç`}
+                  className={cn(
+                    "group inline-flex items-center gap-2 rounded-full border bg-white py-1.5 pl-1.5 pr-3 text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40",
+                    selected
+                      ? "border-primary shadow-[0_0_0_3px_rgba(220,38,38,0.12)]"
+                      : "border-border",
+                  )}
+                >
+                  <span
+                    className="size-7 rounded-full border border-black/10 shadow-inner ring-1 ring-white"
+                    style={{ backgroundColor: color.hexCode }}
+                    aria-hidden="true"
+                  />
+                  {color.displayName}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+
+      {storageOptions.length ? (
+        <fieldset className="mt-5">
+          <legend className="text-sm font-black text-foreground">
+            Depolama
+          </legend>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {storageOptions.map((option) => {
+              const key = storageKey(option);
+              const selected = key === selectedStorageKey;
+              const available = variants.some(
+                (variant) =>
+                  storageKey(variant) === key &&
+                  (!selectedColorId || variant.colorId === selectedColorId),
+              );
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onStorageChange(key)}
+                  disabled={!available}
+                  aria-pressed={selected}
+                  className={cn(
+                    "min-h-11 rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40",
+                    selected
+                      ? "border-primary bg-red-50 text-primary shadow-[0_0_0_2px_rgba(220,38,38,0.1)]"
+                      : "border-border bg-white text-foreground",
+                  )}
+                >
+                  {option.storageValue} {option.storageUnit}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+
+      {colors.length || storageOptions.length ? (
+        <Divider className="my-5" />
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {product.discountRate ? (
           <Badge variant="brand">%{product.discountRate} indirim</Badge>
@@ -122,6 +241,8 @@ export function ProductInfo({ product }: { product: CatalogProduct }) {
         product={product}
         productId={product.id}
         productName={productName}
+        selectionRequired={selectionRequired}
+        selectionComplete={selectionComplete}
       />
     </section>
   );
