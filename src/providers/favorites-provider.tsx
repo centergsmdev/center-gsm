@@ -22,6 +22,8 @@ import type { CatalogProduct } from "@/types/product";
 import {
   PRODUCT_DELETED_EVENT,
   removeDeletedProducts,
+  removeUnavailableProducts,
+  subscribeToUnavailableProducts,
 } from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-favorites-v2";
@@ -101,11 +103,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true;
     const client = createClient();
-    const enterGuestMode = () => {
+    const enterGuestMode = async () => {
       if (!active) return;
       activeUserRef.current = null;
       setUserId(null);
-      setProducts(readGuestFavorites());
+      const available = await removeUnavailableProducts(readGuestFavorites());
+      if (!active || activeUserRef.current !== null) return;
+      setProducts(available);
       setError(null);
       setLoading(false);
     };
@@ -114,7 +118,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       setUserId(currentUserId);
       setLoading(true);
       setError(null);
-      const guestProducts = readGuestFavorites();
+      const guestProducts =
+        await removeUnavailableProducts(readGuestFavorites());
       if (guestProducts.length) {
         const sync = await syncLocalFavoritesToUser(
           currentUserId,
@@ -138,12 +143,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     void auth.getSession().then(({ data }) => {
       const id = data.session?.user.id;
       if (id) void enterUserMode(id);
-      else enterGuestMode();
+      else void enterGuestMode();
     });
     const { data } = auth.onAuthStateChange((event, session) => {
       const id = session?.user.id;
       if (id && id !== activeUserRef.current) void enterUserMode(id);
-      if (!id && activeUserRef.current !== null) enterGuestMode();
+      if (!id && activeUserRef.current !== null) void enterGuestMode();
       if (event === "SIGNED_OUT") window.localStorage.removeItem(STORAGE_KEY);
     });
     return () => {
@@ -168,9 +173,11 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         ),
       );
     };
-    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
-    return () =>
-      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    return subscribeToUnavailableProducts((deleted) =>
+      removeDeleted(
+        new CustomEvent(PRODUCT_DELETED_EVENT, { detail: deleted }),
+      ),
+    );
   }, []);
 
   const mutateRemote = useCallback(

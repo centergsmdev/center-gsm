@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
-import { markProductDeleted } from "@/lib/catalog/deleted-products";
+import {
+  clearProductDeleted,
+  markProductDeleted,
+} from "@/lib/catalog/deleted-products";
 import type {
   AdminProduct,
   AdminProductFilters,
@@ -246,9 +249,16 @@ export async function setAdminProductActive(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive }),
     });
-    const result = (await response.json()) as AdminProductResult<true>;
+    const result = (await response.json()) as AdminProductResult<true> & {
+      productState?: { id: string; slug: string; isActive: boolean };
+    };
+    if (response.ok && result.data && result.productState) {
+      if (result.productState.isActive)
+        clearProductDeleted(result.productState);
+      else markProductDeleted(result.productState);
+    }
     return response.ok && result.data
-      ? result
+      ? { data: true, error: null }
       : { data: null, error: result.error ?? SAFE_ERROR };
   } catch {
     return { data: null, error: SAFE_ERROR };

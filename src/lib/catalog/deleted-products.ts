@@ -1,4 +1,5 @@
 import type { CatalogProduct } from "@/types/product";
+import { createClient } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "center-gsm-deleted-product-ids";
 export const PRODUCT_DELETED_EVENT = "center-gsm:product-deleted";
@@ -42,4 +43,52 @@ export function markProductDeleted(product: DeletedProductIdentity) {
       detail: product,
     }),
   );
+}
+
+export function clearProductDeleted(product: DeletedProductIdentity) {
+  const deleted = deletedIds();
+  deleted.delete(product.id);
+  deleted.delete(product.slug);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...deleted]));
+}
+
+export async function removeUnavailableProducts(products: CatalogProduct[]) {
+  const locallyAvailable = removeDeletedProducts(products);
+  if (!locallyAvailable.length) return [];
+  const client = createClient();
+  if (!client) return locallyAvailable;
+  const slugs = [...new Set(locallyAvailable.map((product) => product.slug))];
+  const result = await client
+    .from("products")
+    .select("slug")
+    .in("slug", slugs)
+    .eq("is_active", true);
+  if (result.error) return locallyAvailable;
+  const activeSlugs = new Set(result.data.map((product) => product.slug));
+  return locallyAvailable.filter((product) => activeSlugs.has(product.slug));
+}
+
+export function subscribeToUnavailableProducts(
+  listener: (product: DeletedProductIdentity) => void,
+) {
+  const onProductDeleted = (event: Event) =>
+    listener((event as CustomEvent<DeletedProductIdentity>).detail);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== STORAGE_KEY || !event.newValue) return;
+    try {
+      const values: unknown = JSON.parse(event.newValue);
+      if (Array.isArray(values))
+        values
+          .filter((value): value is string => typeof value === "string")
+          .forEach((value) => listener({ id: value, slug: value }));
+    } catch {
+      // Bozuk bir storage olayı mevcut güvenilir state'i değiştirmez.
+    }
+  };
+  window.addEventListener(PRODUCT_DELETED_EVENT, onProductDeleted);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener(PRODUCT_DELETED_EVENT, onProductDeleted);
+    window.removeEventListener("storage", onStorage);
+  };
 }

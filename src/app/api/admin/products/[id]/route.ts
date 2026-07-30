@@ -81,7 +81,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (updated.error) return responseError("Ürün durumu güncellenemedi.", 400);
 
   await revalidateProductSurfaces(db, current.data);
-  return NextResponse.json({ data: true, error: null });
+  revalidatePath("/sitemap-products.xml");
+  revalidatePath("/sitemap.xml");
+  return NextResponse.json({
+    data: true,
+    error: null,
+    productState: { id, slug: current.data.slug, isActive: body.isActive },
+  });
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -173,6 +179,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   await revalidateProductSurfaces(db, product.data);
   revalidatePath("/", "layout");
   revalidatePath("/sitemap-products.xml");
+  revalidatePath("/sitemap.xml");
   return NextResponse.json({
     data: true,
     error: null,

@@ -12,7 +12,8 @@ import { catalogProducts } from "@/data/catalog-products";
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
 import {
   PRODUCT_DELETED_EVENT,
-  removeDeletedProducts,
+  removeUnavailableProducts,
+  subscribeToUnavailableProducts,
 } from "@/lib/catalog/deleted-products";
 import { calculateCheckoutPricing } from "@/lib/promotions/client";
 import type { CartItem, CartLine, CartTotals } from "@/types/cart";
@@ -54,26 +55,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [announcement, setAnnouncement] = useState("");
   const [storageReady, setStorageReady] = useState(false);
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CartItem[];
-        const products = removeDeletedProducts(
-          parsed.flatMap((item) =>
-            item.product
-              ? [item.product]
-              : catalogProducts.filter(
-                  (product) => product.id === item.productId,
-                ),
-          ),
-        );
-        const activeIds = new Set(products.map((product) => product.id));
-        setItems(parsed.filter((item) => activeIds.has(item.productId)));
+    let active = true;
+    void (async () => {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as CartItem[];
+          const products = await removeUnavailableProducts(
+            parsed.flatMap((item) =>
+              item.product
+                ? [item.product]
+                : catalogProducts.filter(
+                    (product) => product.id === item.productId,
+                  ),
+            ),
+          );
+          const activeIds = new Set(products.map((product) => product.id));
+          if (active)
+            setItems(parsed.filter((item) => activeIds.has(item.productId)));
+        }
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
       }
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-    setStorageReady(true);
+      if (active) setStorageReady(true);
+    })();
     const removeDeleted = (event: Event) => {
       const deleted = (event as CustomEvent<{ id: string; slug: string }>)
         .detail;
@@ -85,9 +90,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ),
       );
     };
-    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
-    return () =>
-      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    const unsubscribe = subscribeToUnavailableProducts((deleted) =>
+      removeDeleted(
+        new CustomEvent(PRODUCT_DELETED_EVENT, { detail: deleted }),
+      ),
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
   useEffect(() => {
     if (storageReady)

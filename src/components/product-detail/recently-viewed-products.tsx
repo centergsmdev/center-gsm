@@ -6,7 +6,8 @@ import { ProductRecommendations } from "@/components/product-detail/product-reco
 import type { CatalogProduct } from "@/types/product";
 import {
   PRODUCT_DELETED_EVENT,
-  removeDeletedProducts,
+  removeUnavailableProducts,
+  subscribeToUnavailableProducts,
 } from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-recently-viewed-products";
@@ -20,28 +21,39 @@ export function RecentlyViewedProducts({
   const [recentProducts, setRecentProducts] = useState<CatalogProduct[]>([]);
 
   useEffect(() => {
+    let active = true;
     let storedProducts: CatalogProduct[] = [];
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       if (Array.isArray(parsed)) {
-        storedProducts = removeDeletedProducts(
-          parsed.filter(
-            (item): item is CatalogProduct =>
-              typeof item === "object" &&
-              item !== null &&
-              "id" in item &&
-              "slug" in item,
-          ),
+        storedProducts = parsed.filter(
+          (item): item is CatalogProduct =>
+            typeof item === "object" &&
+            item !== null &&
+            "id" in item &&
+            "slug" in item,
         );
       }
     } catch {
       storedProducts = [];
     }
 
-    setRecentProducts(
-      storedProducts.filter((item) => item.id !== product.id).slice(0, 4),
-    );
+    void removeUnavailableProducts(storedProducts).then((available) => {
+      if (!active) return;
+      setRecentProducts(
+        available.filter((item) => item.id !== product.id).slice(0, 4),
+      );
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+          [
+            product,
+            ...available.filter((item) => item.id !== product.id),
+          ].slice(0, MAX_STORED_PRODUCTS),
+        ),
+      );
+    });
     const next = [
       product,
       ...storedProducts.filter((item) => item.id !== product.id),
@@ -59,10 +71,38 @@ export function RecentlyViewedProducts({
           (item) => item.id !== deleted.id && item.slug !== deleted.slug,
         ),
       );
+      try {
+        const stored: unknown = JSON.parse(
+          window.localStorage.getItem(STORAGE_KEY) ?? "[]",
+        );
+        if (Array.isArray(stored))
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(
+              stored.filter(
+                (item) =>
+                  typeof item === "object" &&
+                  item !== null &&
+                  "id" in item &&
+                  "slug" in item &&
+                  item.id !== deleted.id &&
+                  item.slug !== deleted.slug,
+              ),
+            ),
+          );
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
     };
-    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
-    return () =>
-      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    const unsubscribe = subscribeToUnavailableProducts((deleted) =>
+      removeDeleted(
+        new CustomEvent(PRODUCT_DELETED_EVENT, { detail: deleted }),
+      ),
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [product]);
 
   return (

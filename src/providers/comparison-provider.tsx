@@ -5,7 +5,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { CatalogProduct } from "@/types/product";
 import {
   PRODUCT_DELETED_EVENT,
-  removeDeletedProducts,
+  removeUnavailableProducts,
+  subscribeToUnavailableProducts,
 } from "@/lib/catalog/deleted-products";
 
 const STORAGE_KEY = "center-gsm-comparison-v2";
@@ -45,21 +46,22 @@ export function ComparisonProvider({
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      const parsed: unknown = stored ? JSON.parse(stored) : [];
-      if (Array.isArray(parsed)) {
-        setProducts(
-          removeDeletedProducts(parsed.filter(isStoredProduct)).slice(
-            0,
-            COMPARISON_LIMIT,
-          ),
-        );
+    let active = true;
+    void (async () => {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        const parsed: unknown = stored ? JSON.parse(stored) : [];
+        if (Array.isArray(parsed)) {
+          const available = await removeUnavailableProducts(
+            parsed.filter(isStoredProduct),
+          );
+          if (active) setProducts(available.slice(0, COMPARISON_LIMIT));
+        }
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
       }
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-    setStorageReady(true);
+      if (active) setStorageReady(true);
+    })();
     const removeDeleted = (event: Event) => {
       const deleted = (event as CustomEvent<{ id: string; slug: string }>)
         .detail;
@@ -70,9 +72,15 @@ export function ComparisonProvider({
         ),
       );
     };
-    window.addEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
-    return () =>
-      window.removeEventListener(PRODUCT_DELETED_EVENT, removeDeleted);
+    const unsubscribe = subscribeToUnavailableProducts((deleted) =>
+      removeDeleted(
+        new CustomEvent(PRODUCT_DELETED_EVENT, { detail: deleted }),
+      ),
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
