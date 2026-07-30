@@ -2,6 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .rich-product-content p {
+    @apply my-3;
+  }
+  .rich-product-content h2 {
+    @apply mb-3 mt-7 text-xl font-bold text-foreground;
+  }
+  .rich-product-content h3 {
+    @apply mb-2 mt-6 text-lg font-bold text-foreground;
+  }
+  .rich-product-content ul {
+    @apply my-3 list-disc pl-6;
+  }
+  .rich-product-content ol {
+    @apply my-3 list-decimal pl-6;
+  }
+  .rich-product-content li {
+    @apply my-1;
+  }
+  .rich-product-content blockquote {
+    @apply my-4 border-l-2 border-primary pl-4 italic;
+  }
+  .rich-product-content pre {
+    @apply my-4 overflow-x-auto rounded-xl bg-zinc-950 p-4 text-zinc-100;
+  }
+  .rich-product-content code {
+    @apply rounded bg-zinc-100 px-1 py-0.5 font-mono text-[0.9em] text-zinc-900;
+  }
+  .rich-product-content pre code {
+    @apply bg-transparent p-0 text-inherit;
+  }
+  .rich-product-content a {
+    @apply font-semibold text-primary underline underline-offset-4;
+  }
+  .rich-product-content img {
+    @apply my-6 h-auto max-w-full rounded-2xl border border-border object-contain shadow-sm;
+  }
+  .rich-product-content table {
+    @apply my-6 block w-full overflow-x-auto rounded-xl border border-border text-left;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .rich-product-content th {
+    @apply whitespace-nowrap bg-zinc-50 px-4 py-3 font-bold text-foreground;
+  }
+  .rich-product-content td {
+    @apply min-w-32 border-t border-border px-4 py-3 align-top;
+  }
+  .rich-product-content th + th,
+  .rich-product-content td + td {
+    @apply border-l border-border;
+  }
+  .rich-product-content iframe {
+    @apply my-6 aspect-video h-auto w-full max-w-3xl rounded-2xl border-0 bg-black shadow-md;
+  }
+}
+
 @layer base {
   :root {
     /* Color */

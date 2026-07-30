@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AlertTriangle, Check, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { AdminField, AdminFormSection, adminControlClass } from "./admin-form";
 import { AdminErrorState, AdminLoadingState } from "./admin-states";
 import { AdminProductImages } from "./admin-product-images";
 import { RichTextEditor } from "./rich-text-editor";
+import { RichProductContent } from "@/components/product-detail/rich-product-content";
 import {
   createAdminProduct,
   getAdminProduct,
@@ -83,6 +84,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   const [saving, setSaving] = useState(false);
   const [imageUploadProgress, setImageUploadProgress] = useState(0);
   const [saved, setSaved] = useState(false);
+  const previewDescription = useMemo(
+    () => sanitizeRichText(form.description),
+    [form.description],
+  );
   useEffect(() => {
     void (async () => {
       setLoading(true);
@@ -302,6 +307,24 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               onChange={(value) => set("description", value)}
             />
           </AdminField>
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-zinc-950">Canlı Önizleme</p>
+              <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500 shadow-sm">
+                Ürün detayı görünümü
+              </span>
+            </div>
+            {previewDescription ? (
+              <RichProductContent
+                html={previewDescription}
+                className="max-w-none rounded-xl bg-white p-4 text-zinc-600 shadow-sm sm:p-6"
+              />
+            ) : (
+              <p className="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center text-sm text-zinc-500">
+                İçerik yazdıkça ürün detayındaki görünümü burada göreceksiniz.
+              </p>
+            )}
+          </div>
         </AdminFormSection>
         <AdminFormSection
           title="Fiyat"
