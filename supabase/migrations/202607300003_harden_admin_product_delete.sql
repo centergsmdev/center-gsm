@@ -1,5 +1,10 @@
 begin;
 
+update public.products
+set description = short_description
+where nullif(btrim(description), '') is null
+  and nullif(btrim(short_description), '') is not null;
+
 alter table public.products
   drop column if exists short_description,
   drop column if exists technical_specifications,
