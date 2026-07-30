@@ -80,7 +80,9 @@ export function AdminProductImages({
     ]);
     setMessage({
       tone: "success",
-      text: `${validation.valid.length} görsel eklendi. Tuval görünümünü düzenleyip ürünü kaydedin.`,
+      text: colorId
+        ? `${validation.valid.length} renk görseli hazır. Tuval görünümünü düzenleyip "Varyantları kaydet" butonuna basın.`
+        : `${validation.valid.length} görsel eklendi. Tuval görünümünü düzenleyip ürünü kaydedin.`,
     });
   };
   const pick = (event: ChangeEvent<HTMLInputElement>) => {

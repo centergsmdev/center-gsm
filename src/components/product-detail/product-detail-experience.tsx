@@ -137,13 +137,13 @@ export function ProductDetailExperience({
               ? "limited"
               : "in-stock",
         sku: selectedVariant.sku,
-        mainImageUrl: selectedColor?.imageUrls[0] ?? product.mainImageUrl,
-        imageUrls: selectedColor?.imageUrls.length
-          ? selectedColor.imageUrls
-          : product.imageUrls,
+        mainImageUrl: selectedColor
+          ? selectedColor.imageUrls[0]
+          : product.mainImageUrl,
+        imageUrls: selectedColor ? selectedColor.imageUrls : product.imageUrls,
       }
     : product;
-  const galleryImages = selectedColor?.imageUrls.length
+  const galleryImages = selectedColor
     ? selectedColor.imageUrls
     : product.imageUrls;
   const cartVariant = selectedVariant

@@ -39,6 +39,9 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
   const [colors, setColors] = useState<VariantColorDraft[]>([]);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [images, setImages] = useState<Tables<"product_images">[]>([]);
+  const [pendingImagesByColor, setPendingImagesByColor] = useState<
+    Record<string, PendingProductImage[]>
+  >({});
   const [storages, setStorages] = useState<VariantStorageOption[]>([]);
   const [storageValue, setStorageValue] = useState("128");
   const [storageUnit, setStorageUnit] = useState<"GB" | "TB">("GB");
@@ -163,11 +166,41 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
       return setMessage(validationError || "Önce ürünü kaydedin.");
     setSaving(true);
     const result = await saveAdminVariantSetup(productId, colors, variants);
-    setSaving(false);
-    if (!result.data) return setMessage(result.error);
+    if (!result.data) {
+      setSaving(false);
+      return setMessage(result.error);
+    }
     setColors(result.data.colors);
     setVariants(result.data.variants);
-    setMessage("Varyantlar başarıyla kaydedildi.");
+    const uploadedImages: Tables<"product_images">[] = [];
+    for (const [colorId, pending] of Object.entries(pendingImagesByColor)) {
+      if (!pending.length) continue;
+      const upload = await uploadProductImages(
+        productId,
+        pending,
+        images.filter((image) => image.color_id === colorId).length,
+        undefined,
+        colorId,
+      );
+      if (!upload.data) {
+        setSaving(false);
+        setMessage(
+          upload.error ??
+            "Varyantlar kaydedildi ancak renk görselleri yüklenemedi.",
+        );
+        return;
+      }
+      uploadedImages.push(...upload.data);
+    }
+    if (uploadedImages.length)
+      setImages((current) => [...current, ...uploadedImages]);
+    setPendingImagesByColor({});
+    setSaving(false);
+    setMessage(
+      uploadedImages.length
+        ? "Varyantlar ve renk görselleri başarıyla kaydedildi."
+        : "Varyantlar başarıyla kaydedildi.",
+    );
   };
 
   if (!productId)
@@ -417,6 +450,13 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
                 productId={productId}
                 color={color}
                 images={images.filter((image) => image.color_id === color.id)}
+                pending={pendingImagesByColor[color.id] ?? []}
+                onPending={(pending) =>
+                  setPendingImagesByColor((current) => ({
+                    ...current,
+                    [color.id]: pending,
+                  }))
+                }
                 onImages={(next) =>
                   setImages((current) => [
                     ...current.filter((image) => image.color_id !== color.id),
@@ -731,14 +771,17 @@ function ColorImageManager({
   productId,
   color,
   images,
+  pending,
+  onPending,
   onImages,
 }: {
   productId: string;
   color: VariantColorDraft;
   images: Tables<"product_images">[];
+  pending: PendingProductImage[];
+  onPending: (images: PendingProductImage[]) => void;
   onImages: (images: Tables<"product_images">[]) => void;
 }) {
-  const [pending, setPending] = useState<PendingProductImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const upload = async () => {
     if (!pending.length) return;
@@ -753,7 +796,7 @@ function ColorImageManager({
     setUploading(false);
     if (result.data) {
       onImages([...images, ...result.data]);
-      setPending([]);
+      onPending([]);
     }
   };
   return (
@@ -774,7 +817,7 @@ function ColorImageManager({
           images={images}
           onImagesChange={onImages}
           pendingImages={pending}
-          onPendingImagesChange={setPending}
+          onPendingImagesChange={onPending}
         />
         {pending.length ? (
           <Button

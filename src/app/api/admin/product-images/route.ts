@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import {
@@ -83,6 +84,13 @@ export async function POST(request: Request) {
   });
   if (existing.error)
     return errorResponse("Ürün görselleri doğrulanamadı.", 400);
+  const product = await db
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+  if (product.error || !product.data)
+    return errorResponse("Ürün bilgisi doğrulanamadı.", 400);
 
   const startOrder = existing.data.length ? existing.data[0].sort_order + 1 : 0;
   const hasPrimary = existing.data.some((image) => image.is_primary);
@@ -127,6 +135,9 @@ export async function POST(request: Request) {
       insertedIds.push(inserted.data.id);
       rows.push(inserted.data);
     }
+    revalidatePath(`/urun/${product.data.slug}`);
+    revalidatePath("/");
+    revalidatePath("/urunler");
     return NextResponse.json({ data: rows, error: null });
   } catch {
     if (insertedIds.length)
