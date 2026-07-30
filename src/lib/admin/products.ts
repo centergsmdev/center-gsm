@@ -15,6 +15,46 @@ const SAFE_ERROR =
   "İşlem tamamlanamadı. Yetkinizi ve bağlantınızı kontrol edip tekrar deneyin.";
 const NOT_CONFIGURED = "Supabase bağlantısı yapılandırılmamış.";
 
+type SupabaseFailure = {
+  code?: string;
+  message: string;
+  details?: string;
+  hint?: string;
+};
+
+function reportProductFailure(
+  operation: "create" | "update" | "read" | "references",
+  error: SupabaseFailure,
+) {
+  if (process.env.NODE_ENV !== "production") {
+    console.error(`Admin product ${operation} failed`, {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      stack: new Error().stack,
+    });
+  }
+}
+
+function productMutationError(error: SupabaseFailure) {
+  if (error.code === "23505") {
+    if (error.message.includes("products_slug_key"))
+      return "Bu ürün adresi (slug) zaten kullanılıyor.";
+    if (error.message.includes("products_sku_key"))
+      return "Bu SKU zaten kullanılıyor.";
+  }
+  if (error.code === "23503")
+    return "Seçilen marka veya kategori artık mevcut değil.";
+  if (error.code === "42501" || error.code === "PGRST301")
+    return "Admin yetkisi doğrulanamadı. Oturumu yenileyip tekrar deneyin.";
+  if (error.message.includes("warehouse_unavailable"))
+    return "Ürün stoğunu başlatmak için aktif bir depo bulunamadı.";
+  if (error.message.includes("direct_stock_update_forbidden"))
+    return "Stok yalnızca stok yönetimi üzerinden değiştirilebilir.";
+  return SAFE_ERROR;
+}
+
 function browserClient(): AdminProductResult<SupabaseClient<Database>> {
   const client = createClient();
   return client
@@ -162,9 +202,11 @@ export async function createAdminProduct(
     .insert(values)
     .select("*")
     .single();
-  return result.error
-    ? { data: null, error: SAFE_ERROR }
-    : { data: result.data, error: null };
+  if (result.error) {
+    reportProductFailure("create", result.error);
+    return { data: null, error: productMutationError(result.error) };
+  }
+  return { data: result.data, error: null };
 }
 
 export async function updateAdminProduct(
@@ -181,9 +223,11 @@ export async function updateAdminProduct(
     .eq("id", id)
     .select("*")
     .single();
-  return result.error
-    ? { data: null, error: SAFE_ERROR }
-    : { data: result.data, error: null };
+  if (result.error) {
+    reportProductFailure("update", result.error);
+    return { data: null, error: productMutationError(result.error) };
+  }
+  return { data: result.data, error: null };
 }
 
 export async function deactivateAdminProduct(

@@ -23,6 +23,7 @@ export type AdminProductFormValues = Pick<
   | "price"
   | "old_price"
   | "stock_quantity"
+  | "warranty_months"
   | "is_active"
   | "is_featured"
 >;

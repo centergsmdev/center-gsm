@@ -40,6 +40,7 @@ type FormState = {
   old_price: string;
   stock_quantity: string;
   reorder_level: string;
+  warranty_months: string;
   is_active: boolean;
   is_featured: boolean;
 };
@@ -55,6 +56,7 @@ const emptyForm: FormState = {
   old_price: "",
   stock_quantity: "0",
   reorder_level: "5",
+  warranty_months: "24",
   is_active: true,
   is_featured: false,
 };
@@ -110,6 +112,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           old_price: item.old_price === null ? "" : String(item.old_price),
           stock_quantity: String(item.stock_quantity),
           reorder_level: "5",
+          warranty_months: String(item.warranty_months),
           is_active: item.is_active,
           is_featured: item.is_featured,
         });
@@ -161,6 +164,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       price: Number(form.price),
       old_price: form.old_price ? Number(form.old_price) : null,
       stock_quantity: Number(form.stock_quantity),
+      warranty_months: Number(form.warranty_months),
       is_active: form.is_active,
       is_featured: form.is_featured,
     };
@@ -275,6 +279,14 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               error={errors.category_id}
               onChange={(value) => set("category_id", value)}
               items={categories}
+            />
+            <Field
+              label="Garanti (ay)"
+              name="warranty_months"
+              type="number"
+              form={form}
+              errors={errors}
+              set={set}
             />
           </div>
         </AdminFormSection>
