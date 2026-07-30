@@ -23,38 +23,73 @@ export type VariantDraft = Pick<
 >;
 export type VariantStorageOption = { value: number; unit: "GB" | "TB" };
 
+type VariantFailure = {
+  code?: string;
+  message: string;
+  details?: string;
+  hint?: string;
+};
+
+function reportVariantFailure(
+  operation: "read" | "save" | "refresh",
+  error: VariantFailure | unknown,
+) {
+  if (process.env.NODE_ENV === "production") return;
+  const failure =
+    error && typeof error === "object" ? (error as VariantFailure) : null;
+  console.error(`Admin product variants ${operation} failed`, {
+    code: failure?.code,
+    message: failure?.message ?? String(error),
+    details: failure?.details,
+    hint: failure?.hint,
+    stack: error instanceof Error ? error.stack : new Error().stack,
+  });
+}
+
 export async function getAdminVariantSetup(productId: string) {
   const client = createClient();
   if (!client)
     return { data: null, error: "Supabase bağlantısı yapılandırılmamış." };
-  const [colors, variants, images] = await Promise.all([
-    client
-      .from("product_colors")
-      .select("*")
-      .eq("product_id", productId)
-      .order("sort_order"),
-    client
-      .from("product_variants")
-      .select("*")
-      .eq("product_id", productId)
-      .order("sort_order"),
-    client
-      .from("product_images")
-      .select("*")
-      .eq("product_id", productId)
-      .not("color_id", "is", null)
-      .order("sort_order"),
-  ]);
-  if (colors.error || variants.error || images.error)
+  try {
+    const [colors, variants, images] = await Promise.all([
+      client
+        .from("product_colors")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order"),
+      client
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order"),
+      client
+        .from("product_images")
+        .select("*")
+        .eq("product_id", productId)
+        .not("color_id", "is", null)
+        .order("sort_order"),
+    ]);
+    const failure = colors.error ?? variants.error ?? images.error;
+    if (failure) {
+      reportVariantFailure("read", failure);
+      return {
+        data: null,
+        error:
+          "Varyant bilgileri yüklenemedi. Migration'ın uygulandığını doğrulayın.",
+      };
+    }
     return {
-      data: null,
-      error:
-        "Varyant bilgileri yüklenemedi. Migration'ın uygulandığını doğrulayın.",
+      data: {
+        colors: colors.data ?? [],
+        variants: variants.data ?? [],
+        images: images.data ?? [],
+      },
+      error: null,
     };
-  return {
-    data: { colors: colors.data, variants: variants.data, images: images.data },
-    error: null,
-  };
+  } catch (error) {
+    reportVariantFailure("read", error);
+    return { data: null, error: "Varyant bilgileri yüklenemedi." };
+  }
 }
 
 export async function saveAdminVariantSetup(
@@ -92,8 +127,13 @@ export async function saveAdminVariantSetup(
     p_colors: colors,
     p_variants: payload,
   });
-  if (saved.error) return { data: null, error: variantError(saved.error) };
+  if (saved.error) {
+    reportVariantFailure("save", saved.error);
+    return { data: null, error: variantError(saved.error) };
+  }
   const refreshed = await getAdminVariantSetup(productId);
+  if (!refreshed.data)
+    reportVariantFailure("refresh", new Error(refreshed.error));
   return refreshed.data
     ? {
         data: {

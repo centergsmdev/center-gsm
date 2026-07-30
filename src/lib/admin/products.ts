@@ -86,15 +86,21 @@ async function composeProducts(
       .in("product_id", productIds)
       .order("sort_order", { ascending: true }),
   ]);
-  if (brands.error || categories.error || images.error)
+  const failure = brands.error ?? categories.error ?? images.error;
+  if (failure) {
+    reportProductFailure("read", failure);
     return { data: null, error: SAFE_ERROR };
-  const brandMap = new Map(brands.data.map((item) => [item.id, item]));
-  const categoryMap = new Map(categories.data.map((item) => [item.id, item]));
+  }
+  const brandMap = new Map((brands.data ?? []).map((item) => [item.id, item]));
+  const categoryMap = new Map(
+    (categories.data ?? []).map((item) => [item.id, item]),
+  );
+  const productImageRows = images.data ?? [];
   const rows = products.flatMap((product) => {
     const brand = brandMap.get(product.brand_id);
     const category = categoryMap.get(product.category_id);
     if (!brand || !category) return [];
-    const productImages = images.data.filter(
+    const productImages = productImageRows.filter(
       (image) => image.product_id === product.id && image.color_id == null,
     );
     return [
@@ -145,7 +151,10 @@ export async function getAdminProducts(
   } as const;
   const [column, ascending] = sortMap[filters.sort];
   const result = await query.order(column, { ascending });
-  if (result.error) return { data: null, error: SAFE_ERROR };
+  if (result.error) {
+    reportProductFailure("read", result.error);
+    return { data: null, error: SAFE_ERROR };
+  }
   return composeProducts(connection.data, result.data);
 }
 
@@ -159,7 +168,10 @@ export async function getAdminProduct(
     .select("*")
     .eq("id", id)
     .maybeSingle();
-  if (result.error) return { data: null, error: SAFE_ERROR };
+  if (result.error) {
+    reportProductFailure("read", result.error);
+    return { data: null, error: SAFE_ERROR };
+  }
   if (!result.data) return { data: null, error: null };
   const composed = await composeProducts(connection.data, [result.data]);
   return composed.data
@@ -187,10 +199,13 @@ export async function getAdminProductReferences(): Promise<
       .eq("is_active", true)
       .order("sort_order"),
   ]);
-  if (brands.error || categories.error)
+  const failure = brands.error ?? categories.error;
+  if (failure) {
+    reportProductFailure("references", failure);
     return { data: null, error: SAFE_ERROR };
+  }
   return {
-    data: { brands: brands.data, categories: categories.data },
+    data: { brands: brands.data ?? [], categories: categories.data ?? [] },
     error: null,
   };
 }

@@ -101,7 +101,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
         )
         .map((image) => image.url),
     })),
-    variants: row.variants
+    variants: (row.variants ?? [])
       .filter((variant) => variant.is_active)
       .map((variant) => ({
         id: variant.id,

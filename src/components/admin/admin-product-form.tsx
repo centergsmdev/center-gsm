@@ -91,41 +91,54 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   );
   useEffect(() => {
     void (async () => {
-      setLoading(true);
-      const [references, product] = await Promise.all([
-        getAdminProductReferences(),
-        productId
-          ? getAdminProduct(productId)
-          : Promise.resolve({ data: null, error: null }),
-      ]);
-      if (!references.data || product.error) {
-        setPageError(references.error ?? product.error ?? "Form yüklenemedi.");
+      try {
+        setLoading(true);
+        const [references, product] = await Promise.all([
+          getAdminProductReferences(),
+          productId
+            ? getAdminProduct(productId)
+            : Promise.resolve({ data: null, error: null }),
+        ]);
+        if (!references.data || product.error) {
+          setPageError(
+            references.error ?? product.error ?? "Form yüklenemedi.",
+          );
+          return;
+        }
+        setBrands(references.data.brands);
+        setCategories(references.data.categories);
+        if (product.data) {
+          const item = product.data;
+          setForm({
+            name: item.name,
+            slug: item.slug,
+            sku: item.sku,
+            brand_id: item.brand_id,
+            category_id: item.category_id,
+            description: item.description ?? "",
+            price: String(item.price),
+            old_price: item.old_price === null ? "" : String(item.old_price),
+            stock_quantity: String(item.stock_quantity),
+            reorder_level: "5",
+            warranty_months: String(item.warranty_months),
+            is_active: item.is_active,
+            is_featured: item.is_featured,
+          });
+          setImages(item.images);
+        } else if (productId)
+          setPageError(
+            "Ürün bulunamadı veya bu kaydı görüntüleme yetkiniz yok.",
+          );
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production")
+          console.error("Admin product edit reload failed", {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : new Error().stack,
+          });
+        setPageError("Ürün bilgileri yüklenemedi.");
+      } finally {
         setLoading(false);
-        return;
       }
-      setBrands(references.data.brands);
-      setCategories(references.data.categories);
-      if (product.data) {
-        const item = product.data;
-        setForm({
-          name: item.name,
-          slug: item.slug,
-          sku: item.sku,
-          brand_id: item.brand_id,
-          category_id: item.category_id,
-          description: item.description ?? "",
-          price: String(item.price),
-          old_price: item.old_price === null ? "" : String(item.old_price),
-          stock_quantity: String(item.stock_quantity),
-          reorder_level: "5",
-          warranty_months: String(item.warranty_months),
-          is_active: item.is_active,
-          is_featured: item.is_featured,
-        });
-        setImages(item.images);
-      } else if (productId)
-        setPageError("Ürün bulunamadı veya bu kaydı görüntüleme yetkiniz yok.");
-      setLoading(false);
     })();
   }, [productId]);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {

@@ -46,5 +46,5 @@ export type SupabaseCatalogRow = Tables<"products"> & {
   brand: BrandTaxonomy;
   images: Tables<"product_images">[];
   colors?: Tables<"product_colors">[];
-  variants: Tables<"product_variants">[];
+  variants?: Tables<"product_variants">[];
 };
