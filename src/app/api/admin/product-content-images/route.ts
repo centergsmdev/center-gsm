@@ -13,6 +13,11 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const IMAGE_FORMATS = {
+  "image/jpeg": { extension: "jpg", sharpFormat: "jpeg" },
+  "image/png": { extension: "png", sharpFormat: "png" },
+  "image/webp": { extension: "webp", sharpFormat: "webp" },
+} as const;
 const errorResponse = (message: string, status: number) =>
   NextResponse.json({ data: null, error: message }, { status });
 
@@ -41,24 +46,23 @@ export async function POST(request: Request) {
   if (file.size > MAX_PRODUCT_IMAGE_SIZE)
     return errorResponse("Görsel 5 MB sınırını aşıyor.", 400);
 
-  const path = `content/${randomUUID()}.webp`;
+  const imageFormat = IMAGE_FORMATS[file.type as keyof typeof IMAGE_FORMATS];
+  const path = `content/${randomUUID()}.${imageFormat.extension}`;
   try {
-    const buffer = await sharp(Buffer.from(await file.arrayBuffer()))
-      .rotate()
-      .resize({
-        width: 1800,
-        height: 1800,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .flatten({ background: "#ffffff" })
-      .webp({ quality: 90, smartSubsample: true })
-      .toBuffer();
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const metadata = await sharp(buffer).metadata();
+    if (
+      metadata.format !== imageFormat.sharpFormat ||
+      !metadata.width ||
+      !metadata.height
+    )
+      return errorResponse("Görsel dosyası geçerli değil.", 400);
+
     const upload = await db.storage
       .from(PRODUCT_IMAGE_BUCKET)
       .upload(path, buffer, {
         cacheControl: "31536000",
-        contentType: "image/webp",
+        contentType: file.type,
         upsert: false,
       });
     if (upload.error) throw upload.error;
