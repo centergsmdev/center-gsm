@@ -9,14 +9,6 @@ import type {
   ProductCategory,
 } from "@/types/product";
 
-const categories: ProductCategory[] = [
-  "Telefon",
-  "Bilgisayar",
-  "Tablet",
-  "Akıllı Saat",
-  "Kulaklık",
-  "Aksesuar",
-];
 const accents: CatalogProduct["accent"][] = [
   "graphite",
   "silver",
@@ -52,9 +44,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     oldPrice && oldPrice > price
       ? Math.round(((oldPrice - price) / oldPrice) * 100)
       : undefined;
-  const category = categories.includes(row.category.name as ProductCategory)
-    ? (row.category.name as ProductCategory)
-    : "Aksesuar";
+  const category = row.category.name as ProductCategory;
   const model = row.name
     .toLocaleLowerCase("tr-TR")
     .startsWith(row.brand.name.toLocaleLowerCase("tr-TR"))
