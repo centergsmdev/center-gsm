@@ -17,6 +17,14 @@ import type { CatalogProduct } from "@/types/product";
 const DEFAULT_PAGE_SIZE = 8;
 type CatalogClient = NonNullable<ReturnType<typeof createClient>>;
 
+function resolveProductSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
 function fallbackProducts(filters: CatalogFilters): CatalogListResult {
   let data = [...catalogProducts];
   const query = normalizeSearchTerm(filters.query ?? "");
@@ -330,10 +338,13 @@ export async function searchProducts(
 export async function getProductBySlug(
   slug: string,
 ): Promise<CatalogItemResult> {
+  const resolvedSlug = resolveProductSlug(slug);
   const client = createClient();
   if (!client)
     return {
-      data: catalogProducts.find((product) => product.slug === slug) ?? null,
+      data:
+        catalogProducts.find((product) => product.slug === resolvedSlug) ??
+        null,
       error: false,
       source: "fallback",
     };
@@ -341,7 +352,7 @@ export async function getProductBySlug(
     const result = await client
       .from("products")
       .select("*")
-      .eq("slug", slug)
+      .eq("slug", resolvedSlug)
       .eq("is_active", true)
       .maybeSingle();
     if (result.error) return { data: null, error: true, source: "supabase" };
