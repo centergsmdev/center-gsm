@@ -5,6 +5,7 @@ import { Deals } from "@/components/home/deals";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { Hero } from "@/components/home/hero";
+import { TrustSection } from "@/components/home/trust-section";
 import { FadeIn, MotionProvider } from "@/components/motion/motion-system";
 import { getFeaturedProducts } from "@/lib/catalog/data";
 import {
@@ -12,10 +13,14 @@ import {
   createOrganizationSchema,
   createWebsiteSchema,
 } from "@/lib/seo/schema";
+import { getPublicShippingCarriers } from "@/shipping/repository/public-shipping-repository";
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const featured = await getFeaturedProducts(5);
+  const [featured, shippingCarriers] = await Promise.all([
+    getFeaturedProducts(5),
+    getPublicShippingCarriers(),
+  ]);
   return (
     <div className="tech-atmosphere min-h-screen text-zinc-950">
       <JsonLd id="organization-schema" data={createOrganizationSchema()} />
@@ -28,6 +33,7 @@ export default async function HomePage() {
           <Deals products={featured.error ? [] : featured.data} />
           <Brands />
           <Benefits />
+          <TrustSection carriers={shippingCarriers} />
         </main>
         <FadeIn>
           <Footer />
