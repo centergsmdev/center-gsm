@@ -36,13 +36,19 @@ export default async function ProductsPage({
 }) {
   const params = await searchParams;
   const filters = catalogFiltersFromParams(params);
-  const [result, categories, brands] = await Promise.all([
+  const [result, desktopResult, categories, brands] = await Promise.all([
     getProducts(filters),
+    getProducts({ ...filters, pageSize: 10 }),
     getCategories(),
     getBrands(),
   ]);
   const hasError = result.error || categories.error || brands.error;
+  const desktopHasError =
+    desktopResult.error || categories.error || brands.error;
   const totalPages = Math.ceil(result.total / result.pageSize);
+  const desktopTotalPages = Math.ceil(
+    desktopResult.total / desktopResult.pageSize,
+  );
   return (
     <main className="tech-atmosphere min-h-screen pb-12 pt-3 sm:pb-16 sm:pt-7">
       <Container>
@@ -69,30 +75,58 @@ export default async function ProductsPage({
             compactMobile
           />
           <div className="min-w-0 flex-1">
-            {hasError ? (
-              <CatalogErrorState />
-            ) : result.data.length === 0 ? (
-              <CatalogEmptyState />
-            ) : (
-              <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                {result.data.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    compactMobile
-                    denseMobile
-                  />
-                ))}
-              </div>
-            )}{" "}
-            {!hasError ? (
-              <Pagination
-                page={result.page}
-                totalPages={totalPages}
-                basePath="/urunler"
-                params={params}
-              />
-            ) : null}
+            <div className="lg:hidden">
+              {hasError ? (
+                <CatalogErrorState />
+              ) : result.data.length === 0 ? (
+                <CatalogEmptyState />
+              ) : (
+                <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  {result.data.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      compactMobile
+                      denseMobile
+                    />
+                  ))}
+                </div>
+              )}{" "}
+              {!hasError ? (
+                <Pagination
+                  page={result.page}
+                  totalPages={totalPages}
+                  basePath="/urunler"
+                  params={params}
+                />
+              ) : null}
+            </div>
+            <div className="hidden lg:block">
+              {desktopHasError ? (
+                <CatalogErrorState />
+              ) : desktopResult.data.length === 0 ? (
+                <CatalogEmptyState />
+              ) : (
+                <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  {desktopResult.data.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      compactMobile
+                      denseMobile
+                    />
+                  ))}
+                </div>
+              )}{" "}
+              {!desktopHasError ? (
+                <Pagination
+                  page={desktopResult.page}
+                  totalPages={desktopTotalPages}
+                  basePath="/urunler"
+                  params={params}
+                />
+              ) : null}
+            </div>
           </div>
         </div>
       </Container>
