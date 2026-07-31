@@ -36,16 +36,22 @@ export default async function ProductsPage({
 }) {
   const params = await searchParams;
   const filters = catalogFiltersFromParams(params);
-  const [result, desktopResult, categories, brands] = await Promise.all([
-    getProducts(filters),
-    getProducts({ ...filters, pageSize: 10 }),
-    getCategories(),
-    getBrands(),
-  ]);
+  const [result, tabletResult, desktopResult, categories, brands] =
+    await Promise.all([
+      getProducts({ ...filters, pageSize: 16 }),
+      getProducts(filters),
+      getProducts({ ...filters, pageSize: 10 }),
+      getCategories(),
+      getBrands(),
+    ]);
   const hasError = result.error || categories.error || brands.error;
+  const tabletHasError = tabletResult.error || categories.error || brands.error;
   const desktopHasError =
     desktopResult.error || categories.error || brands.error;
   const totalPages = Math.ceil(result.total / result.pageSize);
+  const tabletTotalPages = Math.ceil(
+    tabletResult.total / tabletResult.pageSize,
+  );
   const desktopTotalPages = Math.ceil(
     desktopResult.total / desktopResult.pageSize,
   );
@@ -75,13 +81,13 @@ export default async function ProductsPage({
             compactMobile
           />
           <div className="min-w-0 flex-1">
-            <div className="lg:hidden">
+            <div className="sm:hidden">
               {hasError ? (
                 <CatalogErrorState />
               ) : result.data.length === 0 ? (
                 <CatalogEmptyState />
               ) : (
-                <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)]">
                   {result.data.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -101,13 +107,39 @@ export default async function ProductsPage({
                 />
               ) : null}
             </div>
+            <div className="hidden sm:block lg:hidden">
+              {tabletHasError ? (
+                <CatalogErrorState />
+              ) : tabletResult.data.length === 0 ? (
+                <CatalogEmptyState />
+              ) : (
+                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3">
+                  {tabletResult.data.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      compactMobile
+                      denseMobile
+                    />
+                  ))}
+                </div>
+              )}{" "}
+              {!tabletHasError ? (
+                <Pagination
+                  page={tabletResult.page}
+                  totalPages={tabletTotalPages}
+                  basePath="/urunler"
+                  params={params}
+                />
+              ) : null}
+            </div>
             <div className="hidden lg:block">
               {desktopHasError ? (
                 <CatalogErrorState />
               ) : desktopResult.data.length === 0 ? (
                 <CatalogEmptyState />
               ) : (
-                <div className="stagger-grid grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                   {desktopResult.data.map((product) => (
                     <ProductCard
                       key={product.id}
