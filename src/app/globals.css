@@ -37,7 +37,7 @@
     @apply font-semibold text-primary underline underline-offset-4;
   }
   .rich-product-content img {
-    @apply my-6 h-auto max-w-full rounded-2xl border border-border object-contain shadow-sm;
+    @apply my-6 block h-auto w-full max-w-full rounded-2xl border border-border shadow-sm;
   }
   .rich-product-content table {
     @apply my-6 block w-full overflow-x-auto rounded-xl border border-border text-left;
