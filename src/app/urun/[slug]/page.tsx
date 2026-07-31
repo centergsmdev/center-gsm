@@ -51,25 +51,32 @@ export async function generateMetadata({
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const result = await getProductBySlug(slug);
+  const productName = result.data
+    ? `${result.data.brand} ${result.data.model}`
+    : "";
+  const productDescription = result.data
+    ? plainText(result.data.description) ||
+      `${productName}, ${result.data.category} kategorisinde CENTER GSM güvencesiyle satışta.`
+    : "";
   return result.data
     ? generateSeoMetadata({
-        title: `${result.data.brand} ${result.data.model}`,
-        description: plainText(result.data.description),
+        title: productName,
+        description: productDescription,
         keywords: [
           result.data.brand,
           result.data.category,
           result.data.sku ?? "",
           result.data.model,
         ],
-        canonical: `/urun/${slug}`,
+        canonical: `/urun/${result.data.slug}`,
         category: result.data.category,
         social: {
-          title: `${result.data.brand} ${result.data.model}`,
-          description: plainText(result.data.description),
-          canonical: `/urun/${slug}`,
+          title: productName,
+          description: productDescription,
+          canonical: `/urun/${result.data.slug}`,
           image: result.data.mainImageUrl ?? result.data.imageUrls?.[0],
           product: {
-            name: `${result.data.brand} ${result.data.model}`,
+            name: productName,
             brand: result.data.brand,
             category: result.data.category,
             price: result.data.price,
@@ -114,21 +121,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         id="product-category-breadcrumb-schema"
         data={createBreadcrumbSchema([
           { name: "Ana Sayfa", path: "/" },
+          { name: "Ürünler", path: "/urunler" },
           {
             name: product.category,
             path: `/kategori/${schemaSlug(product.category)}`,
           },
-          {
-            name: `${product.brand} ${product.model}`,
-            path: `/urun/${product.slug}`,
-          },
-        ])}
-      />
-      <JsonLd
-        id="product-brand-breadcrumb-schema"
-        data={createBreadcrumbSchema([
-          { name: "Ana Sayfa", path: "/" },
-          { name: product.brand, path: `/marka/${schemaSlug(product.brand)}` },
           {
             name: `${product.brand} ${product.model}`,
             path: `/urun/${product.slug}`,
