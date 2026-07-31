@@ -25,6 +25,7 @@ type CouponResult = { success: boolean; error?: string };
 const itemKey = (productId: string, variantId?: string) =>
   variantId ? `${productId}:${variantId}` : productId;
 type CartContextValue = {
+  isReady: boolean;
   items: CartItem[];
   lines: CartLine[];
   itemCount: number;
@@ -281,6 +282,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return result;
   };
   const value: CartContextValue = {
+    isReady: storageReady,
     items,
     lines,
     itemCount: lines.reduce((sum, line) => sum + line.quantity, 0),

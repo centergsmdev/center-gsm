@@ -55,7 +55,13 @@ const requiredFields: Record<string, string> = {
 };
 export function CheckoutForm() {
   const router = useRouter();
-  const { lines, couponCode, clearCart, totals } = useCart();
+  const {
+    isReady: cartReady,
+    lines,
+    couponCode,
+    clearCart,
+    totals,
+  } = useCart();
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
   const [credits, setCredits] = useState<CreditSelection>({
@@ -80,8 +86,9 @@ export function CheckoutForm() {
   );
 
   useEffect(() => {
-    if (lines.length === 0 && !processing) router.replace("/sepet");
-  }, [lines.length, processing, router]);
+    if (cartReady && lines.length === 0 && !processing)
+      router.replace("/sepet");
+  }, [cartReady, lines.length, processing, router]);
 
   useEffect(() => {
     void getActiveShippingCarriers().then((result) => {
@@ -403,7 +410,7 @@ export function CheckoutForm() {
             title="İndirim Kodu"
             description="Kuponunuz server-side doğrulanır ve toplam anında güncellenir."
           >
-            <CouponForm />
+            <CouponForm embedded />
           </CheckoutSection>
           <CheckoutSection
             number="6"
