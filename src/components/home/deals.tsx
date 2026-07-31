@@ -3,6 +3,11 @@ import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 import type { CatalogProduct } from "@/types/product";
 import { MobileSectionHeading } from "./mobile-section-heading";
+import {
+  AnimatedCard,
+  RevealSection,
+  StaggerContainer,
+} from "@/components/motion/motion-system";
 
 export function Deals({ products }: { products: CatalogProduct[] }) {
   const discountedProducts = products
@@ -15,7 +20,7 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
     .slice(0, 4);
 
   return (
-    <section
+    <RevealSection
       id="deals"
       aria-label="Kampanyalar"
       className="tech-panel-dark py-5 sm:py-11"
@@ -35,25 +40,25 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
           />
         </div>
         {discountedProducts.length ? (
-          <div
-            className="stagger-grid flex snap-x snap-mandatory gap-1.5 overflow-x-auto scroll-smooth pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
+          <StaggerContainer
+            className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto scroll-smooth pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
             aria-label="Kampanyalı ürünler"
           >
             {discountedProducts.map((product) => (
-              <div
+              <AnimatedCard
                 key={product.id}
                 className="w-[clamp(12.5rem,58vw,15rem)] shrink-0 snap-start md:w-[31%] lg:w-auto"
               >
                 <ProductCard product={product} compactMobile denseMobile />
-              </div>
+              </AnimatedCard>
             ))}
-          </div>
+          </StaggerContainer>
         ) : (
           <p className="home-premium-surface border border-white/10 bg-white/5 p-8 text-center text-sm text-zinc-400">
             Aktif kampanyalı ürün bulunmuyor.
           </p>
         )}
       </Container>
-    </section>
+    </RevealSection>
   );
 }

@@ -2,17 +2,22 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { HeroVisual } from "@/components/home/hero-visual";
+import {
+  AnimatedImage,
+  FadeIn,
+  FadeUp,
+} from "@/components/motion/motion-system";
 import { Container } from "@/components/ui/container";
 
 export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="py-2.5 sm:py-4">
       <Container>
-        <div className="launch-hero">
+        <FadeIn className="launch-hero">
           <div className="launch-hero-atmosphere" aria-hidden="true" />
 
           <div className="launch-hero-layout">
-            <div className="launch-hero-copy">
+            <FadeUp className="launch-hero-copy">
               <div className="launch-hero-kicker">
                 <Sparkles className="size-3.5" aria-hidden="true" />
                 Premium teknoloji seçkisi
@@ -32,16 +37,18 @@ export function Hero() {
                 Fırsatları keşfet
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </Link>
-            </div>
+            </FadeUp>
 
-            <HeroVisual />
+            <AnimatedImage>
+              <HeroVisual />
+            </AnimatedImage>
           </div>
 
           <div className="launch-hero-index" aria-label="Slayt 1 / 1">
             <span />
             01 / 01
           </div>
-        </div>
+        </FadeIn>
       </Container>
     </section>
   );

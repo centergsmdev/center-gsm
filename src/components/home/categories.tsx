@@ -5,6 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 import { getCategories } from "@/lib/catalog/data";
+import {
+  AnimatedCard,
+  RevealSection,
+  StaggerContainer,
+} from "@/components/motion/motion-system";
 
 const categoryCards = [
   {
@@ -53,10 +58,10 @@ export async function Categories() {
   );
 
   return (
-    <section
+    <RevealSection
       id="categories"
       aria-label="Kategoriler"
-      className="reveal-on-scroll pb-6 pt-2 sm:py-14"
+      className="pb-6 pt-2 sm:py-14"
     >
       <Container>
         <div className="hidden sm:block">
@@ -67,43 +72,42 @@ export async function Categories() {
             action={{ label: "Tüm kategoriler", href: "/urunler" }}
           />
         </div>
-        <div className="stagger-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
+        <StaggerContainer className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
           {categoryCards.map((card) => {
             const category = categoriesByName.get(normalizeName(card.name));
             if (!category) return null;
 
             return (
-              <Card
-                key={category.id}
-                className="home-premium-surface group overflow-hidden border-zinc-200/80 bg-white"
-              >
-                <Link
-                  href={`/kategori/${category.slug}`}
-                  className="flex h-full min-h-64 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
-                >
-                  <span className="relative block min-h-40 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
-                    <Image
-                      src={card.image}
-                      alt={`${card.name} kategorisi`}
-                      fill
-                      sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 16vw"
-                      className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
-                    />
-                  </span>
-                  <span className="px-1 pb-1 pt-4">
-                    <span className="block text-sm font-black tracking-[-0.025em] text-zinc-950 sm:text-base">
-                      {card.name}
+              <AnimatedCard key={category.id} className="h-full">
+                <Card className="home-premium-surface group h-full overflow-hidden border-zinc-200/80 bg-white">
+                  <Link
+                    href={`/kategori/${category.slug}`}
+                    className="flex h-full min-h-64 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
+                  >
+                    <span className="relative block min-h-40 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
+                      <Image
+                        src={card.image}
+                        alt={`${card.name} kategorisi`}
+                        fill
+                        sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 16vw"
+                        className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
+                      />
                     </span>
-                    <span className="mt-1 block text-xs leading-5 text-zinc-500 sm:text-sm">
-                      {card.subtitle}
+                    <span className="px-1 pb-1 pt-4">
+                      <span className="block text-sm font-black tracking-[-0.025em] text-zinc-950 sm:text-base">
+                        {card.name}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-zinc-500 sm:text-sm">
+                        {card.subtitle}
+                      </span>
                     </span>
-                  </span>
-                </Link>
-              </Card>
+                  </Link>
+                </Card>
+              </AnimatedCard>
             );
           })}
-        </div>
+        </StaggerContainer>
       </Container>
-    </section>
+    </RevealSection>
   );
 }

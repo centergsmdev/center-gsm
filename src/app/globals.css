@@ -332,7 +332,6 @@
     flex-direction: column;
     align-items: flex-start;
     padding: 34px 24px 0;
-    animation: launch-copy-in 720ms var(--ease-premium) both;
   }
 
   .launch-hero-kicker {
@@ -440,7 +439,6 @@
     min-height: 230px;
     overflow: hidden;
     isolation: isolate;
-    animation: launch-visual-in 900ms 100ms var(--ease-premium) both;
   }
 
   .launch-hero-visual::before {
