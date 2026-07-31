@@ -1,5 +1,3 @@
-"use client";
-
 import { ShieldCheck, Truck } from "lucide-react";
 
 import {
