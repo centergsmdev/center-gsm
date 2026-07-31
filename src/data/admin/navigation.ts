@@ -47,6 +47,11 @@ export const adminNavigation = [
     icon: PlugZap,
   },
   {
+    label: "Ödeme Çözüm Ortakları",
+    href: "/admin/odeme-cozum-ortaklari",
+    icon: Landmark,
+  },
+  {
     label: "Ödeme Webhookları",
     href: "/admin/odeme-webhooklari",
     icon: Webhook,
@@ -160,6 +165,10 @@ export const adminPageTitles: Record<
     title: "Ödeme Sağlayıcıları",
     description:
       "Ödeme ağ geçitlerini, ortamlarını ve sağlık durumlarını yönetin.",
+  },
+  "/admin/odeme-cozum-ortaklari": {
+    title: "Ödeme Çözüm Ortakları",
+    description: "Ana sayfadaki ödeme markalarını ve görünme sırasını yönetin.",
   },
   "/admin/odeme-webhooklari": {
     title: "Ödeme Webhookları",

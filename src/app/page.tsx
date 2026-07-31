@@ -13,13 +13,15 @@ import {
   createOrganizationSchema,
   createWebsiteSchema,
 } from "@/lib/seo/schema";
+import { getPublicPaymentPartners } from "@/payments/repository/public-payment-partner-repository";
 import { getPublicShippingCarriers } from "@/shipping/repository/public-shipping-repository";
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [featured, shippingCarriers] = await Promise.all([
+  const [featured, shippingCarriers, paymentPartners] = await Promise.all([
     getFeaturedProducts(5),
     getPublicShippingCarriers(),
+    getPublicPaymentPartners(),
   ]);
   return (
     <div className="tech-atmosphere min-h-screen text-zinc-950">
@@ -33,7 +35,10 @@ export default async function HomePage() {
           <Deals products={featured.error ? [] : featured.data} />
           <Brands />
           <Benefits />
-          <TrustSection carriers={shippingCarriers} />
+          <TrustSection
+            carriers={shippingCarriers}
+            paymentPartners={paymentPartners}
+          />
         </main>
         <FadeIn>
           <Footer />

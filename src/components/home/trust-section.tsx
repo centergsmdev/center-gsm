@@ -1,53 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { ShieldCheck, Truck } from "lucide-react";
-import { useState } from "react";
 
 import {
   AnimatedCard,
   RevealSection,
   StaggerContainer,
 } from "@/components/motion/motion-system";
+import { PartnerLogo } from "@/components/shared/partner-logo";
 import { Container } from "@/components/ui/container";
+import type { PublicPaymentPartner } from "@/payments/repository/public-payment-partner-repository";
 import type { PublicShippingCarrier } from "@/shipping/repository/public-shipping-repository";
-
-const paymentPartners = [
-  { name: "Visa", src: "/payment-partners/visa.svg" },
-  { name: "Mastercard", src: "/payment-partners/mastercard.svg" },
-  { name: "American Express", src: "/payment-partners/american-express.svg" },
-  { name: "Troy", src: "/payment-partners/troy.svg" },
-  { name: "Bonus", src: "/payment-partners/bonus.svg" },
-  { name: "World", src: "/payment-partners/world.svg" },
-  { name: "Maximum", src: "/payment-partners/maximum.svg" },
-  { name: "Axess", src: "/payment-partners/axess.svg" },
-] as const;
-
-function CarrierLogo({ carrier }: { carrier: PublicShippingCarrier }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const logoUrl = carrier.logoUrl;
-
-  if (logoUrl && failedUrl !== logoUrl) {
-    return (
-      // Logo hosts are managed in the admin panel and can use any HTTPS domain.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={logoUrl}
-        alt={`${carrier.name} logosu`}
-        loading="lazy"
-        decoding="async"
-        className="h-10 w-14 object-contain"
-        onError={() => setFailedUrl(logoUrl)}
-      />
-    );
-  }
-
-  return (
-    <span className="max-w-14 text-center text-[10px] font-black leading-tight text-zinc-700">
-      {carrier.name}
-    </span>
-  );
-}
 
 function LogoCard({
   children,
@@ -70,8 +33,10 @@ function LogoCard({
 
 export function TrustSection({
   carriers,
+  paymentPartners,
 }: {
   carriers: PublicShippingCarrier[];
+  paymentPartners: PublicPaymentPartner[];
 }) {
   return (
     <RevealSection
@@ -92,7 +57,10 @@ export function TrustSection({
               {carriers.length ? (
                 carriers.map((carrier) => (
                   <LogoCard key={carrier.id} label={carrier.name}>
-                    <CarrierLogo carrier={carrier} />
+                    <PartnerLogo
+                      name={carrier.name}
+                      logoUrl={carrier.logoUrl}
+                    />
                   </LogoCard>
                 ))
               ) : (
@@ -107,17 +75,21 @@ export function TrustSection({
               title="Ödeme Çözümlerimiz"
               description="Tüm ödemeler SSL ile korunur ve uluslararası güvenlik standartlarına uygun şekilde işlenir."
             >
-              {paymentPartners.map((partner) => (
-                <LogoCard key={partner.name} label={partner.name}>
-                  <Image
-                    src={partner.src}
-                    alt={`${partner.name} logosu`}
-                    width={56}
-                    height={36}
-                    className="h-9 w-14 object-contain"
-                  />
-                </LogoCard>
-              ))}
+              {paymentPartners.length ? (
+                paymentPartners.map((partner) => (
+                  <LogoCard key={partner.id} label={partner.name}>
+                    <PartnerLogo
+                      name={partner.name}
+                      logoUrl={partner.logoUrl}
+                      className="h-9 w-14"
+                    />
+                  </LogoCard>
+                ))
+              ) : (
+                <p className="text-sm text-zinc-500">
+                  Aktif ödeme çözüm ortağı bilgisi güncelleniyor.
+                </p>
+              )}
             </PartnerGroup>
           </div>
 

@@ -291,6 +291,14 @@ type PaymentAccount = Timestamps & {
   is_active: boolean;
   is_default: boolean;
 };
+type PaymentPartner = Timestamps & {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  is_active: boolean;
+  is_default: boolean;
+  sort_order: number;
+};
 type PaymentTransaction = Timestamps & {
   id: string;
   order_id: string;
@@ -1069,6 +1077,10 @@ export type Database = {
             "order_id" | "provider" | "status" | "amount" | "reference"
           >
       >;
+      payment_partners: Table<
+        PaymentPartner,
+        Partial<PaymentPartner> & Pick<PaymentPartner, "name">
+      >;
       payment_providers: Table<PaymentProvider, never, never>;
       payment_provider_settings: Table<PaymentProviderSetting, never, never>;
       payment_webhooks: Table<PaymentWebhook, never, never>;
@@ -1445,6 +1457,10 @@ export type Database = {
       };
       set_default_shipping_carrier: {
         Args: { p_carrier_id: string };
+        Returns: boolean;
+      };
+      set_default_payment_partner: {
+        Args: { p_partner_id: string };
         Returns: boolean;
       };
       admin_update_shipping_experience: {
