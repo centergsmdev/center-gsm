@@ -241,17 +241,42 @@
     border-radius: var(--home-premium-radius);
     box-shadow: var(--home-premium-shadow);
     transition:
-      transform 300ms var(--ease-premium),
-      box-shadow 300ms var(--ease-premium),
-      border-color 300ms var(--ease-premium);
+      transform 200ms var(--ease-premium),
+      box-shadow 200ms var(--ease-premium),
+      border-color 200ms var(--ease-premium);
   }
 
   a.home-premium-surface:hover,
   .home-premium-surface:has(> a:hover),
   .home-premium-interactive:hover {
-    transform: translate3d(0, -5px, 0);
+    transform: translate3d(0, -3px, 0);
     border-color: rgb(248 113 113 / 0.45);
     box-shadow: var(--home-premium-shadow-hover);
+  }
+
+  .motion-card-shell:hover > .home-premium-surface,
+  .motion-card-shell:hover > .home-premium-interactive {
+    transform: none;
+  }
+
+  .storefront-action {
+    transition:
+      transform 200ms var(--ease-premium),
+      opacity 200ms var(--ease-premium),
+      box-shadow 200ms var(--ease-premium);
+  }
+
+  .storefront-action:hover {
+    opacity: 0.96;
+  }
+
+  .storefront-action:active {
+    transform: scale(0.98);
+  }
+
+  .storefront-icon-action:hover {
+    transform: scale(1.04);
+    opacity: 0.9;
   }
 
   .brand-premium-card::before {

@@ -34,7 +34,7 @@ export function FavoriteButton({
       size={size}
       aria-pressed={active}
       className={cn(
-        "transition-all duration-200",
+        "storefront-icon-action transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none",
         active &&
           "border-red-200 bg-red-50 text-primary hover:border-red-300 hover:bg-red-100",
         showLabel && "w-auto grid-flow-col gap-2 px-4",

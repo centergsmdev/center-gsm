@@ -2,22 +2,16 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { HeroVisual } from "@/components/home/hero-visual";
-import {
-  AnimatedImage,
-  FadeIn,
-  FadeUp,
-} from "@/components/motion/motion-system";
+import { HeroParallax } from "@/components/home/hero-parallax";
 import { Container } from "@/components/ui/container";
 
 export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="py-2.5 sm:py-4">
       <Container>
-        <FadeIn className="launch-hero">
-          <div className="launch-hero-atmosphere" aria-hidden="true" />
-
-          <div className="launch-hero-layout">
-            <FadeUp className="launch-hero-copy">
+        <HeroParallax
+          copy={
+            <>
               <div className="launch-hero-kicker">
                 <Sparkles className="size-3.5" aria-hidden="true" />
                 Premium teknoloji seçkisi
@@ -33,22 +27,23 @@ export function Hero() {
                 yalın ve ayrıcalıklı bir alışveriş deneyimi.
               </p>
 
-              <Link href="/#deals" className="launch-hero-cta">
+              <Link
+                href="/#deals"
+                className="launch-hero-cta storefront-action"
+              >
                 Fırsatları keşfet
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </Link>
-            </FadeUp>
-
-            <AnimatedImage>
-              <HeroVisual />
-            </AnimatedImage>
-          </div>
-
-          <div className="launch-hero-index" aria-label="Slayt 1 / 1">
-            <span />
-            01 / 01
-          </div>
-        </FadeIn>
+            </>
+          }
+          visual={<HeroVisual />}
+          index={
+            <div className="launch-hero-index" aria-label="Slayt 1 / 1">
+              <span />
+              01 / 01
+            </div>
+          }
+        />
       </Container>
     </section>
   );

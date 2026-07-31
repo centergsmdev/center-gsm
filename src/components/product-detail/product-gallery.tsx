@@ -122,7 +122,7 @@ export function ProductGallery({
       >
         <div
           key={`${galleryKey}-${selectedItem?.url ?? selectedView}`}
-          className="animate-in fade-in zoom-in-95 size-full duration-300"
+          className="animate-in fade-in zoom-in-95 size-full duration-200 ease-premium motion-reduce:animate-none"
         >
           <ProductVisual
             product={product}

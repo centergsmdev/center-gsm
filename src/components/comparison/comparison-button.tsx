@@ -45,7 +45,7 @@ export function ComparisonButton({
       aria-pressed={active}
       onClick={() => toggleComparison(product)}
       className={cn(
-        "relative z-raised",
+        "storefront-icon-action relative z-raised transition-all duration-200 motion-reduce:transform-none motion-reduce:transition-none",
         active && "border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800",
         limitReached && "opacity-60",
         showLabel && "w-auto grid-flow-col gap-2 px-4",

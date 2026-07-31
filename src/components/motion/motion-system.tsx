@@ -17,17 +17,17 @@ const premiumEase = [0.22, 1, 0.36, 1] as const;
 
 export const motionDurations = {
   reveal: 0.55,
-  hover: 0.28,
+  hover: 0.2,
 } as const;
 
 export const motionStagger = {
-  interval: 0.09,
-  delay: 0.04,
+  interval: 0.105,
+  delay: 0.06,
 } as const;
 
 export const motionViewport = {
   once: true,
-  amount: 0.2,
+  amount: 0.32,
 } as const;
 
 const createRevealVariants = ({
@@ -174,8 +174,7 @@ export function AnimatedCard({ className, ...props }: HTMLMotionProps<"div">) {
           ? undefined
           : {
               y: -3,
-              scale: 1.008,
-              boxShadow: "0 18px 42px rgba(9, 9, 11, 0.1)",
+              scale: 1.006,
               transition: {
                 duration: motionDurations.hover,
                 ease: premiumEase,
@@ -183,7 +182,7 @@ export function AnimatedCard({ className, ...props }: HTMLMotionProps<"div">) {
             }
       }
       className={cn(
-        "rounded-[var(--home-premium-radius)] will-change-transform",
+        "motion-card-shell rounded-[var(--home-premium-radius)] will-change-transform",
         className,
       )}
       {...props}

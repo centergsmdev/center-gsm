@@ -22,7 +22,7 @@ export function AddToCartButton({
   const unavailable = product?.stockStatus === "out-of-stock";
   return (
     <Button
-      className={className}
+      className={`storefront-action motion-reduce:transform-none motion-reduce:transition-none ${className ?? ""}`}
       size="md"
       aria-label={`${productName} ürününü sepete ekle`}
       onClick={() => addItem(productId, quantity, product)}
