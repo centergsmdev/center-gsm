@@ -5,6 +5,8 @@ import {
   Boxes,
   Landmark,
   LayoutDashboard,
+  Instagram,
+  Megaphone,
   Package,
   PlugZap,
   Settings,
@@ -24,6 +26,18 @@ import {
 export const adminNavigation = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Ürünler", href: "/admin/urunler", icon: Package },
+  {
+    label: "Marketing Studio",
+    href: "/admin/marketing-studio",
+    icon: Megaphone,
+    exact: true,
+  },
+  {
+    label: "Instagram Gönderileri",
+    href: "/admin/marketing-studio/instagram",
+    icon: Instagram,
+    child: true,
+  },
   { label: "Kategoriler", href: "/admin/kategoriler", icon: Boxes },
   { label: "Markalar", href: "/admin/markalar", icon: Tags },
   { label: "Stok", href: "/admin/stok", icon: Boxes },
@@ -101,6 +115,14 @@ export const adminPageTitles: Record<
   "/admin/urunler/yeni": {
     title: "Yeni ürün",
     description: "Kataloğa yayınlanmaya hazır bir ürün ekleyin.",
+  },
+  "/admin/marketing-studio": {
+    title: "Marketing Studio",
+    description: "Ürün verilerinden kanal içerikleri hazırlayın.",
+  },
+  "/admin/marketing-studio/instagram": {
+    title: "Instagram Gönderileri",
+    description: "Ürün verileriyle canlı Instagram gönderisi önizlemesi.",
   },
   "/admin/kategoriler": {
     title: "Kategoriler",

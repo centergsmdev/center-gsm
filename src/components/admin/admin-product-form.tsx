@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { AlertTriangle, Check, Save } from "lucide-react";
+import { AlertTriangle, Check, Instagram, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -557,6 +557,15 @@ export function AdminProductForm({ productId }: { productId?: string }) {
               <Save className="size-4" />
               {saving ? "Kaydediliyor…" : "Ürünü kaydet"}
             </Button>
+            {productId ? (
+              <Link
+                href={`/admin/marketing-studio/instagram?productId=${encodeURIComponent(productId)}`}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-4 text-sm font-bold text-zinc-800 transition hover:border-zinc-950 hover:shadow-sm"
+              >
+                <Instagram className="size-4" aria-hidden="true" />
+                Instagram Gönderisi Oluştur
+              </Link>
+            ) : null}
             <Link
               href="/admin/urunler"
               className="inline-flex h-11 items-center justify-center rounded-full text-sm font-bold text-zinc-600 hover:bg-zinc-100"

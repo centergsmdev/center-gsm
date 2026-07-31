@@ -26,9 +26,9 @@ export function AdminSidebar({
       )}
     >
       <div className="flex h-20 items-center justify-between border-b border-white/10 px-5 lg:px-6">
-          <Link
-            href="/admin"
-            prefetch={false}
+        <Link
+          href="/admin"
+          prefetch={false}
           className="flex items-center gap-3"
           aria-label="CENTER GSM Admin ana sayfa"
         >
@@ -61,7 +61,7 @@ export function AdminSidebar({
       >
         {adminNavigation.map((item) => {
           const active =
-            item.href === "/admin"
+            item.href === "/admin" || ("exact" in item && item.exact)
               ? pathname === item.href
               : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -75,6 +75,7 @@ export function AdminSidebar({
               title={!mobile ? item.label : undefined}
               className={cn(
                 "group flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors",
+                "child" in item && item.child && "ml-3 h-10 text-xs",
                 active
                   ? "bg-red-600 text-white shadow-lg shadow-red-950/20"
                   : "text-zinc-400 hover:bg-white/[.07] hover:text-white",
