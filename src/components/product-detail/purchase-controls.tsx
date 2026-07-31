@@ -34,7 +34,7 @@ export function PurchaseControls({
   const purchaseDisabled = unavailable || selectionMissing;
 
   return (
-    <div className="mt-5">
+    <div className="mt-3">
       <div className="flex items-center justify-between gap-4">
         <div>
           <label

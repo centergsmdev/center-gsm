@@ -65,7 +65,7 @@ export function ProductInfo({
   return (
     <section
       aria-labelledby="product-title"
-      className="home-premium-surface rounded-2xl border border-white/80 bg-white/90 p-4 shadow-xl backdrop-blur sm:p-6 lg:sticky lg:top-36"
+      className="home-premium-surface rounded-2xl border border-white/80 bg-white/90 p-4 shadow-xl backdrop-blur lg:sticky lg:top-36"
     >
       <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
         {product.brand}
@@ -96,7 +96,7 @@ export function ProductInfo({
         </span>
       </div>
 
-      <Divider className="my-5" />
+      <Divider className="my-3" />
       {colors.length ? (
         <fieldset>
           <legend className="text-sm font-black text-foreground">
@@ -145,7 +145,7 @@ export function ProductInfo({
       ) : null}
 
       {storageOptions.length ? (
-        <fieldset className="mt-5">
+        <fieldset className="mt-3">
           <legend className="text-sm font-black text-foreground">
             Depolama
           </legend>
@@ -181,7 +181,7 @@ export function ProductInfo({
       ) : null}
 
       {colors.length || storageOptions.length ? (
-        <Divider className="my-5" />
+        <Divider className="my-3" />
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {product.discountRate ? (
@@ -192,7 +192,7 @@ export function ProductInfo({
           {stockLabel}
         </Badge>
       </div>
-      <div className="mt-4">
+      <div className="mt-3">
         {product.previousPrice ? (
           <p className="text-sm text-muted line-through">
             {formatCurrency(product.previousPrice)}
@@ -212,7 +212,7 @@ export function ProductInfo({
         ) : null}
       </div>
 
-      <Card className="mt-5 grid gap-2 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">
+      <Card className="mt-3 grid gap-1.5 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">
         {product.sameDayShipping ? (
           <InfoRow
             icon={PackageCheck}
@@ -261,13 +261,13 @@ function InfoRow({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-red-50 text-primary">
+    <div className="flex items-center gap-2 rounded-xl border border-white bg-white p-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-red-50 text-primary">
         <Icon className="size-5" aria-hidden="true" />
       </span>
       <div>
-        <p className="text-xs font-bold text-foreground">{title}</p>
-        <p className="mt-0.5 text-[11px] text-muted">{description}</p>
+        <p className="text-xs font-black text-foreground">{title}</p>
+        <p className="mt-0.5 text-xs leading-4 text-muted">{description}</p>
       </div>
     </div>
   );

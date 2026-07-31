@@ -79,7 +79,7 @@ export function ProductCard({
             {product.brand}
           </p>
           <span
-            className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${stock.className}`}
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${stock.className}`}
           >
             {stock.label}
           </span>
@@ -135,7 +135,7 @@ export function ProductCard({
             {formatCurrency(product.price)}
           </p>
           {product.showInstallments ? (
-            <p className="mt-0.5 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-medium text-zinc-600 sm:mt-1 sm:px-2.5 sm:py-1 sm:text-[10px]">
+            <p className="mt-0.5 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 sm:mt-1 sm:px-2.5 sm:py-1">
               <strong className="text-zinc-950">
                 {product.installmentCount} ay
               </strong>{" "}
@@ -145,12 +145,12 @@ export function ProductCard({
 
           <div className="mt-1.5 flex flex-wrap gap-1 sm:mt-2">
             {product.freeShipping ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[9px] font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-700">
                 <Truck className="size-3 text-primary" aria-hidden="true" />
                 Ücretsiz Kargo
               </span>
             ) : null}
-            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[9px] font-bold text-zinc-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-700">
               <ShieldCheck className="size-3 text-primary" aria-hidden="true" />
               Güvenli Ödeme
             </span>
