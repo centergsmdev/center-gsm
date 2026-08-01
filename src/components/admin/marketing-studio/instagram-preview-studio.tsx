@@ -158,9 +158,6 @@ function StudioWorkspace({
         (!selectedColorId || variant.color_id === selectedColorId) &&
         (!selectedStorageKey || storageKey(variant) === selectedStorageKey),
     ) ?? initialVariant;
-  const selectedColor = activeColors.find(
-    (color) => color.id === selectedColorId,
-  );
   const colorImages = selectedColorId
     ? data.variantImages.filter((image) => image.color_id === selectedColorId)
     : [];
@@ -297,7 +294,6 @@ function StudioWorkspace({
           <InstagramCanvas
             canvasRef={canvasRef}
             product={product}
-            selectedColor={selectedColor}
             activeColors={activeColors}
             storageOptions={storageOptions}
             selectedStorageKey={selectedStorageKey}
@@ -468,7 +464,6 @@ function useStudioCutout(source?: string) {
 function InstagramCanvas({
   canvasRef,
   product,
-  selectedColor,
   activeColors,
   storageOptions,
   selectedStorageKey,
@@ -483,7 +478,6 @@ function InstagramCanvas({
 }: {
   canvasRef: RefObject<HTMLElement | null>;
   product: AdminProduct;
-  selectedColor?: ProductColor;
   activeColors: ProductColor[];
   storageOptions: [string, ProductVariant][];
   selectedStorageKey: string;
@@ -542,9 +536,9 @@ function InstagramCanvas({
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-[0.7cqw] rounded-[1cqw] border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-500/20 to-orange-400/10 px-[1.15cqw] py-[0.65cqw] text-[0.92cqw] font-black text-white shadow-[0_0_24px_rgba(217,70,239,0.2)]">
+          <span className="inline-flex items-center gap-[0.8cqw] rounded-[1cqw] border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-500/20 to-orange-400/10 px-[1.35cqw] py-[0.75cqw] text-[1.15cqw] font-black text-white shadow-[0_0_24px_rgba(217,70,239,0.2)]">
             <Instagram
-              className="size-[1.45cqw] text-fuchsia-300"
+              className="size-[1.7cqw] text-fuchsia-300"
               aria-hidden="true"
             />
             @offgamersofficial
@@ -562,7 +556,7 @@ function InstagramCanvas({
               </p>
               <h2
                 className={cn(
-                  "mt-[0.35cqw] line-clamp-2 font-black leading-[0.94] tracking-[-0.055em] text-white drop-shadow-[0_0_18px_rgba(99,102,241,0.35)]",
+                  "mt-[0.35cqw] line-clamp-2 bg-gradient-to-r from-fuchsia-200 via-white to-blue-200 bg-clip-text font-black leading-[0.94] tracking-[-0.055em] text-transparent drop-shadow-[0_0_18px_rgba(217,70,239,0.55)]",
                   productNameSize,
                 )}
               >
@@ -625,11 +619,7 @@ function InstagramCanvas({
                     {activeColors.map((color) => (
                       <span
                         key={color.id}
-                        className={cn(
-                          "size-[1.75cqw] rounded-full border-[0.16cqw] border-white/70 shadow-[0_0_10px_rgba(255,255,255,0.18)]",
-                          color.id === selectedColor?.id &&
-                            "ring-[0.28cqw] ring-fuchsia-400 ring-offset-[0.25cqw] ring-offset-[#050508]",
-                        )}
+                        className="size-[1.75cqw] rounded-full border-[0.16cqw] border-white/70 shadow-[0_0_10px_rgba(255,255,255,0.18)]"
                         style={{ backgroundColor: color.hex_code }}
                         title={color.display_name ?? color.name}
                       />
@@ -641,7 +631,7 @@ function InstagramCanvas({
           </section>
 
           <section
-            className="flex min-h-0 flex-col"
+            className="flex min-h-0 flex-col pb-[1cqw]"
             aria-label="Ödeme seçenekleri"
           >
             <div className="flex items-center justify-between">
@@ -770,10 +760,10 @@ function InstagramCanvas({
             </div>
           </div>
           <div className="text-center">
-            <p className="text-[2.1cqw] font-black leading-none tracking-[-0.04em] text-white">
+            <p className="text-[2.5cqw] font-black leading-none tracking-[-0.04em] text-white">
               CENTER <span className="text-red-500">GSM</span>
             </p>
-            <p className="mt-[0.45cqw] text-[0.72cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
+            <p className="mt-[0.5cqw] text-[0.9cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
               Teknolojinin Merkezi
             </p>
           </div>
@@ -782,7 +772,7 @@ function InstagramCanvas({
               <p className="text-[1.45cqw] font-black uppercase text-fuchsia-300">
                 Hemen İncele
               </p>
-              <p className="max-w-[26cqw] truncate text-[1.05cqw] font-semibold text-white">
+              <p className="max-w-[26cqw] truncate text-[1.3cqw] font-semibold text-white">
                 {domain}
               </p>
             </div>
@@ -871,8 +861,8 @@ function TrustItem({
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.65cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[1.25cqw] font-medium text-zinc-300">
+        <p className="truncate text-[1.75cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[1.3cqw] font-medium text-zinc-300">
           {description}
         </p>
       </div>
