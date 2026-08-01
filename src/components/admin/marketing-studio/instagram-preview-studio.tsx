@@ -521,7 +521,10 @@ function InstagramCanvas({
       <div className="pointer-events-none absolute right-[5%] top-[12%] size-[26%] rotate-45 border-r border-t border-fuchsia-400/25" />
       <div className="pointer-events-none absolute bottom-[18%] left-[4%] h-[20%] w-[62%] rounded-[50%] bg-fuchsia-500/10 blur-[4cqw]" />
 
-      <div className="relative grid h-full grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]">
+      <div
+        className="absolute inset-[8.333333%] grid h-[120%] w-[120%] origin-top-left scale-[0.833333] grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]"
+        aria-label="Instagram grid güvenli alanı"
+      >
         <header className="flex min-h-0 items-start justify-between">
           <div className="flex items-center gap-[1.15cqw]">
             <span className="grid size-[4.6cqw] place-items-center rounded-[1cqw] bg-white p-[0.65cqw] shadow-[0_0_26px_rgba(255,255,255,0.22)]">
