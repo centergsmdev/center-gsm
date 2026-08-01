@@ -522,7 +522,7 @@ function InstagramCanvas({
       <div className="pointer-events-none absolute bottom-[18%] left-[4%] h-[20%] w-[62%] rounded-[50%] bg-fuchsia-500/10 blur-[4cqw]" />
 
       <div
-        className="absolute inset-[8.333333%] grid h-[120%] w-[120%] origin-top-left scale-[0.833333] grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]"
+        className="absolute inset-[8.333333%] grid grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]"
         aria-label="Instagram grid güvenli alanı"
       >
         <header className="flex min-h-0 items-start justify-between">
@@ -559,20 +559,20 @@ function InstagramCanvas({
             className="flex min-h-0 flex-col"
             aria-label="Ürün bilgileri"
           >
+            <div className="shrink-0 pb-[0.8cqw]">
+              <p className="text-[1.05cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
+                {product.brand.name}
+              </p>
+              <h2
+                className={cn(
+                  "mt-[0.35cqw] line-clamp-2 font-black leading-[0.94] tracking-[-0.055em] text-white drop-shadow-[0_0_18px_rgba(99,102,241,0.35)]",
+                  productNameSize,
+                )}
+              >
+                {product.name}
+              </h2>
+            </div>
             <div className="relative min-h-0 flex-1 overflow-hidden">
-              <div className="absolute left-[4%] top-[4%] z-20 max-w-[92%]">
-                <p className="text-[1.05cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
-                  {product.brand.name}
-                </p>
-                <h2
-                  className={cn(
-                    "mt-[0.35cqw] line-clamp-2 font-black leading-[0.94] tracking-[-0.055em] text-white drop-shadow-[0_0_18px_rgba(99,102,241,0.35)]",
-                    productNameSize,
-                  )}
-                >
-                  {product.name}
-                </h2>
-              </div>
               <div className="absolute left-1/2 top-[56%] size-[71%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/25 bg-fuchsia-500/[0.04] shadow-[0_0_55px_rgba(59,130,246,0.22),inset_0_0_48px_rgba(217,70,239,0.14)]" />
               <div className="absolute bottom-[4%] left-1/2 h-[7.5%] w-[76%] -translate-x-1/2 rounded-[50%] border border-fuchsia-300/70 bg-blue-500/25 shadow-[0_0_10px_#e879f9,0_0_28px_#2563eb,inset_0_0_18px_#d946ef]" />
               <div className="absolute bottom-[6.2%] left-1/2 h-[3.5%] w-[63%] -translate-x-1/2 rounded-[50%] border border-cyan-200/60 shadow-[0_0_18px_#22d3ee]" />
@@ -755,8 +755,8 @@ function InstagramCanvas({
           />
         </section>
 
-        <footer className="grid min-h-0 grid-cols-[1fr_auto_1fr] items-center gap-[1.5cqw] pt-[1.2cqw]">
-          <div className="flex items-center gap-[1.2cqw]">
+        <footer className="grid min-h-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-[1.5cqw] pt-[1.2cqw]">
+          <div className="flex min-w-0 items-center gap-[1.2cqw]">
             <span className="rounded-[0.8cqw] border border-fuchsia-300 bg-white p-[0.5cqw] shadow-[0_0_20px_rgba(232,121,249,0.45)]">
               <QRCodeSVG value={productUrl} size={74} level="M" />
             </span>
