@@ -170,6 +170,7 @@ function StudioWorkspace({
     previewImages.find((image) => image.is_primary) ??
     previewImages[0] ??
     product.primaryImage;
+  const { cutoutImage, cutoutProcessing } = useStudioCutout(selectedImage?.url);
   const price = Number(selectedVariant?.price ?? product.price);
   const oldPriceValue = selectedVariant?.old_price ?? product.old_price;
   const oldPrice = oldPriceValue === null ? undefined : Number(oldPriceValue);
@@ -205,7 +206,7 @@ function StudioWorkspace({
 
   async function downloadPng() {
     const canvas = canvasRef.current;
-    if (!canvas || exporting) return;
+    if (!canvas || exporting || cutoutProcessing) return;
     setExporting(true);
     setExportError("");
     try {
@@ -275,7 +276,7 @@ function StudioWorkspace({
               <button
                 type="button"
                 onClick={() => void downloadPng()}
-                disabled={exporting}
+                disabled={exporting || cutoutProcessing}
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-950 px-4 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-60"
               >
                 {exporting ? (
@@ -286,7 +287,11 @@ function StudioWorkspace({
                 ) : (
                   <Download className="size-4" aria-hidden="true" />
                 )}
-                {exporting ? "PNG hazırlanıyor…" : "PNG İndir"}
+                {exporting
+                  ? "PNG hazırlanıyor…"
+                  : cutoutProcessing
+                    ? "Ürün ayıklanıyor…"
+                    : "PNG İndir"}
               </button>
             </div>
           }
@@ -299,7 +304,7 @@ function StudioWorkspace({
             activeColors={activeColors}
             storageOptions={storageOptions}
             selectedStorageKey={selectedStorageKey}
-            selectedImage={selectedImage}
+            cutoutImage={cutoutImage}
             price={price}
             oldPrice={oldPrice}
             discountRate={discountRate}
@@ -335,6 +340,135 @@ function StudioWorkspace({
   );
 }
 
+function useStudioCutout(source?: string) {
+  const [cutoutImage, setCutoutImage] = useState<string>();
+  const [cutoutProcessing, setCutoutProcessing] = useState(Boolean(source));
+
+  useEffect(() => {
+    if (!source) {
+      setCutoutImage(undefined);
+      setCutoutProcessing(false);
+      return;
+    }
+    let active = true;
+    setCutoutImage(undefined);
+    setCutoutProcessing(true);
+    const image = new window.Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      try {
+        const maxSide = 1800;
+        const scale = Math.min(
+          1,
+          maxSide / Math.max(image.width, image.height),
+        );
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        if (!context) return;
+        context.drawImage(image, 0, 0, width, height);
+        const frame = context.getImageData(0, 0, width, height);
+        const pixels = frame.data;
+        const corners = [
+          0,
+          (width - 1) * 4,
+          (height - 1) * width * 4,
+          (height * width - 1) * 4,
+        ];
+        const lightCorners = corners.filter(
+          (index) =>
+            pixels[index] > 215 &&
+            pixels[index + 1] > 215 &&
+            pixels[index + 2] > 215,
+        );
+        if (lightCorners.length < 3) {
+          if (active) {
+            setCutoutImage(source);
+            setCutoutProcessing(false);
+          }
+          return;
+        }
+        const background = lightCorners.reduce(
+          (sum, index) => [
+            sum[0] + pixels[index] / lightCorners.length,
+            sum[1] + pixels[index + 1] / lightCorners.length,
+            sum[2] + pixels[index + 2] / lightCorners.length,
+          ],
+          [0, 0, 0],
+        );
+        const visited = new Uint8Array(width * height);
+        const queue = new Int32Array(width * height);
+        let head = 0;
+        let tail = 0;
+        const enqueue = (position: number) => {
+          if (visited[position]) return;
+          const pixel = position * 4;
+          const distance = Math.hypot(
+            pixels[pixel] - background[0],
+            pixels[pixel + 1] - background[1],
+            pixels[pixel + 2] - background[2],
+          );
+          const brightness =
+            (pixels[pixel] + pixels[pixel + 1] + pixels[pixel + 2]) / 3;
+          if (distance > 58 || brightness < 190) return;
+          visited[position] = 1;
+          queue[tail++] = position;
+        };
+        for (let x = 0; x < width; x += 1) {
+          enqueue(x);
+          enqueue((height - 1) * width + x);
+        }
+        for (let y = 0; y < height; y += 1) {
+          enqueue(y * width);
+          enqueue(y * width + width - 1);
+        }
+        while (head < tail) {
+          const position = queue[head++];
+          const x = position % width;
+          const y = Math.floor(position / width);
+          const pixel = position * 4;
+          const distance = Math.hypot(
+            pixels[pixel] - background[0],
+            pixels[pixel + 1] - background[1],
+            pixels[pixel + 2] - background[2],
+          );
+          pixels[pixel + 3] =
+            distance < 30 ? 0 : Math.round((distance - 30) * 9);
+          if (x > 0) enqueue(position - 1);
+          if (x + 1 < width) enqueue(position + 1);
+          if (y > 0) enqueue(position - width);
+          if (y + 1 < height) enqueue(position + width);
+        }
+        context.putImageData(frame, 0, 0);
+        if (active) {
+          setCutoutImage(canvas.toDataURL("image/png"));
+          setCutoutProcessing(false);
+        }
+      } catch {
+        if (active) {
+          setCutoutImage(source);
+          setCutoutProcessing(false);
+        }
+      }
+    };
+    image.onerror = () => {
+      if (active) {
+        setCutoutImage(source);
+        setCutoutProcessing(false);
+      }
+    };
+    image.src = source;
+    return () => {
+      active = false;
+    };
+  }, [source]);
+
+  return { cutoutImage, cutoutProcessing };
+}
+
 function InstagramCanvas({
   canvasRef,
   product,
@@ -342,7 +476,7 @@ function InstagramCanvas({
   activeColors,
   storageOptions,
   selectedStorageKey,
-  selectedImage,
+  cutoutImage,
   price,
   oldPrice,
   discountRate,
@@ -358,7 +492,7 @@ function InstagramCanvas({
   activeColors: ProductColor[];
   storageOptions: [string, ProductVariant][];
   selectedStorageKey: string;
-  selectedImage?: ProductImage | null;
+  cutoutImage?: string;
   price: number;
   oldPrice?: number;
   discountRate?: number;
@@ -442,11 +576,11 @@ function InstagramCanvas({
               <div className="absolute left-1/2 top-[56%] size-[71%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/25 bg-fuchsia-500/[0.04] shadow-[0_0_55px_rgba(59,130,246,0.22),inset_0_0_48px_rgba(217,70,239,0.14)]" />
               <div className="absolute bottom-[4%] left-1/2 h-[7.5%] w-[76%] -translate-x-1/2 rounded-[50%] border border-fuchsia-300/70 bg-blue-500/25 shadow-[0_0_10px_#e879f9,0_0_28px_#2563eb,inset_0_0_18px_#d946ef]" />
               <div className="absolute bottom-[6.2%] left-1/2 h-[3.5%] w-[63%] -translate-x-1/2 rounded-[50%] border border-cyan-200/60 shadow-[0_0_18px_#22d3ee]" />
-              {selectedImage?.url ? (
+              {cutoutImage ? (
                 // Supabase Storage images are intentionally rendered from their saved URL.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={selectedImage.url}
+                  src={cutoutImage}
                   alt={product.name}
                   className="relative z-10 size-full scale-[1.2] object-contain px-[2%] pb-[3%] pt-[9%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
                 />
@@ -534,7 +668,7 @@ function InstagramCanvas({
                 <div className="flex min-w-0 items-end justify-between gap-[1cqw]">
                   <div className="min-w-0">
                     {oldPrice ? (
-                      <p className="text-[1.15cqw] font-semibold text-zinc-500 line-through">
+                      <p className="text-[1.4cqw] font-semibold text-zinc-400 line-through">
                         {formatCurrency(oldPrice)}
                       </p>
                     ) : null}
@@ -543,7 +677,7 @@ function InstagramCanvas({
                     </p>
                   </div>
                   {discountRate ? (
-                    <span className="shrink-0 rounded-[0.7cqw] border border-amber-200/50 bg-amber-400 px-[0.85cqw] py-[0.45cqw] text-[0.95cqw] font-black text-zinc-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]">
+                    <span className="shrink-0 rounded-[0.7cqw] border border-amber-200/50 bg-amber-400 px-[0.9cqw] py-[0.5cqw] text-[1.15cqw] font-black text-zinc-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]">
                       %{discountRate} indirim
                     </span>
                   ) : null}
@@ -555,13 +689,13 @@ function InstagramCanvas({
                 eyebrow="Kredi kartına vade farksız taksit"
                 accent="blue"
               >
-                <p className="text-[2.15cqw] font-black leading-tight text-white">
+                <p className="text-[2.5cqw] font-black leading-[1.08] text-white">
                   {hasInstallments
                     ? `${installmentCount} aya varan taksit imkânı`
                     : "Bu ürün için taksit seçeneği bulunmuyor"}
                 </p>
                 {hasInstallments ? (
-                  <p className="mt-[0.45cqw] text-[1.2cqw] font-semibold text-blue-200">
+                  <p className="mt-[0.55cqw] text-[1.55cqw] font-bold text-blue-200">
                     Aylık{" "}
                     {formatCurrency(
                       calculateMonthlyInstallment(price, installmentCount),
@@ -575,7 +709,7 @@ function InstagramCanvas({
                 eyebrow="Elden taksit imkânı"
                 accent="green"
               >
-                <p className="max-w-[92%] text-[1.55cqw] font-bold leading-[1.25] text-white">
+                <p className="max-w-[96%] text-[1.85cqw] font-bold leading-[1.22] text-white">
                   Uygun ödeme seçenekleri için mağazamızla iletişime geçin.
                 </p>
               </PaymentCard>
@@ -621,7 +755,7 @@ function InstagramCanvas({
           />
         </section>
 
-        <footer className="flex min-h-0 items-center justify-between gap-[1.5cqw] pt-[1.2cqw]">
+        <footer className="grid min-h-0 grid-cols-[1fr_auto_1fr] items-center gap-[1.5cqw] pt-[1.2cqw]">
           <div className="flex items-center gap-[1.2cqw]">
             <span className="rounded-[0.8cqw] border border-fuchsia-300 bg-white p-[0.5cqw] shadow-[0_0_20px_rgba(232,121,249,0.45)]">
               <QRCodeSVG value={productUrl} size={74} level="M" />
@@ -638,7 +772,15 @@ function InstagramCanvas({
               </p>
             </div>
           </div>
-          <div className="flex min-w-0 items-center gap-[1.2cqw] rounded-[1.2cqw] border border-fuchsia-400/55 bg-fuchsia-500/10 px-[2cqw] py-[1cqw] text-right shadow-[0_0_24px_rgba(217,70,239,0.22),inset_0_0_18px_rgba(217,70,239,0.08)]">
+          <div className="text-center">
+            <p className="text-[2.1cqw] font-black leading-none tracking-[-0.04em] text-white">
+              CENTER <span className="text-red-500">GSM</span>
+            </p>
+            <p className="mt-[0.45cqw] text-[0.72cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
+              Teknolojinin Merkezi
+            </p>
+          </div>
+          <div className="flex min-w-0 items-center gap-[1.2cqw] justify-self-end rounded-[1.2cqw] border border-fuchsia-400/55 bg-fuchsia-500/10 px-[2cqw] py-[1cqw] text-right shadow-[0_0_24px_rgba(217,70,239,0.22),inset_0_0_18px_rgba(217,70,239,0.08)]">
             <div>
               <p className="text-[1.45cqw] font-black uppercase text-fuchsia-300">
                 Hemen İncele
@@ -682,14 +824,14 @@ function PaymentCard({
       )}
     >
       <div className="flex items-center gap-[0.7cqw]">
-        <span className="border-current/50 bg-current/10 grid size-[2.5cqw] place-items-center rounded-full border shadow-[0_0_14px_currentColor]">
+        <span className="border-current/50 bg-current/10 grid size-[3.2cqw] place-items-center rounded-full border shadow-[0_0_14px_currentColor]">
           <Icon
-            className="size-[1.35cqw]"
+            className="size-[1.75cqw]"
             strokeWidth={1.8}
             aria-hidden="true"
           />
         </span>
-        <p className="text-[1.1cqw] font-black uppercase tracking-[0.08em]">
+        <p className="text-[1.32cqw] font-black uppercase tracking-[0.045em]">
           {eyebrow}
         </p>
       </div>
@@ -725,15 +867,15 @@ function TrustItem({
       />
       <Icon
         className={cn(
-          "size-[2.45cqw] shrink-0 drop-shadow-[0_0_8px_currentColor]",
+          "size-[3.15cqw] shrink-0 drop-shadow-[0_0_8px_currentColor]",
           color.split(" ")[1],
         )}
         strokeWidth={1.5}
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.15cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[0.82cqw] font-medium text-zinc-400">
+        <p className="truncate text-[1.35cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[1cqw] font-medium text-zinc-300">
           {description}
         </p>
       </div>
