@@ -221,28 +221,25 @@ function StudioWorkspace({
             }),
         ),
       );
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(canvas, {
+      const { snapdom } = await import("@zumer/snapdom");
+      const exportedImage = await snapdom.toPng(canvas, {
         width: 1080,
         height: 1080,
-        canvasWidth: 1080,
-        canvasHeight: 1080,
-        pixelRatio: 1,
+        scale: 1,
+        dpr: 1,
         backgroundColor: "#050508",
-        cacheBust: true,
-        style: {
-          width: "1080px",
-          height: "1080px",
-          minWidth: "1080px",
-          maxWidth: "1080px",
-        },
+        embedFonts: true,
+        compress: false,
+        reconcile: true,
+        fast: false,
+        outerTransforms: false,
+        outerShadows: false,
       });
-      const exportedImage = new window.Image();
-      await new Promise<void>((resolve, reject) => {
-        exportedImage.onload = () => resolve();
-        exportedImage.onerror = () => reject(new Error("PNG doğrulanamadı."));
-        exportedImage.src = dataUrl;
-      });
+      if (!exportedImage.complete)
+        await new Promise<void>((resolve, reject) => {
+          exportedImage.onload = () => resolve();
+          exportedImage.onerror = () => reject(new Error("PNG doğrulanamadı."));
+        });
       if (
         exportedImage.naturalWidth !== 1080 ||
         exportedImage.naturalHeight !== 1080
@@ -250,7 +247,7 @@ function StudioWorkspace({
         throw new Error("PNG ölçüsü doğrulanamadı.");
       const link = document.createElement("a");
       link.download = `${product.slug}-instagram-1080x1080.png`;
-      link.href = dataUrl;
+      link.href = exportedImage.src;
       link.click();
     } catch {
       setExportError(
