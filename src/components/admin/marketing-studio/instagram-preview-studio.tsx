@@ -496,7 +496,7 @@ function InstagramCanvas({
   warrantyMonths: number;
   productUrl: string;
 }) {
-  const domain = "gamersoff.com";
+  const domain = "centergsm.com.tr";
   const hasInstallments = product.show_installments && installmentCount > 1;
   const productNameSize =
     product.name.length > 52
@@ -579,7 +579,7 @@ function InstagramCanvas({
                 <img
                   src={cutoutImage}
                   alt={product.name}
-                  className="relative z-10 size-full scale-[1.4] object-contain px-[1%] pb-[1%] pt-[5%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
+                  className="relative z-10 size-full object-contain p-[1%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
                 />
               ) : (
                 <ImageIcon
@@ -600,7 +600,7 @@ function InstagramCanvas({
                       <span
                         key={key}
                         className={cn(
-                          "grid min-w-[4.1cqw] place-items-center rounded-[0.65cqw] border px-[0.75cqw] py-[0.55cqw] text-[1.05cqw] font-black",
+                          "grid min-w-[4.6cqw] place-items-center rounded-[0.65cqw] border px-[0.9cqw] py-[0.65cqw] text-[1.15cqw] font-black",
                           key === selectedStorageKey
                             ? "border-fuchsia-300 bg-fuchsia-500/25 text-white shadow-[0_0_16px_rgba(217,70,239,0.65),inset_0_0_12px_rgba(217,70,239,0.22)]"
                             : "border-blue-400/40 bg-black/35 text-zinc-400",
@@ -619,7 +619,7 @@ function InstagramCanvas({
                 </p>
                 {activeColors.length ? (
                   <div
-                    className="flex flex-wrap gap-[0.55cqw]"
+                    className="flex flex-nowrap items-center justify-end gap-[0.55cqw] overflow-hidden"
                     aria-label="Renk seçenekleri"
                   >
                     {activeColors.map((color) => (
@@ -692,7 +692,7 @@ function InstagramCanvas({
                     : "Bu ürün için taksit seçeneği bulunmuyor"}
                 </p>
                 {hasInstallments ? (
-                  <p className="mt-[0.55cqw] text-[1.9cqw] font-bold text-blue-200">
+                  <p className="mt-[0.85cqw] text-[1.9cqw] font-bold text-blue-200">
                     Aylık{" "}
                     {formatCurrency(
                       calculateMonthlyInstallment(price, installmentCount),
@@ -816,7 +816,7 @@ function PaymentCard({
   return (
     <div
       className={cn(
-        "relative min-h-0 overflow-hidden rounded-[1.45cqw] border bg-black/55 px-[1.5cqw] py-[1.15cqw] backdrop-blur-xl before:absolute before:inset-y-[12%] before:left-0 before:w-[0.28cqw] before:rounded-full after:absolute after:-right-[8%] after:-top-[28%] after:size-[42%] after:rounded-full after:bg-current after:opacity-[0.06] after:blur-[1.8cqw]",
+        "relative flex min-h-0 flex-col justify-center overflow-hidden rounded-[1.45cqw] border bg-black/55 px-[1.5cqw] py-[1.15cqw] backdrop-blur-xl before:absolute before:inset-y-[12%] before:left-0 before:w-[0.28cqw] before:rounded-full after:absolute after:-right-[8%] after:-top-[28%] after:size-[42%] after:rounded-full after:bg-current after:opacity-[0.06] after:blur-[1.8cqw]",
         styles,
       )}
     >
@@ -832,7 +832,7 @@ function PaymentCard({
           {eyebrow}
         </p>
       </div>
-      <div className="relative z-10 mt-[0.55cqw] text-white">{children}</div>
+      <div className="relative z-10 mt-[1cqw] text-white">{children}</div>
     </div>
   );
 }
@@ -871,8 +871,8 @@ function TrustItem({
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.55cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[1.15cqw] font-medium text-zinc-300">
+        <p className="truncate text-[1.65cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[1.25cqw] font-medium text-zinc-300">
           {description}
         </p>
       </div>
