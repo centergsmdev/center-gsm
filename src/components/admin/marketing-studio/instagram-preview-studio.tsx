@@ -309,7 +309,6 @@ function StudioWorkspace({
             availableStock={availableStock}
             warrantyMonths={warrantyMonths}
             productUrl={productUrl}
-            siteUrl={siteUrl}
           />
         </div>
         {exportError ? (
@@ -481,7 +480,6 @@ function InstagramCanvas({
   availableStock,
   warrantyMonths,
   productUrl,
-  siteUrl,
 }: {
   canvasRef: RefObject<HTMLElement | null>;
   product: AdminProduct;
@@ -497,16 +495,15 @@ function InstagramCanvas({
   availableStock: number;
   warrantyMonths: number;
   productUrl: string;
-  siteUrl: string;
 }) {
-  const domain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const domain = "gamersoff.com";
   const hasInstallments = product.show_installments && installmentCount > 1;
   const productNameSize =
     product.name.length > 52
-      ? "text-[2.65cqw]"
+      ? "text-[2.2cqw]"
       : product.name.length > 34
-        ? "text-[3.15cqw]"
-        : "text-[3.65cqw]";
+        ? "text-[2.7cqw]"
+        : "text-[3.1cqw]";
 
   return (
     <article
@@ -522,7 +519,7 @@ function InstagramCanvas({
       <div className="pointer-events-none absolute bottom-[18%] left-[4%] h-[20%] w-[62%] rounded-[50%] bg-fuchsia-500/10 blur-[4cqw]" />
 
       <div
-        className="absolute inset-[8.333333%] grid grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]"
+        className="absolute inset-[3.5%] grid grid-rows-[7fr_64fr_17fr_12fr] px-[2cqw] pb-[1.8cqw] pt-[1.8cqw]"
         aria-label="Instagram grid güvenli alanı"
       >
         <header className="flex min-h-0 items-start justify-between">
@@ -550,17 +547,17 @@ function InstagramCanvas({
               className="size-[1.45cqw] text-fuchsia-300"
               aria-hidden="true"
             />
-            @centergsm
+            @offgamersofficial
           </span>
         </header>
 
-        <div className="grid min-h-0 grid-cols-[58fr_42fr] gap-[2.3cqw]">
+        <div className="grid min-h-0 grid-cols-[55fr_45fr] gap-[1.8cqw]">
           <section
             className="flex min-h-0 flex-col"
             aria-label="Ürün bilgileri"
           >
             <div className="shrink-0 pb-[0.8cqw]">
-              <p className="text-[1.05cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
+              <p className="text-[1.4cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
                 {product.brand.name}
               </p>
               <h2
@@ -582,7 +579,7 @@ function InstagramCanvas({
                 <img
                   src={cutoutImage}
                   alt={product.name}
-                  className="relative z-10 size-full scale-[1.2] object-contain px-[2%] pb-[3%] pt-[9%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
+                  className="relative z-10 size-full scale-[1.4] object-contain px-[1%] pb-[1%] pt-[5%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
                 />
               ) : (
                 <ImageIcon
@@ -648,7 +645,7 @@ function InstagramCanvas({
             aria-label="Ödeme seçenekleri"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[1.45cqw] font-black uppercase tracking-[-0.02em] text-white">
+              <p className="text-[1.8cqw] font-black uppercase tracking-[-0.02em] text-white">
                 3 farklı{" "}
                 <span className="text-fuchsia-300">ödeme seçeneği</span>
               </p>
@@ -695,7 +692,7 @@ function InstagramCanvas({
                     : "Bu ürün için taksit seçeneği bulunmuyor"}
                 </p>
                 {hasInstallments ? (
-                  <p className="mt-[0.55cqw] text-[1.55cqw] font-bold text-blue-200">
+                  <p className="mt-[0.55cqw] text-[1.9cqw] font-bold text-blue-200">
                     Aylık{" "}
                     {formatCurrency(
                       calculateMonthlyInstallment(price, installmentCount),
@@ -831,7 +828,7 @@ function PaymentCard({
             aria-hidden="true"
           />
         </span>
-        <p className="text-[1.32cqw] font-black uppercase tracking-[0.045em]">
+        <p className="text-[1.42cqw] font-black uppercase tracking-[0.045em]">
           {eyebrow}
         </p>
       </div>
@@ -874,8 +871,8 @@ function TrustItem({
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.35cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[1cqw] font-medium text-zinc-300">
+        <p className="truncate text-[1.55cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[1.15cqw] font-medium text-zinc-300">
           {description}
         </p>
       </div>
