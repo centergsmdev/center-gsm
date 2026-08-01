@@ -370,6 +370,12 @@ function InstagramCanvas({
 }) {
   const domain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const hasInstallments = product.show_installments && installmentCount > 1;
+  const productNameSize =
+    product.name.length > 52
+      ? "text-[2.65cqw]"
+      : product.name.length > 34
+        ? "text-[3.15cqw]"
+        : "text-[3.65cqw]";
 
   return (
     <article
@@ -377,47 +383,72 @@ function InstagramCanvas({
       aria-label={`${product.name} Instagram gönderisi önizlemesi`}
       className="relative mx-auto aspect-square w-full min-w-[680px] max-w-[1080px] overflow-hidden bg-[#050508] text-white shadow-2xl [container-type:inline-size]"
     >
-      <div className="pointer-events-none absolute -left-[10%] top-[12%] size-[52%] rounded-full bg-fuchsia-600/15 blur-[90px]" />
-      <div className="pointer-events-none absolute -right-[12%] top-[4%] size-[48%] rounded-full bg-blue-500/15 blur-[100px]" />
-      <div className="pointer-events-none absolute bottom-[2%] left-[25%] h-[16%] w-[54%] rounded-full bg-emerald-400/10 blur-[80px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_35%,rgba(37,99,235,0.2),transparent_27%),radial-gradient(circle_at_48%_28%,rgba(217,70,239,0.2),transparent_25%),radial-gradient(circle_at_86%_70%,rgba(59,130,246,0.13),transparent_28%),linear-gradient(145deg,#02030a_0%,#080312_48%,#02040b_100%)]" />
+      <div className="pointer-events-none absolute -left-[18%] top-[19%] h-px w-[80%] rotate-[-18deg] bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_18px_#3b82f6]" />
+      <div className="pointer-events-none absolute left-[16%] top-[24%] h-px w-[62%] rotate-[-38deg] bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent shadow-[0_0_24px_#d946ef]" />
+      <div className="pointer-events-none absolute left-[38%] top-[10%] h-px w-[50%] rotate-[132deg] bg-gradient-to-r from-transparent via-cyan-300 to-transparent opacity-70 shadow-[0_0_16px_#22d3ee]" />
+      <div className="pointer-events-none absolute right-[5%] top-[12%] size-[26%] rotate-45 border-r border-t border-fuchsia-400/25" />
+      <div className="pointer-events-none absolute bottom-[18%] left-[4%] h-[20%] w-[62%] rounded-[50%] bg-fuchsia-500/10 blur-[4cqw]" />
 
-      <div className="relative grid h-full grid-rows-[8fr_61fr_18fr_13fr] px-[4.4cqw] pb-[3.1cqw] pt-[3.2cqw]">
+      <div className="relative grid h-full grid-rows-[8fr_62fr_17fr_13fr] px-[3.5cqw] pb-[2.6cqw] pt-[2.7cqw]">
         <header className="flex min-h-0 items-start justify-between">
-          <div>
-            <span className="grid h-[3.8cqw] w-[12.5cqw] place-items-center rounded-[0.75cqw] bg-white px-[0.9cqw]">
+          <div className="flex items-center gap-[1.15cqw]">
+            <span className="grid size-[4.6cqw] place-items-center rounded-[1cqw] bg-white p-[0.65cqw] shadow-[0_0_26px_rgba(255,255,255,0.22)]">
               <Image
                 src="/logo.svg"
                 alt="CENTER GSM"
                 width={168}
                 height={48}
-                className="h-auto w-full"
+                className="h-auto w-full object-contain"
               />
             </span>
-            <p className="mt-[0.4cqw] text-[0.82cqw] font-bold uppercase tracking-[0.16em] text-zinc-500">
-              Teknolojinin Merkezi
-            </p>
+            <div>
+              <p className="text-[1.65cqw] font-black leading-none tracking-[-0.04em] text-white">
+                CENTER <span className="text-red-500">GSM</span>
+              </p>
+              <p className="mt-[0.45cqw] text-[0.72cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
+                Teknolojinin Merkezi
+              </p>
+            </div>
           </div>
-          <span className="inline-flex items-center gap-[0.55cqw] rounded-full border border-fuchsia-400/30 bg-fuchsia-400/10 px-[1.1cqw] py-[0.55cqw] text-[0.95cqw] font-black text-fuchsia-300">
-            <Instagram className="size-[1.25cqw]" aria-hidden="true" />
-            Instagram
+          <span className="inline-flex items-center gap-[0.7cqw] rounded-[1cqw] border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-500/20 to-orange-400/10 px-[1.15cqw] py-[0.65cqw] text-[0.92cqw] font-black text-white shadow-[0_0_24px_rgba(217,70,239,0.2)]">
+            <Instagram
+              className="size-[1.45cqw] text-fuchsia-300"
+              aria-hidden="true"
+            />
+            @centergsm
           </span>
         </header>
 
-        <div className="grid min-h-0 grid-cols-[57fr_43fr] gap-[3.2cqw]">
+        <div className="grid min-h-0 grid-cols-[58fr_42fr] gap-[2.3cqw]">
           <section
             className="flex min-h-0 flex-col"
             aria-label="Ürün bilgileri"
           >
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[2.2cqw] border border-white/10 bg-gradient-to-b from-white/[0.07] to-transparent">
-              <div className="absolute left-1/2 top-[48%] size-[64%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-fuchsia-400/20 bg-blue-500/5 shadow-[0_0_52px_rgba(232,121,249,0.18),inset_0_0_42px_rgba(59,130,246,0.13)]" />
-              <div className="absolute bottom-[6%] left-1/2 h-[8%] w-[56%] -translate-x-1/2 rounded-full bg-blue-400/20 blur-[1.2cqw]" />
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              <div className="absolute left-[4%] top-[4%] z-20 max-w-[92%]">
+                <p className="text-[1.05cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
+                  {product.brand.name}
+                </p>
+                <h2
+                  className={cn(
+                    "mt-[0.35cqw] line-clamp-2 font-black leading-[0.94] tracking-[-0.055em] text-white drop-shadow-[0_0_18px_rgba(99,102,241,0.35)]",
+                    productNameSize,
+                  )}
+                >
+                  {product.name}
+                </h2>
+              </div>
+              <div className="absolute left-1/2 top-[56%] size-[71%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/25 bg-fuchsia-500/[0.04] shadow-[0_0_55px_rgba(59,130,246,0.22),inset_0_0_48px_rgba(217,70,239,0.14)]" />
+              <div className="absolute bottom-[4%] left-1/2 h-[7.5%] w-[76%] -translate-x-1/2 rounded-[50%] border border-fuchsia-300/70 bg-blue-500/25 shadow-[0_0_10px_#e879f9,0_0_28px_#2563eb,inset_0_0_18px_#d946ef]" />
+              <div className="absolute bottom-[6.2%] left-1/2 h-[3.5%] w-[63%] -translate-x-1/2 rounded-[50%] border border-cyan-200/60 shadow-[0_0_18px_#22d3ee]" />
               {selectedImage?.url ? (
                 // Supabase Storage images are intentionally rendered from their saved URL.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={selectedImage.url}
                   alt={product.name}
-                  className="relative z-10 size-full scale-[1.1] object-contain p-[3%] drop-shadow-[0_2.4cqw_3cqw_rgba(0,0,0,0.6)]"
+                  className="relative z-10 size-full scale-[1.2] object-contain px-[2%] pb-[3%] pt-[9%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
                 />
               ) : (
                 <ImageIcon
@@ -427,32 +458,34 @@ function InstagramCanvas({
               )}
             </div>
 
-            <div className="pt-[1.25cqw]">
-              <p className="text-[1.25cqw] font-black uppercase tracking-[0.2em] text-fuchsia-400">
-                {product.brand.name}
-              </p>
-              <h2 className="mt-[0.35cqw] line-clamp-2 max-w-[96%] text-[3.15cqw] font-black leading-[0.98] tracking-[-0.055em] text-white">
-                {product.name}
-              </h2>
-              <div className="mt-[0.9cqw] flex min-h-[2.4cqw] items-center gap-[1.2cqw]">
+            <div className="flex min-h-[5.6cqw] items-end justify-between gap-[1.4cqw] pb-[0.7cqw] pt-[0.7cqw]">
+              <div>
+                <p className="mb-[0.55cqw] text-[0.78cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
+                  Depolama seçenekleri
+                </p>
                 {storageOptions.length ? (
                   <div className="flex flex-wrap gap-[0.45cqw]">
                     {storageOptions.map(([key, variant]) => (
                       <span
                         key={key}
                         className={cn(
-                          "grid min-w-[3.4cqw] place-items-center rounded-[0.55cqw] border px-[0.65cqw] py-[0.45cqw] text-[0.95cqw] font-black",
+                          "grid min-w-[4.1cqw] place-items-center rounded-[0.65cqw] border px-[0.75cqw] py-[0.55cqw] text-[1.05cqw] font-black",
                           key === selectedStorageKey
-                            ? "border-blue-300 bg-blue-400 text-zinc-950 shadow-[0_0_14px_rgba(96,165,250,0.38)]"
-                            : "border-white/15 bg-white/[0.06] text-zinc-400",
+                            ? "border-fuchsia-300 bg-fuchsia-500/25 text-white shadow-[0_0_16px_rgba(217,70,239,0.65),inset_0_0_12px_rgba(217,70,239,0.22)]"
+                            : "border-blue-400/40 bg-black/35 text-zinc-400",
                         )}
                       >
                         {variant.storage_value}
-                        {variant.storage_unit === "TB" ? "TB" : ""}
+                        {variant.storage_unit}
                       </span>
                     ))}
                   </div>
                 ) : null}
+              </div>
+              <div className="text-right">
+                <p className="mb-[0.65cqw] text-[0.78cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
+                  Renkler
+                </p>
                 {activeColors.length ? (
                   <div
                     className="flex flex-wrap gap-[0.55cqw]"
@@ -462,9 +495,9 @@ function InstagramCanvas({
                       <span
                         key={color.id}
                         className={cn(
-                          "size-[1.35cqw] rounded-full border border-white/40",
+                          "size-[1.75cqw] rounded-full border-[0.16cqw] border-white/70 shadow-[0_0_10px_rgba(255,255,255,0.18)]",
                           color.id === selectedColor?.id &&
-                            "ring-[0.28cqw] ring-fuchsia-400/70 ring-offset-[0.2cqw] ring-offset-[#050508]",
+                            "ring-[0.28cqw] ring-fuchsia-400 ring-offset-[0.25cqw] ring-offset-[#050508]",
                         )}
                         style={{ backgroundColor: color.hex_code }}
                         title={color.display_name ?? color.name}
@@ -481,8 +514,9 @@ function InstagramCanvas({
             aria-label="Ödeme seçenekleri"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[1.15cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
-                Ödeme seçenekleri
+              <p className="text-[1.45cqw] font-black uppercase tracking-[-0.02em] text-white">
+                3 farklı{" "}
+                <span className="text-fuchsia-300">ödeme seçeneği</span>
               </p>
               <Sparkles
                 className="size-[1.8cqw] text-amber-300"
@@ -490,8 +524,8 @@ function InstagramCanvas({
                 aria-hidden="true"
               />
             </div>
-            <div className="mt-[0.8cqw] h-px bg-gradient-to-r from-fuchsia-400 via-blue-400 to-transparent" />
-            <div className="mt-[1.2cqw] grid min-h-0 flex-1 grid-rows-3 gap-[1cqw]">
+            <div className="mt-[0.65cqw] h-px bg-gradient-to-r from-fuchsia-400 via-blue-400 to-transparent shadow-[0_0_8px_#d946ef]" />
+            <div className="mt-[1cqw] grid min-h-0 flex-1 grid-rows-3 gap-[0.85cqw]">
               <PaymentCard
                 icon={ShoppingBag}
                 eyebrow="Peşin fiyat"
@@ -504,12 +538,12 @@ function InstagramCanvas({
                         {formatCurrency(oldPrice)}
                       </p>
                     ) : null}
-                    <p className="whitespace-nowrap text-[4.3cqw] font-black leading-none tracking-[-0.065em] text-white">
+                    <p className="whitespace-nowrap bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-[4.3cqw] font-black leading-none tracking-[-0.065em] text-transparent drop-shadow-[0_0_16px_rgba(251,191,36,0.3)]">
                       {formatCurrency(price)}
                     </p>
                   </div>
                   {discountRate ? (
-                    <span className="shrink-0 rounded-full bg-fuchsia-400 px-[0.85cqw] py-[0.4cqw] text-[1cqw] font-black text-zinc-950">
+                    <span className="shrink-0 rounded-[0.7cqw] border border-amber-200/50 bg-amber-400 px-[0.85cqw] py-[0.45cqw] text-[0.95cqw] font-black text-zinc-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]">
                       %{discountRate} indirim
                     </span>
                   ) : null}
@@ -550,7 +584,7 @@ function InstagramCanvas({
         </div>
 
         <section
-          className="grid grid-cols-4 gap-[0.8cqw] border-y border-white/10 py-[1.45cqw]"
+          className="grid grid-cols-4 gap-[0.45cqw] rounded-[1.5cqw] border border-fuchsia-400/35 bg-gradient-to-r from-fuchsia-500/[0.09] via-blue-500/[0.07] to-fuchsia-500/[0.09] px-[0.65cqw] py-[1.15cqw] shadow-[0_0_24px_rgba(217,70,239,0.18),inset_0_0_24px_rgba(59,130,246,0.08)]"
           aria-label="Alışveriş avantajları"
         >
           <TrustItem
@@ -587,12 +621,15 @@ function InstagramCanvas({
           />
         </section>
 
-        <footer className="flex min-h-0 items-center justify-between gap-[2cqw] pt-[1.55cqw]">
+        <footer className="flex min-h-0 items-center justify-between gap-[1.5cqw] pt-[1.2cqw]">
           <div className="flex items-center gap-[1.2cqw]">
-            <span className="rounded-[0.75cqw] bg-white p-[0.55cqw] shadow-[0_0_20px_rgba(255,255,255,0.16)]">
+            <span className="rounded-[0.8cqw] border border-fuchsia-300 bg-white p-[0.5cqw] shadow-[0_0_20px_rgba(232,121,249,0.45)]">
               <QRCodeSVG value={productUrl} size={74} level="M" />
             </span>
-            <div className="text-[0.95cqw] font-semibold leading-[1.35] text-zinc-500">
+            <div className="text-[0.9cqw] font-semibold leading-[1.35] text-zinc-400">
+              <p className="font-black uppercase tracking-[0.08em] text-white">
+                Ürünü keşfet
+              </p>
               <p>{product.category.name}</p>
               <p>
                 {availableStock > 0
@@ -601,11 +638,18 @@ function InstagramCanvas({
               </p>
             </div>
           </div>
-          <div className="min-w-0 text-right">
-            <p className="text-[1.45cqw] font-black text-white">Hemen İncele</p>
-            <p className="max-w-[38cqw] truncate text-[1.1cqw] font-semibold text-fuchsia-300">
-              {domain}
-            </p>
+          <div className="flex min-w-0 items-center gap-[1.2cqw] rounded-[1.2cqw] border border-fuchsia-400/55 bg-fuchsia-500/10 px-[2cqw] py-[1cqw] text-right shadow-[0_0_24px_rgba(217,70,239,0.22),inset_0_0_18px_rgba(217,70,239,0.08)]">
+            <div>
+              <p className="text-[1.45cqw] font-black uppercase text-fuchsia-300">
+                Hemen İncele
+              </p>
+              <p className="max-w-[26cqw] truncate text-[1.05cqw] font-semibold text-white">
+                {domain}
+              </p>
+            </div>
+            <span className="text-[2.8cqw] font-light leading-none text-fuchsia-300">
+              ›
+            </span>
           </div>
         </footer>
       </div>
@@ -625,24 +669,31 @@ function PaymentCard({
   children: React.ReactNode;
 }) {
   const styles = {
-    pink: "border-fuchsia-400/35 before:bg-fuchsia-400 text-fuchsia-300",
-    blue: "border-blue-400/35 before:bg-blue-400 text-blue-300",
-    green: "border-emerald-400/35 before:bg-emerald-400 text-emerald-300",
+    pink: "border-amber-300/65 before:bg-amber-300 text-amber-300 shadow-[0_0_22px_rgba(251,191,36,0.17),inset_0_0_20px_rgba(251,191,36,0.05)]",
+    blue: "border-blue-400/65 before:bg-blue-400 text-blue-300 shadow-[0_0_22px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(59,130,246,0.06)]",
+    green:
+      "border-lime-400/65 before:bg-lime-400 text-lime-300 shadow-[0_0_22px_rgba(163,230,53,0.17),inset_0_0_20px_rgba(163,230,53,0.05)]",
   }[accent];
   return (
     <div
       className={cn(
-        "relative min-h-0 overflow-hidden rounded-[1.5cqw] border bg-white/[0.045] px-[1.6cqw] py-[1.25cqw] before:absolute before:inset-y-0 before:left-0 before:w-[0.35cqw]",
+        "relative min-h-0 overflow-hidden rounded-[1.45cqw] border bg-black/55 px-[1.5cqw] py-[1.15cqw] backdrop-blur-xl before:absolute before:inset-y-[12%] before:left-0 before:w-[0.28cqw] before:rounded-full after:absolute after:-right-[8%] after:-top-[28%] after:size-[42%] after:rounded-full after:bg-current after:opacity-[0.06] after:blur-[1.8cqw]",
         styles,
       )}
     >
       <div className="flex items-center gap-[0.7cqw]">
-        <Icon className="size-[1.55cqw]" strokeWidth={1.8} aria-hidden="true" />
-        <p className="text-[1.05cqw] font-black uppercase tracking-[0.12em]">
+        <span className="border-current/50 bg-current/10 grid size-[2.5cqw] place-items-center rounded-full border shadow-[0_0_14px_currentColor]">
+          <Icon
+            className="size-[1.35cqw]"
+            strokeWidth={1.8}
+            aria-hidden="true"
+          />
+        </span>
+        <p className="text-[1.1cqw] font-black uppercase tracking-[0.08em]">
           {eyebrow}
         </p>
       </div>
-      <div className="mt-[0.65cqw] text-white">{children}</div>
+      <div className="relative z-10 mt-[0.55cqw] text-white">{children}</div>
     </div>
   );
 }
@@ -665,21 +716,24 @@ function TrustItem({
     gold: "bg-amber-300 text-amber-200",
   }[accent];
   return (
-    <div className="relative flex min-w-0 items-center gap-[0.8cqw] px-[0.8cqw]">
+    <div className="relative flex min-w-0 items-center gap-[0.75cqw] px-[0.75cqw] after:absolute after:inset-y-[12%] after:-right-[0.2cqw] after:w-px after:bg-white/10 last:after:hidden">
       <span
         className={cn(
-          "absolute inset-y-[8%] left-0 w-[0.22cqw] rounded-full",
+          "absolute inset-y-[8%] left-0 w-[0.18cqw] rounded-full shadow-[0_0_10px_currentColor]",
           color.split(" ")[0],
         )}
       />
       <Icon
-        className={cn("size-[2.2cqw] shrink-0", color.split(" ")[1])}
+        className={cn(
+          "size-[2.45cqw] shrink-0 drop-shadow-[0_0_8px_currentColor]",
+          color.split(" ")[1],
+        )}
         strokeWidth={1.5}
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.2cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[0.9cqw] font-medium text-zinc-500">
+        <p className="truncate text-[1.15cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[0.82cqw] font-medium text-zinc-400">
           {description}
         </p>
       </div>
