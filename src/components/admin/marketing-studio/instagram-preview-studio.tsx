@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
   BadgeCheck,
   CreditCard,
+  Download,
   ImageIcon,
   Instagram,
+  LoaderCircle,
   PackageSearch,
   ShieldCheck,
   ShoppingBag,
@@ -118,6 +120,9 @@ function StudioWorkspace({
   siteUrl: string;
 }) {
   const { product } = data;
+  const canvasRef = useRef<HTMLElement>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const activeColors = useMemo(
     () => data.colors.filter((color) => color.is_active),
     [data.colors],
@@ -198,21 +203,97 @@ function StudioWorkspace({
     }
   }
 
+  async function downloadPng() {
+    const canvas = canvasRef.current;
+    if (!canvas || exporting) return;
+    setExporting(true);
+    setExportError("");
+    try {
+      await document.fonts.ready;
+      await Promise.all(
+        Array.from(canvas.querySelectorAll("img")).map(
+          (image) =>
+            image.complete ||
+            new Promise<void>((resolve) => {
+              image.addEventListener("load", () => resolve(), { once: true });
+              image.addEventListener("error", () => resolve(), { once: true });
+            }),
+        ),
+      );
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(canvas, {
+        width: 1080,
+        height: 1080,
+        canvasWidth: 1080,
+        canvasHeight: 1080,
+        pixelRatio: 1,
+        backgroundColor: "#050508",
+        cacheBust: true,
+        style: {
+          width: "1080px",
+          height: "1080px",
+          minWidth: "1080px",
+          maxWidth: "1080px",
+        },
+      });
+      const exportedImage = new window.Image();
+      await new Promise<void>((resolve, reject) => {
+        exportedImage.onload = () => resolve();
+        exportedImage.onerror = () => reject(new Error("PNG doğrulanamadı."));
+        exportedImage.src = dataUrl;
+      });
+      if (
+        exportedImage.naturalWidth !== 1080 ||
+        exportedImage.naturalHeight !== 1080
+      )
+        throw new Error("PNG ölçüsü doğrulanamadı.");
+      const link = document.createElement("a");
+      link.download = `${product.slug}-instagram-1080x1080.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch {
+      setExportError(
+        "PNG oluşturulamadı. Görsellerin yüklendiğini kontrol edip tekrar deneyin.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminCard className="overflow-hidden">
         <AdminCardHeader
           title="Instagram Gönderisi · Canlı Önizleme"
-          description="Telefon şablonu · 1080 × 1080 koordinat oranı · İndirme kapalı"
+          description="Telefon şablonu · 1080 × 1080 koordinat oranı · Yüksek kaliteli PNG"
           action={
-            <span className="inline-flex items-center gap-2 rounded-full bg-pink-50 px-3 py-1.5 text-xs font-black text-pink-700">
-              <Instagram className="size-4" aria-hidden="true" />
-              1:1 Gönderi
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="hidden items-center gap-2 rounded-full bg-pink-50 px-3 py-1.5 text-xs font-black text-pink-700 sm:inline-flex">
+                <Instagram className="size-4" aria-hidden="true" />
+                1:1 Gönderi
+              </span>
+              <button
+                type="button"
+                onClick={() => void downloadPng()}
+                disabled={exporting}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-950 px-4 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-60"
+              >
+                {exporting ? (
+                  <LoaderCircle
+                    className="size-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Download className="size-4" aria-hidden="true" />
+                )}
+                {exporting ? "PNG hazırlanıyor…" : "PNG İndir"}
+              </button>
+            </div>
           }
         />
         <div className="overflow-x-auto bg-zinc-100 p-4 sm:p-8">
           <InstagramCanvas
+            canvasRef={canvasRef}
             product={product}
             selectedColor={selectedColor}
             activeColors={activeColors}
@@ -229,6 +310,14 @@ function StudioWorkspace({
             siteUrl={siteUrl}
           />
         </div>
+        {exportError ? (
+          <p
+            className="border-t border-red-100 bg-red-50 px-6 py-3 text-sm font-semibold text-red-700"
+            role="alert"
+          >
+            {exportError}
+          </p>
+        ) : null}
       </AdminCard>
 
       <PreviewControls
@@ -247,6 +336,7 @@ function StudioWorkspace({
 }
 
 function InstagramCanvas({
+  canvasRef,
   product,
   selectedColor,
   activeColors,
@@ -262,6 +352,7 @@ function InstagramCanvas({
   productUrl,
   siteUrl,
 }: {
+  canvasRef: RefObject<HTMLElement | null>;
   product: AdminProduct;
   selectedColor?: ProductColor;
   activeColors: ProductColor[];
@@ -282,6 +373,7 @@ function InstagramCanvas({
 
   return (
     <article
+      ref={canvasRef}
       aria-label={`${product.name} Instagram gönderisi önizlemesi`}
       className="relative mx-auto aspect-square w-full min-w-[680px] max-w-[1080px] overflow-hidden bg-[#050508] text-white shadow-2xl [container-type:inline-size]"
     >
