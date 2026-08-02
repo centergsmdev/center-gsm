@@ -24,6 +24,7 @@ export type CatalogProduct = {
   reviewCount: number;
   accent: "graphite" | "silver" | "red" | "blue" | "cream" | "black";
   sku?: string;
+  variantTitle?: string;
   warrantyMonths?: number;
   mainImageUrl?: string;
   imageUrls?: string[];
@@ -51,6 +52,7 @@ export type CatalogProductVariant = {
   storageValue?: number;
   storageUnit?: "GB" | "TB";
   isDefault?: boolean;
+  variantTitle?: string;
   sortOrder?: number;
   attributes: Record<string, string | number | boolean>;
 };

@@ -20,8 +20,26 @@ export type VariantDraft = Pick<
   | "is_active"
   | "is_default"
   | "sort_order"
->;
+> & { title: string };
 export type VariantStorageOption = { value: number; unit: "GB" | "TB" };
+
+export function toVariantDraft(
+  variant: Tables<"product_variants">,
+): VariantDraft {
+  const attributes =
+    variant.attributes &&
+    typeof variant.attributes === "object" &&
+    !Array.isArray(variant.attributes)
+      ? variant.attributes
+      : {};
+  return {
+    ...variant,
+    title:
+      typeof attributes.variantTitle === "string"
+        ? attributes.variantTitle
+        : "",
+  };
+}
 
 type VariantFailure = {
   code?: string;
@@ -99,7 +117,7 @@ export async function saveAdminVariantSetup(
 ): Promise<
   AdminProductResult<{
     colors: Tables<"product_colors">[];
-    variants: Tables<"product_variants">[];
+    variants: VariantDraft[];
   }>
 > {
   const client = createClient();
@@ -120,6 +138,7 @@ export async function saveAdminVariantSetup(
         color: color?.name ?? null,
         colorHex: color?.hex_code ?? null,
         storage,
+        variantTitle: variant.title.trim() || null,
       },
     };
   });
@@ -150,7 +169,7 @@ export async function saveAdminVariantSetup(
     ? {
         data: {
           colors: refreshed.data.colors,
-          variants: refreshed.data.variants,
+          variants: refreshed.data.variants.map(toVariantDraft),
         },
         error: null,
       }

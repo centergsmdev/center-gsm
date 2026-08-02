@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/providers/cart-provider";
 import { createOrder } from "@/lib/orders/client";
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
+import { productDisplayName } from "@/lib/catalog/variants";
 import { formatCurrency } from "@/lib/format";
 import { getActiveShippingCarriers } from "@/shipping/repository/shipping-repository";
 import type {
@@ -309,7 +310,7 @@ export function CheckoutForm() {
       lines: lines.map((line) => ({
         id: line.product.id,
         slug: line.product.slug,
-        name: `${line.product.brand} ${line.product.model}`,
+        name: productDisplayName(line.product),
         quantity: line.quantity,
         lineTotal: line.lineTotal,
         variantLabel: line.variant

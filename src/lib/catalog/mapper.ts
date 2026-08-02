@@ -98,22 +98,29 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     })),
     variants: (row.variants ?? [])
       .filter((variant) => variant.is_active)
-      .map((variant) => ({
-        id: variant.id,
-        name: variant.name,
-        sku: variant.sku,
-        barcode: variant.barcode ?? undefined,
-        price: Number(variant.price),
-        previousPrice:
-          variant.old_price === null ? undefined : Number(variant.old_price),
-        stockQuantity: variant.stock_quantity,
-        colorId: variant.color_id ?? undefined,
-        storageValue: variant.storage_value ?? undefined,
-        storageUnit: variant.storage_unit ?? undefined,
-        isDefault: variant.is_default,
-        sortOrder: variant.sort_order,
-        attributes: attributes(variant.attributes),
-      })),
+      .map((variant) => {
+        const variantAttributes = attributes(variant.attributes);
+        return {
+          id: variant.id,
+          name: variant.name,
+          sku: variant.sku,
+          barcode: variant.barcode ?? undefined,
+          price: Number(variant.price),
+          previousPrice:
+            variant.old_price === null ? undefined : Number(variant.old_price),
+          stockQuantity: variant.stock_quantity,
+          colorId: variant.color_id ?? undefined,
+          storageValue: variant.storage_value ?? undefined,
+          storageUnit: variant.storage_unit ?? undefined,
+          isDefault: variant.is_default,
+          variantTitle:
+            typeof variantAttributes.variantTitle === "string"
+              ? variantAttributes.variantTitle
+              : undefined,
+          sortOrder: variant.sort_order,
+          attributes: variantAttributes,
+        };
+      }),
   };
   return applyDefaultVariantPresentation(product);
 }

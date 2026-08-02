@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { formatCurrency } from "@/lib/format";
-import { variantStorageKey } from "@/lib/catalog/variants";
+import { productDisplayName, variantStorageKey } from "@/lib/catalog/variants";
 import { cn } from "@/lib/utils";
 import type {
   CatalogProduct,
@@ -48,7 +48,7 @@ export function ProductInfo({
   onStorageChange,
   cartVariant,
 }: ProductInfoProps) {
-  const productName = `${product.brand} ${product.model}`;
+  const productName = productDisplayName(product);
   const stockLabel =
     product.stockStatus === "in-stock"
       ? `Stokta${product.availableStock !== undefined ? ` · ${product.availableStock} adet` : ""}`
@@ -74,7 +74,7 @@ export function ProductInfo({
         id="product-title"
         className="mt-2 text-balance text-3xl font-black tracking-[-0.045em] text-foreground sm:text-4xl"
       >
-        {product.model}
+        {product.variantTitle ?? product.model}
       </h1>
       {product.shortDescription ? (
         <p className="mt-3 text-sm leading-6 text-muted">

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
 import { formatCurrency } from "@/lib/format";
+import { productDisplayName } from "@/lib/catalog/variants";
 import { useCart } from "@/providers/cart-provider";
 import { useFavorites } from "@/providers/favorites-provider";
 import type { CartLine } from "@/types/cart";
@@ -22,7 +23,7 @@ export function CartItemCard({
   const { product, quantity, lineTotal, variant } = line;
   const { updateQuantity, removeItem } = useCart();
   const { addFavorite } = useFavorites();
-  const productName = `${product.brand} ${product.model}`;
+  const productName = productDisplayName(product);
   const maxQuantity = Math.max(1, Math.min(10, product.availableStock ?? 10));
 
   return (
@@ -46,7 +47,7 @@ export function CartItemCard({
                   href={`/urun/${product.slug}`}
                   className="hover:text-primary"
                 >
-                  {product.model}
+                  {productName}
                 </Link>
               </h2>
               <p className="mt-0.5 text-[9px] text-muted sm:mt-1 sm:text-xs">

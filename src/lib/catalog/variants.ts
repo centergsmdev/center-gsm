@@ -50,6 +50,15 @@ export function resolveDefaultVariant(
   );
 }
 
+export function resolveVariantTitle(variant?: CatalogProductVariant) {
+  const title = variant?.variantTitle?.trim();
+  return title || undefined;
+}
+
+export function productDisplayName(product: CatalogProduct) {
+  return product.variantTitle?.trim() || `${product.brand} ${product.model}`;
+}
+
 export function applyDefaultVariantPresentation(product: CatalogProduct) {
   const colors = product.colors ?? [];
   const defaultVariant = resolveDefaultVariant(product.variants ?? [], colors);
@@ -81,6 +90,7 @@ export function applyDefaultVariantPresentation(product: CatalogProduct) {
     sameDayShipping: stockQuantity > 5,
     freeShipping: price >= 2500,
     sku: defaultVariant.sku,
+    variantTitle: resolveVariantTitle(defaultVariant),
     mainImageUrl: color?.imageUrls[0] ?? product.mainImageUrl,
     imageUrls: color?.imageUrls.length ? color.imageUrls : product.imageUrls,
   };

@@ -7,6 +7,7 @@ import { ProductVisual } from "@/components/catalog/product-visual";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { formatCurrency } from "@/lib/format";
+import { productDisplayName } from "@/lib/catalog/variants";
 import { useCart } from "@/providers/cart-provider";
 
 export function CheckoutSummary({
@@ -60,7 +61,7 @@ export function CheckoutSummary({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-black">
-                  {line.product.brand} {line.product.model}
+                  {productDisplayName(line.product)}
                 </p>
                 <p className="mt-1 text-[11px] text-muted">
                   Adet: {line.quantity}

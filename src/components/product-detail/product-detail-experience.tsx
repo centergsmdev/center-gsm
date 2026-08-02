@@ -9,6 +9,7 @@ import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import {
   resolveInitialVariantSelection,
   resolveSelectedVariant,
+  resolveVariantTitle,
   variantStorageKey,
 } from "@/lib/catalog/variants";
 import type { CatalogProduct } from "@/types/product";
@@ -132,6 +133,7 @@ export function ProductDetailExperience({
               ? "limited"
               : "in-stock",
         sku: selectedVariant.sku,
+        variantTitle: resolveVariantTitle(selectedVariant),
         mainImageUrl: selectedColor?.imageUrls[0] ?? product.mainImageUrl,
         imageUrls: selectedColor?.imageUrls.length
           ? selectedColor.imageUrls

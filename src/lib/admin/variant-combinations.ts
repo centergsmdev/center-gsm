@@ -13,6 +13,7 @@ type CombinationVariant = {
   is_active: boolean;
   is_default: boolean;
   sort_order: number;
+  title: string;
 };
 
 export type BulkVariantAction =
@@ -69,6 +70,7 @@ export function normalizeVariantDraft<T extends CombinationVariant>(
       String(variant.barcode ?? "")
         .trim()
         .replace(/\s+/g, " ") || null,
+    title: variant.title.trim().replace(/\s+/g, " "),
   };
 }
 
@@ -112,6 +114,7 @@ export function buildVariantCombinations(
             is_active: true,
             is_default: false,
             sort_order: 0,
+            title: "",
           },
       ),
     )

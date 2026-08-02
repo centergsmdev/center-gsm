@@ -46,6 +46,17 @@ const storageKey = (variant: ProductVariant) =>
   variant.storage_value && variant.storage_unit
     ? `${variant.storage_value}-${variant.storage_unit}`
     : "";
+const variantTitle = (variant?: ProductVariant) => {
+  const attributes = variant?.attributes;
+  if (
+    !attributes ||
+    Array.isArray(attributes) ||
+    typeof attributes !== "object"
+  )
+    return undefined;
+  const title = attributes.variantTitle;
+  return typeof title === "string" && title.trim() ? title.trim() : undefined;
+};
 
 export function InstagramPreviewStudio({
   productId,
@@ -181,6 +192,7 @@ function StudioWorkspace({
   const availableStock = selectedVariant
     ? selectedVariant.stock_quantity
     : product.stock_quantity;
+  const productName = variantTitle(selectedVariant) ?? product.name;
 
   useEffect(() => {
     setSelectedImageId("");
@@ -294,6 +306,7 @@ function StudioWorkspace({
           <InstagramCanvas
             canvasRef={canvasRef}
             product={product}
+            productName={productName}
             activeColors={activeColors}
             storageOptions={storageOptions}
             selectedStorageKey={selectedStorageKey}
@@ -464,6 +477,7 @@ function useStudioCutout(source?: string) {
 function InstagramCanvas({
   canvasRef,
   product,
+  productName,
   activeColors,
   storageOptions,
   selectedStorageKey,
@@ -478,6 +492,7 @@ function InstagramCanvas({
 }: {
   canvasRef: RefObject<HTMLElement | null>;
   product: AdminProduct;
+  productName: string;
   activeColors: ProductColor[];
   storageOptions: [string, ProductVariant][];
   selectedStorageKey: string;
@@ -493,16 +508,16 @@ function InstagramCanvas({
   const domain = "centergsm.com.tr";
   const hasInstallments = product.show_installments && installmentCount > 1;
   const productNameSize =
-    product.name.length > 52
+    productName.length > 52
       ? "text-[2.2cqw]"
-      : product.name.length > 34
+      : productName.length > 34
         ? "text-[2.7cqw]"
         : "text-[3.1cqw]";
 
   return (
     <article
       ref={canvasRef}
-      aria-label={`${product.name} Instagram gönderisi önizlemesi`}
+      aria-label={`${productName} Instagram gönderisi önizlemesi`}
       className="relative mx-auto aspect-square w-full min-w-[680px] max-w-[1080px] overflow-hidden bg-[#050508] text-white shadow-2xl [container-type:inline-size]"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_35%,rgba(37,99,235,0.2),transparent_27%),radial-gradient(circle_at_48%_28%,rgba(217,70,239,0.2),transparent_25%),radial-gradient(circle_at_86%_70%,rgba(59,130,246,0.13),transparent_28%),linear-gradient(145deg,#02030a_0%,#080312_48%,#02040b_100%)]" />
@@ -560,7 +575,7 @@ function InstagramCanvas({
                   productNameSize,
                 )}
               >
-                {product.name}
+                {productName}
               </h2>
             </div>
             <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -572,7 +587,7 @@ function InstagramCanvas({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={cutoutImage}
-                  alt={product.name}
+                  alt={productName}
                   className="relative z-10 size-full object-contain p-[1%] drop-shadow-[0_2.6cqw_2.8cqw_rgba(0,0,0,0.72)]"
                 />
               ) : (
