@@ -7,8 +7,8 @@ import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
 import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import {
+  resolveInitialVariantSelection,
   resolveSelectedVariant,
-  storageKeyFromParam,
   variantStorageKey,
 } from "@/lib/catalog/variants";
 import type { CatalogProduct } from "@/types/product";
@@ -29,22 +29,28 @@ export function ProductDetailExperience({
     [product.variants],
   );
   const colors = useMemo(() => product.colors ?? [], [product.colors]);
-  const initialColor = colors.find(
-    (color) => color.name === searchParams.get("color"),
+  const initialSelection = resolveInitialVariantSelection(
+    variants,
+    colors,
+    searchParams.get("color"),
+    searchParams.get("storage"),
   );
-  const [selectedColorId, setSelectedColorId] = useState(initialColor?.id);
+  const [selectedColorId, setSelectedColorId] = useState(
+    initialSelection.colorId,
+  );
   const [selectedStorageKey, setSelectedStorageKey] = useState(
-    storageKeyFromParam(variants, searchParams.get("storage")),
+    initialSelection.storageKey,
   );
 
   useEffect(() => {
-    const color = colors.find(
-      (item) => item.name === searchParams.get("color"),
+    const selection = resolveInitialVariantSelection(
+      variants,
+      colors,
+      searchParams.get("color"),
+      searchParams.get("storage"),
     );
-    setSelectedColorId(color?.id);
-    setSelectedStorageKey(
-      storageKeyFromParam(variants, searchParams.get("storage")),
-    );
+    setSelectedColorId(selection.colorId);
+    setSelectedStorageKey(selection.storageKey);
   }, [colors, searchParams, variants]);
 
   const storageOptions = useMemo(
