@@ -1,6 +1,7 @@
 import { catalogProducts } from "@/data/catalog-products";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
 import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
+import { applyDefaultVariantPresentation } from "@/lib/catalog/variants";
 import { plainText } from "@/lib/seo/seo";
 import type { Json } from "@/types/database";
 import type {
@@ -50,7 +51,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     .startsWith(row.brand.name.toLocaleLowerCase("tr-TR"))
     ? row.name.slice(row.brand.name.length).trim()
     : row.name;
-  return {
+  const product: CatalogProduct = {
     id: row.id,
     slug: row.slug,
     brand: row.brand.name,
@@ -114,4 +115,5 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
         attributes: attributes(variant.attributes),
       })),
   };
+  return applyDefaultVariantPresentation(product);
 }

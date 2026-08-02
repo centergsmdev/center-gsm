@@ -1,7 +1,9 @@
 import type {
+  CatalogProduct,
   CatalogProductColor,
   CatalogProductVariant,
 } from "@/types/product";
+import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 
 export function variantStorageKey(variant: CatalogProductVariant) {
   return variant.storageValue && variant.storageUnit
@@ -36,6 +38,54 @@ export function storageKeyFromParam(
   return legacy ? variantStorageKey(legacy) : undefined;
 }
 
+export function resolveDefaultVariant(
+  variants: CatalogProductVariant[],
+  colors: CatalogProductColor[],
+) {
+  return variants.find(
+    (variant) =>
+      variant.isDefault &&
+      (!variant.colorId ||
+        colors.some((color) => color.id === variant.colorId)),
+  );
+}
+
+export function applyDefaultVariantPresentation(product: CatalogProduct) {
+  const colors = product.colors ?? [];
+  const defaultVariant = resolveDefaultVariant(product.variants ?? [], colors);
+  if (!defaultVariant) return product;
+
+  const color = colors.find((item) => item.id === defaultVariant.colorId);
+  const price = defaultVariant.price;
+  const previousPrice = defaultVariant.previousPrice;
+  const stockQuantity = defaultVariant.stockQuantity;
+  return {
+    ...product,
+    price,
+    previousPrice,
+    discountRate:
+      previousPrice && previousPrice > price
+        ? Math.round(((previousPrice - price) / previousPrice) * 100)
+        : undefined,
+    monthlyInstallment: calculateMonthlyInstallment(
+      price,
+      product.installmentCount,
+    ),
+    availableStock: stockQuantity,
+    stockStatus:
+      stockQuantity === 0
+        ? ("out-of-stock" as const)
+        : stockQuantity <= 5
+          ? ("limited" as const)
+          : ("in-stock" as const),
+    sameDayShipping: stockQuantity > 5,
+    freeShipping: price >= 2500,
+    sku: defaultVariant.sku,
+    mainImageUrl: color?.imageUrls[0] ?? product.mainImageUrl,
+    imageUrls: color?.imageUrls.length ? color.imageUrls : product.imageUrls,
+  };
+}
+
 export function resolveInitialVariantSelection(
   variants: CatalogProductVariant[],
   colors: CatalogProductColor[],
@@ -53,12 +103,7 @@ export function resolveInitialVariantSelection(
 
   if (hasUrlSelection && urlCombinationExists) return { colorId, storageKey };
 
-  const defaultVariant = variants.find(
-    (variant) =>
-      variant.isDefault &&
-      (!variant.colorId ||
-        colors.some((color) => color.id === variant.colorId)),
-  );
+  const defaultVariant = resolveDefaultVariant(variants, colors);
   return defaultVariant
     ? {
         colorId: defaultVariant.colorId,
