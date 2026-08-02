@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 
+import { productDisplayName } from "@/lib/catalog/variants";
 import type { CatalogProduct } from "@/types/product";
 
 export function ProductDetailBreadcrumb({
@@ -49,7 +50,7 @@ export function ProductDetailBreadcrumb({
           className="max-w-52 truncate font-semibold text-foreground"
           aria-current="page"
         >
-          {product.brand} {product.model}
+          {productDisplayName(product)}
         </li>
       </ol>
     </nav>

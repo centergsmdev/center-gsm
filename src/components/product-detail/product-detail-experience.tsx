@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
 import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
 import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
@@ -159,25 +160,28 @@ export function ProductDetailExperience({
     : undefined;
 
   return (
-    <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:items-start lg:gap-12">
-      <ProductGallery
-        product={displayProduct}
-        imageUrls={galleryImages}
-        galleryKey={selectedColorId ?? "default"}
-      />
-      <ProductInfo
-        product={displayProduct}
-        colors={colors}
-        variants={variants}
-        storageOptions={storageOptions}
-        selectedColorId={selectedColorId}
-        selectedStorageKey={selectedStorageKey}
-        selectionRequired={requiresColor || requiresStorage}
-        selectionComplete={selectionComplete}
-        onColorChange={selectColor}
-        onStorageChange={selectStorage}
-        cartVariant={cartVariant}
-      />
-    </div>
+    <>
+      <ProductDetailBreadcrumb product={displayProduct} />
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:items-start lg:gap-12">
+        <ProductGallery
+          product={displayProduct}
+          imageUrls={galleryImages}
+          galleryKey={selectedColorId ?? "default"}
+        />
+        <ProductInfo
+          product={displayProduct}
+          colors={colors}
+          variants={variants}
+          storageOptions={storageOptions}
+          selectedColorId={selectedColorId}
+          selectedStorageKey={selectedStorageKey}
+          selectionRequired={requiresColor || requiresStorage}
+          selectionComplete={selectionComplete}
+          onColorChange={selectColor}
+          onStorageChange={selectStorage}
+          cartVariant={cartVariant}
+        />
+      </div>
+    </>
   );
 }

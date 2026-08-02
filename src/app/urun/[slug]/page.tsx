@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
-import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
 import { ProductDetailExperience } from "@/components/product-detail/product-detail-experience";
 import { RecentlyViewedProducts } from "@/components/product-detail/recently-viewed-products";
 import { ProductDetailErrorState } from "@/components/product-detail/product-detail-states";
@@ -133,7 +132,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         ])}
       />
       <Container>
-        <ProductDetailBreadcrumb product={product} />
         <ProductDetailExperience product={product} />
         {hasManagedContent ? (
           <div className="mt-12 sm:mt-16">
