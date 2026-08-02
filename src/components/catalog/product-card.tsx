@@ -8,6 +8,7 @@ import { ComparisonButton } from "@/components/comparison/comparison-button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { productDisplayName } from "@/lib/catalog/variants";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -23,7 +24,8 @@ export function ProductCard({
   denseMobile?: boolean;
   footerAction?: ReactNode;
 }) {
-  const productName = `${product.brand} ${product.model}`;
+  const productName = productDisplayName(product);
+  const productTitle = product.variantTitle?.trim() || product.model;
   const stock = {
     "in-stock": {
       label: "Stokta",
@@ -95,7 +97,7 @@ export function ProductCard({
             href={`/urun/${product.slug}`}
             className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
-            {product.model}
+            {productTitle}
           </Link>
         </h2>
         <p
