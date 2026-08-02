@@ -3,23 +3,21 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
-import {
-  MAX_PRODUCT_IMAGE_SIZE,
-  PRODUCT_IMAGE_BUCKET,
-} from "@/lib/admin/product-images";
+import { PRODUCT_IMAGE_BUCKET } from "@/lib/admin/product-images";
 import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_CONTENT_IMAGE_SIZE = 4 * 1024 * 1024;
 const IMAGE_FORMATS = {
   "image/jpeg": { extension: "jpg", sharpFormat: "jpeg" },
   "image/png": { extension: "png", sharpFormat: "png" },
   "image/webp": { extension: "webp", sharpFormat: "webp" },
 } as const;
 const errorResponse = (message: string, status: number) =>
-  NextResponse.json({ data: null, error: message }, { status });
+  NextResponse.json({ error: message }, { status });
 
 export async function POST(request: Request) {
   const db = await createClient();
@@ -43,8 +41,8 @@ export async function POST(request: Request) {
       "Sadece JPEG, PNG ve WebP görseller kabul edilir.",
       400,
     );
-  if (file.size > MAX_PRODUCT_IMAGE_SIZE)
-    return errorResponse("Görsel 5 MB sınırını aşıyor.", 400);
+  if (file.size > MAX_CONTENT_IMAGE_SIZE)
+    return errorResponse("Dosya boyutu 4 MB sınırını aştı.", 413);
 
   const imageFormat = IMAGE_FORMATS[file.type as keyof typeof IMAGE_FORMATS];
   const path = `content/${randomUUID()}.${imageFormat.extension}`;
@@ -67,7 +65,11 @@ export async function POST(request: Request) {
       });
     if (upload.error) throw upload.error;
     const { data } = db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
-    return NextResponse.json({ data: { url: data.publicUrl }, error: null });
+    return NextResponse.json({
+      url: data.publicUrl,
+      width: metadata.width,
+      height: metadata.height,
+    });
   } catch (error) {
     if (process.env.NODE_ENV === "development")
       console.error("Product content image upload failed", error);

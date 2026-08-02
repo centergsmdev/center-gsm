@@ -52,6 +52,7 @@ const Vimeo = Node.create({
 });
 
 type DialogMode = "link" | "video" | null;
+const MAX_CONTENT_IMAGE_SIZE = 4 * 1024 * 1024;
 
 export function RichTextEditor({
   id,
@@ -106,6 +107,12 @@ export function RichTextEditor({
   const uploadImage = async (file: File) => {
     setUploading(true);
     setError("");
+    if (file.size > MAX_CONTENT_IMAGE_SIZE) {
+      setError("Dosya boyutu 4 MB sınırını aştı.");
+      setUploading(false);
+      if (imageInput.current) imageInput.current.value = "";
+      return;
+    }
     const body = new FormData();
     body.set("file", file);
     try {
@@ -113,17 +120,27 @@ export function RichTextEditor({
         method: "POST",
         body,
       });
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          response.status === 413
+            ? "Dosya boyutu yükleme sınırını aştı."
+            : "Sunucu geçerli bir yükleme yanıtı döndürmedi.",
+        );
+      }
       const result = (await response.json()) as {
-        data: { url: string } | null;
-        error: string | null;
+        url?: string;
+        width?: number;
+        height?: number;
+        error?: string;
       };
-      if (!response.ok || !result.data)
+      if (!response.ok || !result.url)
         throw new Error(result.error ?? "Görsel yüklenemedi.");
       editor
         ?.chain()
         .focus()
         .setImage({
-          src: result.data.url,
+          src: result.url,
           alt: file.name.replace(/\.[^.]+$/, ""),
         })
         .run();
