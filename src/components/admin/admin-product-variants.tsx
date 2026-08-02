@@ -113,10 +113,6 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
   };
   const generate = () => {
     const activeColors = colors.filter((color) => color.is_active);
-    if (!activeColors.length || !storages.length)
-      return setMessage(
-        "Kombinasyon üretmek için en az bir aktif renk ve depolama seçeneği ekleyin.",
-      );
     const next = buildVariantCombinations(
       activeColors,
       storages,
@@ -124,8 +120,12 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
       () => crypto.randomUUID(),
     );
     setVariants(next);
-    setShowPreview(true);
-    setMessage(`${next.length} renk/depolama kombinasyonu hazırlandı.`);
+    setShowPreview(Boolean(next.length));
+    setMessage(
+      next.length
+        ? `${next.length} varyant hazırlandı.`
+        : "Renk veya depolama seçilmedi; ürün varyantsız olarak kalacak.",
+    );
   };
 
   const filteredVariants = useMemo(() => {
@@ -297,7 +297,8 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
             Depolama
           </h3>
           <p className="text-xs text-zinc-500">
-            Değer ve birim ayrı, normalize edilmiş alanlarda saklanır.
+            Opsiyoneldir. Değer ve birim ayrı, normalize edilmiş alanlarda
+            saklanır.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -638,12 +639,20 @@ function VariantPreview({
               className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-white px-3 py-2 text-xs font-semibold text-zinc-700"
             >
               <Check className="size-4 shrink-0 text-emerald-600" />
-              <span
-                className="size-4 shrink-0 rounded-full border border-black/10"
-                style={{ backgroundColor: color?.hex_code }}
-              />
-              {color?.display_name || color?.name} · {variant.storage_value}{" "}
-              {variant.storage_unit}
+              {color ? (
+                <span
+                  className="size-4 shrink-0 rounded-full border border-black/10"
+                  style={{ backgroundColor: color.hex_code }}
+                />
+              ) : null}
+              {[
+                color?.display_name || color?.name,
+                variant.storage_value && variant.storage_unit
+                  ? `${variant.storage_value} ${variant.storage_unit}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
           );
         })}
@@ -801,7 +810,9 @@ function VariantTableRow({
         </div>
       </td>
       <td className="whitespace-nowrap px-3 py-2 font-semibold">
-        {variant.storage_value} {variant.storage_unit}
+        {variant.storage_value && variant.storage_unit
+          ? `${variant.storage_value} ${variant.storage_unit}`
+          : "—"}
       </td>
       <td className="px-2 py-2">
         {input("sku")}

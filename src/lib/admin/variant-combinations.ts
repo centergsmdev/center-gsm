@@ -78,22 +78,32 @@ export function buildVariantCombinations(
   variants: CombinationVariant[],
   createId: () => string,
 ) {
+  const activeColors = colors.filter((color) => color.is_active);
+  if (!activeColors.length && !storages.length) return [];
+
+  const colorOptions: Array<CombinationColor | null> = activeColors.length
+    ? activeColors
+    : [null];
+  const storageOptions: Array<CombinationStorage | null> = storages.length
+    ? storages
+    : [null];
   const existing = new Map(
     variants.map((variant) => [
       `${variant.color_id}-${variant.storage_value}-${variant.storage_unit}`,
       variant,
     ]),
   );
-  return colors
-    .filter((color) => color.is_active)
+  return colorOptions
     .flatMap((color) =>
-      storages.map(
+      storageOptions.map(
         (storage) =>
-          existing.get(`${color.id}-${storage.value}-${storage.unit}`) ?? {
+          existing.get(
+            `${color?.id ?? null}-${storage?.value ?? null}-${storage?.unit ?? null}`,
+          ) ?? {
             id: `new-${createId()}`,
-            color_id: color.id,
-            storage_value: storage.value,
-            storage_unit: storage.unit,
+            color_id: color?.id ?? null,
+            storage_value: storage?.value ?? null,
+            storage_unit: storage?.unit ?? null,
             sku: "",
             barcode: null,
             price: 0,

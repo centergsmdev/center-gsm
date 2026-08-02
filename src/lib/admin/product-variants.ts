@@ -111,10 +111,11 @@ export async function saveAdminVariantSetup(
     const storage =
       variant.storage_value && variant.storage_unit
         ? `${variant.storage_value} ${variant.storage_unit}`
-        : "Standart";
+        : null;
+    const colorName = color?.display_name || color?.name || null;
     return {
       ...variant,
-      name: `${color?.display_name || color?.name || "Standart"} / ${storage}`,
+      name: [colorName, storage].filter(Boolean).join(" / ") || "Standart",
       attributes: {
         color: color?.name ?? null,
         colorHex: color?.hex_code ?? null,
