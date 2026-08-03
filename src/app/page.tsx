@@ -8,6 +8,12 @@ import { WeeklyDeals } from "@/components/home/weekly-deals";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { Hero } from "@/components/home/hero";
+import {
+  BrandShowcase,
+  HomepageFooterCta,
+  PaymentAdvantages,
+  WhyCenterGsm,
+} from "@/components/home/homepage-trust-sections";
 import { TrustSection } from "@/components/home/trust-section";
 import { FadeIn, MotionProvider } from "@/components/motion/motion-system";
 import { getFeaturedProducts, getProducts } from "@/lib/catalog/data";
@@ -103,6 +109,10 @@ export default async function HomePage() {
             carriers={shippingCarriers}
             paymentPartners={paymentPartners}
           />
+          <WhyCenterGsm />
+          <PaymentAdvantages />
+          <BrandShowcase />
+          <HomepageFooterCta />
         </main>
         <FadeIn>
           <Footer />
