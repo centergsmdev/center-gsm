@@ -14,6 +14,8 @@ export type CatalogFilters = {
   page?: number;
   pageSize?: number;
   featured?: boolean;
+  weeklyDeal?: boolean;
+  latestPhone?: boolean;
 };
 export type CatalogListResult = {
   data: CatalogProduct[];

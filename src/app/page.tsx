@@ -40,8 +40,8 @@ export default async function HomePage() {
   ] = await Promise.all([
     getFeaturedProducts(8),
     getProducts({ sort: "popular", pageSize: 8 }),
-    getProducts({ discount: true, sort: "popular", pageSize: 8 }),
-    getProducts({ categories: ["telefon"], sort: "newest", pageSize: 8 }),
+    getProducts({ weeklyDeal: true, sort: "popular", pageSize: 8 }),
+    getProducts({ latestPhone: true, sort: "newest", pageSize: 8 }),
     getProducts({ categories: ["laptoplar"], sort: "newest", pageSize: 8 }),
     getProducts({
       categories: ["akilli-saat"],

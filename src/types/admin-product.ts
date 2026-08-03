@@ -29,6 +29,8 @@ export type AdminProductFormValues = Pick<
   | "installment_note"
   | "is_active"
   | "is_featured"
+  | "is_weekly_deal"
+  | "is_latest_phone"
 >;
 
 export type AdminProductFilters = {

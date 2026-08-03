@@ -114,6 +114,8 @@ export function AdminQuickProductForm() {
       installment_note: "Taksit seçenekleri ödeme adımında görüntülenir.",
       is_active: false,
       is_featured: false,
+      is_weekly_deal: false,
+      is_latest_phone: false,
     });
     if (!created.data) {
       setSaving(false);

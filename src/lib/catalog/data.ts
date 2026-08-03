@@ -70,6 +70,12 @@ function fallbackProducts(filters: CatalogFilters): CatalogListResult {
     data = data.filter((product) =>
       ["p-001", "p-002", "p-003", "p-004"].includes(product.id),
     );
+  if (filters.weeklyDeal)
+    data = data.filter((product) => Boolean(product.discountRate));
+  if (filters.latestPhone)
+    data = data.filter(
+      (product) => product.category.toLocaleLowerCase("tr-TR") === "telefon",
+    );
   if (filters.sort === "price-asc") data.sort((a, b) => a.price - b.price);
   else if (filters.sort === "price-desc")
     data.sort((a, b) => b.price - a.price);
@@ -264,6 +270,8 @@ export async function getProducts(
     if (filters.stock) query = query.gt("stock_quantity", 0);
     if (filters.discount) query = query.not("old_price", "is", null);
     if (filters.featured) query = query.eq("is_featured", true);
+    if (filters.weeklyDeal) query = query.eq("is_weekly_deal", true);
+    if (filters.latestPhone) query = query.eq("is_latest_phone", true);
     if (safeQuery) {
       const clauses = [`search_text.like.%${safeQuery}%`];
       if (searchCategoryIds.length)

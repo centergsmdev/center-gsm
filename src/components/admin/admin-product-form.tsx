@@ -54,6 +54,8 @@ type FormState = {
   installment_note: string;
   is_active: boolean;
   is_featured: boolean;
+  is_weekly_deal: boolean;
+  is_latest_phone: boolean;
 };
 type FormErrors = Partial<Record<keyof FormState, string>>;
 const emptyForm: FormState = {
@@ -73,6 +75,8 @@ const emptyForm: FormState = {
   installment_note: "",
   is_active: true,
   is_featured: false,
+  is_weekly_deal: false,
+  is_latest_phone: false,
 };
 const slugify = (value: string) =>
   value
@@ -138,6 +142,8 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             installment_note: item.installment_note ?? "",
             is_active: item.is_active,
             is_featured: item.is_featured,
+            is_weekly_deal: item.is_weekly_deal,
+            is_latest_phone: item.is_latest_phone,
           });
           setImages(item.images);
         } else if (productId)
@@ -207,6 +213,8 @@ export function AdminProductForm({ productId }: { productId?: string }) {
       installment_note: form.installment_note.trim() || null,
       is_active: form.is_active,
       is_featured: form.is_featured,
+      is_weekly_deal: form.is_weekly_deal,
+      is_latest_phone: form.is_latest_phone,
     };
     const result = currentProductId
       ? await updateAdminProduct(currentProductId, values)
@@ -516,9 +524,21 @@ export function AdminProductForm({ productId }: { productId?: string }) {
             />
             <Toggle
               label="Öne çıkan ürün"
-              description="Ana sayfa vitrininde kullanılabilir."
+              description="Öne Çıkan Ürünler alanında gösterilir."
               checked={form.is_featured}
               onChange={(value) => set("is_featured", value)}
+            />
+            <Toggle
+              label="Haftanın fırsatı"
+              description="Haftanın Fırsatları alanında gösterilir."
+              checked={form.is_weekly_deal}
+              onChange={(value) => set("is_weekly_deal", value)}
+            />
+            <Toggle
+              label="En yeni telefon"
+              description="En Yeni Telefonlar alanında gösterilir."
+              checked={form.is_latest_phone}
+              onChange={(value) => set("is_latest_phone", value)}
             />
           </div>
         </AdminFormSection>

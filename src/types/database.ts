@@ -45,6 +45,8 @@ type Product = Timestamps & {
   stock_quantity: number;
   is_active: boolean;
   is_featured: boolean;
+  is_weekly_deal: boolean;
+  is_latest_phone: boolean;
   warranty_months: number;
   show_installments: boolean;
   installment_count: number;
