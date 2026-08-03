@@ -8,7 +8,11 @@ import { ComparisonButton } from "@/components/comparison/comparison-button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { productDisplayName } from "@/lib/catalog/variants";
+import {
+  productDisplayName,
+  resolveDefaultVariant,
+  variantStorageKey,
+} from "@/lib/catalog/variants";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -26,6 +30,21 @@ export function ProductCard({
 }) {
   const productName = productDisplayName(product);
   const productTitle = product.variantTitle?.trim() || product.model;
+  const defaultVariant = resolveDefaultVariant(
+    product.variants ?? [],
+    product.colors ?? [],
+  );
+  const defaultColor = product.colors?.find(
+    (color) => color.id === defaultVariant?.colorId,
+  );
+  const defaultStorage = defaultVariant
+    ? variantStorageKey(defaultVariant)
+    : undefined;
+  const productParams = new URLSearchParams();
+  if (defaultColor) productParams.set("color", defaultColor.name);
+  if (defaultStorage) productParams.set("storage", defaultStorage);
+  const productQuery = productParams.toString();
+  const productHref = `/urun/${product.slug}${productQuery ? `?${productQuery}` : ""}`;
   const stock = {
     "in-stock": {
       label: "Stokta",
@@ -94,7 +113,7 @@ export function ProductCard({
           )}
         >
           <Link
-            href={`/urun/${product.slug}`}
+            href={productHref}
             className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
             {productTitle}
