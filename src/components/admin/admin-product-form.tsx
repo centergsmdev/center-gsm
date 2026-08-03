@@ -276,10 +276,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   return (
     <form
       onSubmit={submit}
-      className="grid gap-6 xl:grid-cols-[1fr_360px]"
+      className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
       noValidate
     >
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         {pageError ? (
           <p
             className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
@@ -513,7 +513,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           />
         </AdminFormSection>
       </div>
-      <aside className="space-y-6">
+      <aside className="min-w-0 space-y-6">
         <AdminFormSection title="Yayın durumu">
           <div className="space-y-5">
             <Toggle
