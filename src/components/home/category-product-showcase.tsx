@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
-import { MobileShowcaseCarousel } from "./mobile-showcase-carousel";
+import { HomepageProductCarousel } from "./mobile-showcase-carousel";
 
 type CategoryProductShowcaseProps = {
   id: string;
@@ -55,16 +55,16 @@ export function CategoryProductShowcase({
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
         {visibleProducts.length ? (
-          <MobileShowcaseCarousel>
+          <HomepageProductCarousel>
             {visibleProducts.map((product) => (
               <AnimatedCard
                 key={product.id}
-                className="h-full max-md:!transform-none max-md:!opacity-100"
+                className="h-full !transform-none !opacity-100"
               >
-                <ProductCard product={product} />
+                <ProductCard product={product} compactMobile denseMobile />
               </AnimatedCard>
             ))}
-          </MobileShowcaseCarousel>
+          </HomepageProductCarousel>
         ) : (
           <p className="home-premium-surface rounded-2xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">
             Bu kategoride gösterilecek ürün bulunmuyor.
