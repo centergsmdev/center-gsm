@@ -31,6 +31,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/providers/cart-provider";
 import { createOrder } from "@/lib/orders/client";
+import {
+  PAYMENT_RECEIPT_MAX_SIZE,
+  PAYMENT_RECEIPT_TYPES,
+  uploadPaymentReceipt,
+} from "@/lib/payment-receipts/client";
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
 import { productDisplayName } from "@/lib/catalog/variants";
 import { formatCurrency } from "@/lib/format";
@@ -75,6 +80,7 @@ export function CheckoutForm() {
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("standard");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("transfer");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [carriers, setCarriers] = useState<CheckoutCarrier[]>(
     fallbackCheckoutCarriers,
   );
@@ -156,6 +162,18 @@ export function CheckoutForm() {
       next.distanceAgreement = "Mesafeli satış sözleşmesini onaylayın.";
     if (!formData.get("preInformation"))
       next.preInformation = "Ön bilgilendirme formunu onaylayın.";
+    if (paymentMethod === "transfer") {
+      if (!receiptFile)
+        next.paymentReceipt = "Lütfen ödeme dekontunu yükleyin.";
+      else if (
+        !PAYMENT_RECEIPT_TYPES.includes(
+          receiptFile.type as (typeof PAYMENT_RECEIPT_TYPES)[number],
+        )
+      )
+        next.paymentReceipt = "JPEG, PNG, WebP veya PDF dosyası yükleyin.";
+      else if (receiptFile.size > PAYMENT_RECEIPT_MAX_SIZE)
+        next.paymentReceipt = "Dekont dosyası en fazla 10 MB olabilir.";
+    }
     return next;
   }
 
@@ -299,6 +317,18 @@ export function CheckoutForm() {
       setErrors({ submit: created.error ?? "Sipariş oluşturulamadı." });
       setProcessing(false);
       return;
+    }
+    if (paymentMethod === "transfer" && receiptFile) {
+      const receipt = await uploadPaymentReceipt(
+        created.data.orderNumber,
+        created.data.contact,
+        receiptFile,
+      );
+      if (receipt.error) {
+        setErrors({ submit: receipt.error });
+        setProcessing(false);
+        return;
+      }
     }
     const order: DemoOrder = {
       orderNumber: created.data.orderNumber,
@@ -448,8 +478,26 @@ export function CheckoutForm() {
           >
             <PaymentMethods
               value={paymentMethod}
-              onChange={setPaymentMethod}
+              onChange={(method) => {
+                setPaymentMethod(method);
+                if (method !== "transfer") setReceiptFile(null);
+                setErrors((current) => {
+                  const next = { ...current };
+                  delete next.paymentReceipt;
+                  return next;
+                });
+              }}
               errors={errors}
+              receiptFile={receiptFile}
+              onReceiptFileChange={(file) => {
+                setReceiptFile(file);
+                setErrors((current) => {
+                  const next = { ...current };
+                  delete next.paymentReceipt;
+                  return next;
+                });
+              }}
+              receiptError={errors.paymentReceipt}
             />
           </CheckoutSection>
           <CheckoutSection

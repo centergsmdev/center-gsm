@@ -321,6 +321,19 @@ type PaymentTransaction = Timestamps & {
   note: string | null;
   metadata: Json;
 };
+type PaymentReceipt = Timestamps & {
+  id: string;
+  order_id: string;
+  upload_token: string;
+  storage_path: string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  status: "awaiting_upload" | "pending_review" | "approved" | "rejected";
+  uploaded_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+};
 type PaymentProvider = Timestamps & {
   id: string;
   code: "mock" | "iyzico" | "paytr" | "param";
@@ -1079,6 +1092,7 @@ export type Database = {
             "order_id" | "provider" | "status" | "amount" | "reference"
           >
       >;
+      payment_receipts: Table<PaymentReceipt, never, Partial<PaymentReceipt>>;
       payment_partners: Table<
         PaymentPartner,
         Partial<PaymentPartner> & Pick<PaymentPartner, "name">
@@ -1305,6 +1319,24 @@ export type Database = {
         Returns: string;
       };
       create_order: { Args: { p_payload: Json }; Returns: Json };
+      prepare_payment_receipt_upload: {
+        Args: {
+          p_order_number: string;
+          p_contact: string;
+          p_original_name: string;
+          p_mime_type: string;
+          p_size_bytes: number;
+        };
+        Returns: Json;
+      };
+      finalize_payment_receipt_upload: {
+        Args: {
+          p_order_number: string;
+          p_contact: string;
+          p_upload_token: string;
+        };
+        Returns: boolean;
+      };
       admin_update_manual_payment: {
         Args: { p_order_id: string; p_action: string; p_note?: string };
         Returns: boolean;
