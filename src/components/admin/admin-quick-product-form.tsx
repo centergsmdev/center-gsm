@@ -367,7 +367,7 @@ export function AdminQuickProductForm() {
               Oluşturulan taslağı aç
             </Link>
           ) : null}
-          <Button disabled={saving} className="gap-2">
+          <Button type="submit" disabled={saving} className="gap-2">
             {saving ? (
               <LoaderCircle className="size-4 animate-spin" />
             ) : (
