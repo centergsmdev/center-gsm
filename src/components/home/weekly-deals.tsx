@@ -2,14 +2,11 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ProductCard } from "@/components/catalog/product-card";
-import {
-  AnimatedCard,
-  RevealSection,
-  StaggerContainer,
-} from "@/components/motion/motion-system";
+import { AnimatedCard, RevealSection } from "@/components/motion/motion-system";
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
 import type { CatalogProduct } from "@/types/product";
+import { MobileShowcaseCarousel } from "./mobile-showcase-carousel";
 
 export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
   const discountedProducts = products
@@ -44,13 +41,16 @@ export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
         {discountedProducts.length ? (
-          <StaggerContainer className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+          <MobileShowcaseCarousel>
             {discountedProducts.map((product) => (
-              <AnimatedCard key={product.id} className="h-full">
+              <AnimatedCard
+                key={product.id}
+                className="h-full max-md:!transform-none max-md:!opacity-100"
+              >
                 <ProductCard product={product} />
               </AnimatedCard>
             ))}
-          </StaggerContainer>
+          </MobileShowcaseCarousel>
         ) : (
           <p className="home-premium-surface rounded-2xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">
             Bu hafta aktif fırsat ürünü bulunmuyor.
