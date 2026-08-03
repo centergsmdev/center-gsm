@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Tags,
   TicketPercent,
   Truck,
@@ -26,6 +27,12 @@ import {
 export const adminNavigation = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Ürünler", href: "/admin/urunler", icon: Package },
+  {
+    label: "Hızlı Ürün Oluştur",
+    href: "/admin/urunler/hizli-olustur",
+    icon: Sparkles,
+    child: true,
+  },
   {
     label: "Marketing Studio",
     href: "/admin/marketing-studio",
@@ -115,6 +122,10 @@ export const adminPageTitles: Record<
   "/admin/urunler/yeni": {
     title: "Yeni ürün",
     description: "Kataloğa yayınlanmaya hazır bir ürün ekleyin.",
+  },
+  "/admin/urunler/hizli-olustur": {
+    title: "Hızlı Ürün Oluştur",
+    description: "Temel ürün bilgilerini hızlıca hazırlayıp taslak oluşturun.",
   },
   "/admin/marketing-studio": {
     title: "Marketing Studio",

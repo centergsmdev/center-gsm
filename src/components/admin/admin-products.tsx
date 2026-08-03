@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -135,13 +136,22 @@ export function AdminProducts() {
           <AdminBadge variant="success">{products.length} ürün</AdminBadge>
           <AdminBadge>Supabase kataloğu</AdminBadge>
         </div>
-        <Link
-          href="/admin/urunler/yeni"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-red-700"
-        >
-          <Plus className="size-4" />
-          Yeni ürün
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/urunler/hizli-olustur"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300"
+          >
+            <Sparkles className="size-4 text-red-600" />
+            Hızlı ürün oluştur
+          </Link>
+          <Link
+            href="/admin/urunler/yeni"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-red-700"
+          >
+            <Plus className="size-4" />
+            Yeni ürün
+          </Link>
+        </div>
       </div>
       {notice ? (
         <p
