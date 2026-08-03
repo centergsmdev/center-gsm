@@ -24,9 +24,11 @@ import {
   Table2,
   UnderlineIcon,
   Video,
+  Globe2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { downloadRemoteImage } from "@/lib/admin/remote-images";
 
 const Vimeo = Node.create({
   name: "vimeo",
@@ -51,7 +53,7 @@ const Vimeo = Node.create({
   },
 });
 
-type DialogMode = "link" | "video" | null;
+type DialogMode = "link" | "video" | "image" | null;
 const MAX_CONTENT_IMAGE_SIZE = 4 * 1024 * 1024;
 
 export function RichTextEditor({
@@ -186,6 +188,21 @@ export function RichTextEditor({
     setError("");
   };
 
+  const insertImageUrl = async () => {
+    if (!url.trim()) return;
+    setUploading(true);
+    setError("");
+    const result = await downloadRemoteImage(url, "content");
+    if (!result.data) {
+      setUploading(false);
+      setError(result.error);
+      return;
+    }
+    setDialogMode(null);
+    setUrl("");
+    await uploadImage(result.data);
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100">
       <div
@@ -288,6 +305,16 @@ export function RichTextEditor({
           {uploading ? <Loader2 className="animate-spin" /> : <ImagePlus />}
         </EditorButton>
         <EditorButton
+          label="Görsel adresinden ekle"
+          disabled={uploading}
+          onClick={() => {
+            setDialogMode("image");
+            setUrl("");
+          }}
+        >
+          {uploading ? <Loader2 className="animate-spin" /> : <Globe2 />}
+        </EditorButton>
+        <EditorButton
           label="Video ekle"
           onClick={() => {
             setDialogMode("video");
@@ -310,7 +337,11 @@ export function RichTextEditor({
       {dialogMode ? (
         <div className="flex flex-col gap-2 border-b border-zinc-100 bg-white p-3 sm:flex-row">
           <label className="sr-only" htmlFor={`${id}-${dialogMode}-url`}>
-            {dialogMode === "link" ? "Bağlantı adresi" : "Video adresi"}
+            {dialogMode === "link"
+              ? "Bağlantı adresi"
+              : dialogMode === "image"
+                ? "Görsel adresi"
+                : "Video adresi"}
           </label>
           <input
             id={`${id}-${dialogMode}-url`}
@@ -319,21 +350,28 @@ export function RichTextEditor({
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
-                insertUrl();
+                if (dialogMode === "image") void insertImageUrl();
+                else insertUrl();
               }
             }}
             autoFocus
             placeholder={
               dialogMode === "link"
                 ? "https://…"
-                : "YouTube veya Vimeo bağlantısı"
+                : dialogMode === "image"
+                  ? "https://ornek.com/urun-aciklama-gorseli.jpg"
+                  : "YouTube veya Vimeo bağlantısı"
             }
             className="min-h-10 flex-1 rounded-lg border border-zinc-200 px-3 text-base outline-none focus:border-red-500 sm:text-sm"
           />
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={insertUrl}
+              onClick={() => {
+                if (dialogMode === "image") void insertImageUrl();
+                else insertUrl();
+              }}
+              disabled={uploading}
               className="min-h-10 rounded-lg bg-zinc-950 px-4 text-xs font-bold text-white"
             >
               Ekle

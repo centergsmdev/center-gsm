@@ -31,6 +31,7 @@ import {
   validateProductImages,
   type PendingProductImage,
 } from "@/lib/admin/product-images";
+import { downloadRemoteImage } from "@/lib/admin/remote-images";
 import { DEFAULT_PRODUCT_IMAGE_TRANSFORM } from "@/lib/images/product-image-transform";
 import type { Tables } from "@/types/database";
 
@@ -55,6 +56,8 @@ export function AdminProductImages({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [remoteUrl, setRemoteUrl] = useState("");
+  const [remoteLoading, setRemoteLoading] = useState(false);
   const [message, setMessage] = useState<{
     tone: "error" | "success" | "warning";
     text: string;
@@ -93,6 +96,22 @@ export function AdminProductImages({
     event.preventDefault();
     setDragging(false);
     void accept(Array.from(event.dataTransfer.files));
+  };
+  const addFromUrl = async () => {
+    if (!remoteUrl.trim()) {
+      setMessage({ tone: "error", text: "Önce görsel adresini girin." });
+      return;
+    }
+    setRemoteLoading(true);
+    setMessage(null);
+    const result = await downloadRemoteImage(remoteUrl, "product");
+    setRemoteLoading(false);
+    if (!result.data) {
+      setMessage({ tone: "error", text: result.error });
+      return;
+    }
+    await accept([result.data]);
+    setRemoteUrl("");
   };
   const remove = async (image: ImageRow) => {
     if (!window.confirm("Bu görsel kalıcı olarak silinsin mi?")) return;
@@ -197,6 +216,52 @@ export function AdminProductImages({
           onChange={pick}
           aria-label="Ürün görselleri seç"
         />
+      </div>
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+        <p className="text-sm font-bold text-zinc-800">
+          Görsel adresinden ekle
+        </p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          Görsel sitenizin Storage alanına kopyalanır; dış bağlantıya bağımlı
+          kalmaz.
+        </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <label
+            className="sr-only"
+            htmlFor={`remote-product-image-${colorId ?? "main"}`}
+          >
+            Görsel adresi
+          </label>
+          <input
+            id={`remote-product-image-${colorId ?? "main"}`}
+            type="url"
+            inputMode="url"
+            value={remoteUrl}
+            onChange={(event) => setRemoteUrl(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void addFromUrl();
+              }
+            }}
+            placeholder="https://ornek.com/urun-gorseli.jpg"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void addFromUrl()}
+            disabled={busy || remoteLoading}
+          >
+            {remoteLoading ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <ImagePlus className="size-4" />
+            )}
+            {remoteLoading ? "Alınıyor…" : "URL'den ekle"}
+          </Button>
+        </div>
       </div>
       {message ? (
         <p
