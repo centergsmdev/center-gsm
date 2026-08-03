@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import {
   FacebookLogo,
@@ -39,24 +39,11 @@ export function Footer() {
               buluşturuyoruz.
             </p>
             <address className="mt-6 space-y-3 text-sm not-italic text-zinc-400">
-              <a
-                href="tel:08500000000"
-                className="flex w-fit items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              >
-                <Phone className="size-4 text-red-500" aria-hidden="true" />
-                0850 000 00 00
-              </a>
-              <a
-                href="mailto:destek@centergsm.com"
-                className="flex w-fit items-center gap-3 rounded-sm transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              >
-                <Mail className="size-4 text-red-500" aria-hidden="true" />
-                destek@centergsm.com
-              </a>
               <p className="flex items-center gap-3">
                 <MapPin className="size-4 text-red-500" aria-hidden="true" />
                 Türkiye genelinde hizmet
               </p>
+              <p>İletişim bilgileri güncelleniyor.</p>
             </address>
           </div>
 

@@ -21,7 +21,7 @@ function BrandLogo() {
       <span className="grid size-9 place-items-center rounded-md bg-zinc-950 text-sm font-black text-white shadow-sm transition-transform duration-200 ease-premium group-hover:-rotate-3">
         C
       </span>
-      <span className="hidden min-[340px]:block">
+      <span className="hidden min-[375px]:block">
         <span className="block text-lg font-black leading-none tracking-[-0.055em] sm:text-xl">
           CENTER<span className="text-primary">GSM</span>
         </span>

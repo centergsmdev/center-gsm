@@ -73,7 +73,7 @@ export function ProfileForm() {
             className="mt-4 flex items-center gap-2 text-xs font-bold text-success"
           >
             <Check className="size-4" />
-            Değişiklikler bu demo oturumu için kaydedildi.
+            Profil bilgileriniz kaydedildi.
           </p>
         ) : null}
         {error ? (

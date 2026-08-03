@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Save } from "lucide-react";
+import { BellOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,9 +34,7 @@ const options: {
   },
 ];
 export function NotificationSettings() {
-  const { preferences, updatePreferences } = useAuth();
-  const [draft, setDraft] = useState(preferences);
-  const [saved, setSaved] = useState(false);
+  const { preferences } = useAuth();
   return (
     <Card className="p-5 sm:p-7">
       <div className="space-y-3">
@@ -54,36 +51,20 @@ export function NotificationSettings() {
             </span>
             <input
               type="checkbox"
-              checked={draft[option.key]}
-              onChange={(event) => {
-                setDraft((current) => ({
-                  ...current,
-                  [option.key]: event.target.checked,
-                }));
-                setSaved(false);
-              }}
+              checked={preferences[option.key]}
+              readOnly
+              disabled
               className="size-5 shrink-0 accent-red-700"
             />
           </label>
         ))}
       </div>
-      {saved ? (
-        <p
-          role="status"
-          className="mt-4 flex items-center gap-2 text-xs font-bold text-success"
-        >
-          <Check className="size-4" />
-          Bildirim tercihleri güncellendi.
-        </p>
-      ) : null}
-      <Button
-        className="mt-6"
-        onClick={() => {
-          updatePreferences(draft);
-          setSaved(true);
-        }}
-      >
-        <Save className="size-4" />
+      <p className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-900">
+        <BellOff className="size-4 shrink-0" aria-hidden="true" />
+        Bildirim tercihlerini kalıcı olarak kaydetme özelliği henüz
+        kullanılamıyor.
+      </p>
+      <Button className="mt-6" disabled>
         Tercihleri Kaydet
       </Button>
     </Card>

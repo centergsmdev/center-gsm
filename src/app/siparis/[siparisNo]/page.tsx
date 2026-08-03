@@ -10,7 +10,7 @@ export async function generateMetadata({
   const { siparisNo } = await params;
   return {
     title: `${decodeURIComponent(siparisNo)} | Sipariş Detayı`,
-    description: "CENTER GSM demo sipariş detay ve kargo takip ekranı.",
+    description: "CENTER GSM sipariş detay ve kargo takip ekranı.",
   };
 }
 export default async function OrderDetailPage({

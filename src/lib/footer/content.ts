@@ -68,7 +68,7 @@ export const footerPages = {
       {
         title: "Müşteri hizmetleri",
         paragraphs: [
-          "0850 000 00 00 numaralı hattımızdan veya destek@centergsm.com adresinden bize ulaşabilirsiniz.",
+          "Doğrulanmış müşteri hizmetleri iletişim bilgilerimiz kısa süre içinde bu sayfada yayınlanacaktır.",
         ],
       },
       {
@@ -154,7 +154,7 @@ export const footerPages = {
       {
         title: "Haklarınız",
         paragraphs: [
-          "6698 sayılı Kanun kapsamındaki taleplerinizi kimliğinizi doğrulamaya elverişli bilgilerle birlikte destek@centergsm.com adresine iletebilirsiniz.",
+          "6698 sayılı Kanun kapsamındaki başvuru kanalımız doğrulandıktan sonra bu sayfada yayınlanacaktır.",
         ],
       },
     ],

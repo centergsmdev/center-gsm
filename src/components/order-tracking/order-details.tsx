@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Ban, Download, FileText, MapPin, RotateCcw } from "lucide-react";
+import { Download, FileText, MapPin } from "lucide-react";
 
 import { CargoTracking } from "@/components/order-tracking/cargo-tracking";
 import { OrderDetailNotFound } from "@/components/order-tracking/order-detail-not-found";
@@ -16,19 +15,9 @@ import { getOrderByReference } from "@/lib/orders/client";
 import { mapOrderDetail } from "@/lib/orders/mapper";
 import { formatCurrency } from "@/lib/format";
 import type { TrackedOrder } from "@/types/order-tracking";
-const OrderActionModal = dynamic(
-  () =>
-    import("@/components/order-tracking/order-action-modal").then(
-      (module) => module.OrderActionModal,
-    ),
-  { ssr: false },
-);
-
 export function OrderDetails({ orderNumber }: { orderNumber: string }) {
   const [order, setOrder] = useState<TrackedOrder | null>(null);
   const [ready, setReady] = useState(false);
-  const [modal, setModal] = useState<"cancel" | "return" | null>(null);
-  const [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -65,11 +54,6 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
     delivered: "Teslim edildi",
     cancelled: "İptal edildi",
   };
-  const canCancel =
-    order.stage === "received" ||
-    order.stage === "paid" ||
-    order.stage === "preparing";
-  const canReturn = order.stage === "delivered";
   return (
     <div className="min-w-0 max-w-full overflow-x-clip">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -106,54 +90,24 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
           <Card className="p-5">
             <h2 className="font-black">Sipariş İşlemleri</h2>
             <div className="mt-4 grid gap-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setNotice(
-                    "Demo fatura hazırlandı; gerçek dosya oluşturulmadı.",
-                  );
-                }}
-              >
+              <Button variant="outline" className="w-full" disabled>
                 <Download className="size-4" aria-hidden="true" />
                 Faturayı İndir
               </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
-                disabled={!canCancel}
-                onClick={() => setModal("cancel")}
-              >
-                <Ban className="size-4" aria-hidden="true" />
+              <Button variant="ghost" className="w-full" disabled>
                 İptal Talebi Oluştur
               </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
-                disabled={!canReturn}
-                onClick={() => setModal("return")}
-              >
-                <RotateCcw className="size-4" aria-hidden="true" />
+              <Button variant="ghost" className="w-full" disabled>
                 İade Talebi Oluştur
               </Button>
             </div>
-            {notice ? (
-              <p
-                role="status"
-                className="mt-3 rounded-md bg-emerald-50 p-3 text-xs font-semibold text-emerald-800"
-              >
-                {notice}
-              </p>
-            ) : null}
             <p className="mt-3 text-[11px] leading-5 text-muted">
-              İptal ve iade seçenekleri sipariş durumuna göre açılır.
+              Fatura, iptal ve iade işlemleri çevrimiçi olarak henüz
+              kullanılamıyor.
             </p>
           </Card>
         </aside>
       </div>
-      {modal ? (
-        <OrderActionModal type={modal} onClose={() => setModal(null)} />
-      ) : null}
     </div>
   );
 }

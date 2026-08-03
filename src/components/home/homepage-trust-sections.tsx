@@ -210,7 +210,7 @@ export async function BrandShowcase() {
           <StaggerContainer className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
             {brands.map((brand) => {
               const logo =
-                brand.logo_url || brandLogoFallbacks[brand.normalizedName];
+                brandLogoFallbacks[brand.normalizedName] || brand.logo_url;
 
               return (
                 <AnimatedCard key={brand.id} className="h-full">

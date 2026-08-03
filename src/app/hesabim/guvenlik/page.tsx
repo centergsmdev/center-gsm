@@ -6,7 +6,7 @@ export default function SecurityPage() {
       <AccountPageHeader
         eyebrow="Hesap koruması"
         title="Şifre ve Güvenlik"
-        description="Demo şifre değişikliği ve oturum yönetimi seçenekleri."
+        description="Şifre değişikliği ve oturum yönetimi seçenekleri."
       />
       <SecurityForm />
     </>

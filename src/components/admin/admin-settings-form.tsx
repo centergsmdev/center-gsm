@@ -1,19 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Check, Upload } from "lucide-react";
+import { AlertCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminField, AdminFormSection, adminControlClass } from "./admin-form";
 
 export function AdminSettingsForm() {
-  const [saved, setSaved] = useState(false);
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2200);
-  };
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form className="space-y-6">
       <AdminFormSection title="Firma bilgileri">
         <div className="grid gap-5 md:grid-cols-2">
           <AdminField label="Firma unvanı" htmlFor="company">
@@ -54,7 +47,7 @@ export function AdminSettingsForm() {
               id="contact-email"
               type="email"
               className={adminControlClass}
-              defaultValue="destek@centergsm.com"
+              placeholder="Doğrulanmış iletişim e-postası"
             />
           </AdminField>
           <AdminField label="Telefon" htmlFor="phone">
@@ -62,7 +55,7 @@ export function AdminSettingsForm() {
               id="phone"
               type="tel"
               className={adminControlClass}
-              defaultValue="0850 000 00 00"
+              placeholder="Doğrulanmış iletişim telefonu"
             />
           </AdminField>
           <AdminField label="Adres" htmlFor="address" className="md:col-span-2">
@@ -123,7 +116,7 @@ export function AdminSettingsForm() {
         <AdminFormSection title="Ödeme ayarları">
           <div className="space-y-4">
             <label className="flex items-center justify-between text-sm font-semibold">
-                  <span>Online Kart ile Öde (Telefon ile Onay)</span>
+              <span>Online Kart ile Öde (Telefon ile Onay)</span>
               <input
                 type="checkbox"
                 defaultChecked
@@ -142,16 +135,13 @@ export function AdminSettingsForm() {
         </AdminFormSection>
       </div>
       <div className="sticky bottom-4 flex items-center justify-end gap-4 rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-xl backdrop-blur">
-        {saved ? (
-          <span
-            className="flex items-center gap-2 text-sm font-bold text-emerald-700"
-            role="status"
-          >
-            <Check className="size-4" />
-            Ayarlar demo olarak kaydedildi
-          </span>
-        ) : null}
-        <Button type="submit">Değişiklikleri kaydet</Button>
+        <span className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+          <AlertCircle className="size-4" aria-hidden="true" />
+          Kalıcı ayar kaydı henüz kullanılamıyor.
+        </span>
+        <Button type="button" disabled>
+          Değişiklikleri kaydet
+        </Button>
       </div>
     </form>
   );

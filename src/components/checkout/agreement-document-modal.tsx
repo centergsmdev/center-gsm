@@ -36,7 +36,7 @@ const documents = {
       ],
       [
         "Başvuru kanalı",
-        "Sipariş, teslimat, iade veya satış sonrası destek talepleri müşteri hizmetleri ve destek@centergsm.com üzerinden iletilebilir.",
+        "Sipariş, teslimat, iade veya satış sonrası destek talepleri, sitede yayınlanan doğrulanmış müşteri hizmetleri kanalı üzerinden iletilebilir.",
       ],
     ],
   },

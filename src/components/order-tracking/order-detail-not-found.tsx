@@ -10,8 +10,8 @@ export function OrderDetailNotFound() {
       <PackageX className="mx-auto size-12 text-primary" aria-hidden="true" />
       <h1 className="mt-5 text-2xl font-black">Sipariş bulunamadı</h1>
       <p className="mt-3 text-sm leading-6 text-muted">
-        Bu sipariş numarasıyla eşleşen bir demo kayıt bulunamadı. Bilgilerinizi
-        yeniden sorgulayabilirsiniz.
+        Bu sipariş numarası ve iletişim bilgisiyle eşleşen bir kayıt bulunamadı.
+        Bilgilerinizi yeniden sorgulayabilirsiniz.
       </p>
       <Link
         href="/siparis-takip"

@@ -60,7 +60,7 @@ export function OrderTrackingForm() {
         <CheckoutField
           label="Sipariş numarası"
           name="orderNumber"
-          placeholder="CG-2026-482731"
+          placeholder="Sipariş numaranız"
           autoComplete="off"
           error={errors.orderNumber}
           required
@@ -68,7 +68,7 @@ export function OrderTrackingForm() {
         <CheckoutField
           label="E-posta veya telefon"
           name="contact"
-          placeholder="demo@centergsm.com"
+          placeholder="E-posta veya telefon"
           autoComplete="email"
           error={errors.contact}
           required

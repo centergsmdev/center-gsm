@@ -337,7 +337,7 @@ export function CheckoutForm() {
       total: created.data.grandTotal,
     };
     window.sessionStorage.setItem(
-      "center-gsm-demo-order",
+      "center-gsm-last-order",
       JSON.stringify(order),
     );
     window.sessionStorage.setItem(
@@ -362,8 +362,8 @@ export function CheckoutForm() {
   );
   return (
     <form onSubmit={handleSubmit} onBlur={handleFieldBlur} noValidate>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        <div className="space-y-5">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="min-w-0 space-y-5">
           <CheckoutSection
             number="1"
             title="Teslimat Bilgileri"

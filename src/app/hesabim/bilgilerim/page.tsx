@@ -6,7 +6,7 @@ export default function ProfilePage() {
       <AccountPageHeader
         eyebrow="Profil ayarları"
         title="Kişisel Bilgilerim"
-        description="İletişim ve profil bilgilerinizi bu demo oturumu için güncelleyin."
+        description="İletişim ve profil bilgilerinizi güvenle güncelleyin."
       />
       <ProfileForm />
     </>

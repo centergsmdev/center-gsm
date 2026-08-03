@@ -12,7 +12,7 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   applyCoreResourceHints();
   return (
-    <html lang="tr">
+    <html lang="tr" suppressHydrationWarning>
       <body>
         <AuthProvider>
           <FavoritesProvider>

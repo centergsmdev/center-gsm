@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ProductsPage from "@/app/urunler/page";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -18,27 +18,39 @@ export const revalidate = 600;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params,
     categories = await getCategories(),
-    item = categories.data.find((x) => x.slug === slug),
+    item = categories.data.find(
+      (x) =>
+        x.slug.toLocaleLowerCase("tr-TR") === slug.toLocaleLowerCase("tr-TR"),
+    ),
     name = item?.name ?? slug.replaceAll("-", " ");
   return generateSeoMetadata({
     title: `${name} Ürünleri`,
     description: taxonomyDescription(name, "kategori"),
     keywords: [name, `${name} ürünleri`],
-    canonical: `/kategori/${slug}`,
+    canonical: `/kategori/${item?.slug ?? slug}`,
     category: name,
-    social: { title: `${name} Ürünleri`, description: taxonomyDescription(name, "kategori"), canonical: `/kategori/${slug}`, image: item?.image_url ?? undefined },
+    social: {
+      title: `${name} Ürünleri`,
+      description: taxonomyDescription(name, "kategori"),
+      canonical: `/kategori/${item?.slug ?? slug}`,
+      image: item?.image_url ?? undefined,
+    },
     robots: item ? undefined : { index: false, follow: true },
   });
 }
 export default async function Page({ params, searchParams }: Props) {
   const { slug } = await params,
     categories = await getCategories(),
-    item = categories.data.find((x) => x.slug === slug);
+    item = categories.data.find(
+      (x) =>
+        x.slug.toLocaleLowerCase("tr-TR") === slug.toLocaleLowerCase("tr-TR"),
+    );
   if (!categories.error && !item) notFound();
+  if (item && item.slug !== slug) redirect(`/kategori/${item.slug}`);
   const query = await searchParams,
     name = item?.name ?? slug.replaceAll("-", " "),
     description = taxonomyDescription(name, "kategori"),
-    path = `/kategori/${slug}`;
+    path = `/kategori/${item?.slug ?? slug}`;
   return (
     <>
       <JsonLd
@@ -59,7 +71,10 @@ export default async function Page({ params, searchParams }: Props) {
       />
       <Header />
       <ProductsPage
-        searchParams={Promise.resolve({ ...query, kategori: slug })}
+        searchParams={Promise.resolve({
+          ...query,
+          kategori: item?.slug ?? slug,
+        })}
       />
       <Footer />
     </>

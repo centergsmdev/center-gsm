@@ -9,7 +9,7 @@ export default function AccountError({
   return (
     <ErrorState
       title="Hesap bilgileri yüklenemedi"
-      description="Demo hesap alanı hazırlanırken bir sorun oluştu."
+      description="Hesap alanı hazırlanırken bir sorun oluştu."
       actionLabel="Yeniden Dene"
       onAction={reset}
       className="min-h-[50vh]"

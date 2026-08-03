@@ -16,7 +16,7 @@ export function OrderSuccess() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
-      const stored = window.sessionStorage.getItem("center-gsm-demo-order");
+      const stored = window.sessionStorage.getItem("center-gsm-last-order");
       if (stored) setOrder(JSON.parse(stored) as DemoOrder);
     } finally {
       setReady(true);
@@ -37,9 +37,10 @@ export function OrderSuccess() {
           className="mx-auto size-10 text-primary"
           aria-hidden="true"
         />
-        <h1 className="mt-5 text-2xl font-black">Demo sipariş bulunamadı</h1>
+        <h1 className="mt-5 text-2xl font-black">Sipariş bilgisi bulunamadı</h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Yeni bir demo sipariş oluşturmak için sepetinize ürün ekleyin.
+          Sipariş özeti yalnızca sipariş tamamlandıktan sonra bu oturumda
+          görüntülenebilir.
         </p>
         <Link href="/urunler" className={buttonVariants({ className: "mt-6" })}>
           Ürünleri İncele

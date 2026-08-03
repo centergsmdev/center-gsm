@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import { demoTrackedOrder } from "@/data/demo-order";
 import { useFavorites } from "@/providers/favorites-provider";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -68,7 +67,7 @@ export function AccountDashboard() {
           Siparişlerinizi ve hesap tercihlerinizi güvenle tek noktadan yönetin.
         </p>
         <div className="mt-6 grid grid-cols-3 gap-3">
-          <Metric value="1" label="Sipariş" />
+          <Metric value="—" label="Sipariş" />
           <Metric value={String(count)} label="Favori" />
           <Metric value={String(addresses.length)} label="Adres" />
         </div>
@@ -96,20 +95,6 @@ export function AccountDashboard() {
           </Link>
         ))}
       </div>
-      <Card className="mt-5 p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-muted">Son sipariş</p>
-            <h2 className="mt-1 font-black">{demoTrackedOrder.orderNumber}</h2>
-          </div>
-          <Link
-            href={`/siparis/${demoTrackedOrder.orderNumber}`}
-            className="text-xs font-bold text-primary"
-          >
-            Detayı Gör
-          </Link>
-        </div>
-      </Card>
     </div>
   );
 }

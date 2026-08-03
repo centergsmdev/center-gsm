@@ -30,8 +30,8 @@ export const SEO_CONFIG = {
   twitterHandle: "@centergsm",
   organizationName: "CENTER GSM",
   organizationLogo: "/logo.svg",
-  supportEmail: "destek@centergsm.com",
-  supportPhone: "+90 850 000 00 00",
+  supportEmail: "",
+  supportPhone: "",
 } as const;
 export const PRIVATE_ROBOTS = {
   index: false,
