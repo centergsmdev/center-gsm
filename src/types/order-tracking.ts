@@ -5,6 +5,8 @@ export type TrackedOrder = {
   orderNumber: string;
   orderDate: string;
   stage: OrderStage;
+  paymentStatus: string;
+  paymentStatusLabel: string;
   paymentMethod: string;
   deliveryMethod: string;
   customerName: string;

@@ -35,6 +35,7 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [paymentAction, setPaymentAction] = useState<string | null>(null);
@@ -55,6 +56,8 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
     event.preventDefault();
     if (!detail) return;
     const data = new FormData(event.currentTarget);
+    setActionError("");
+    setNotice("");
     setSaving(true);
     const result = await updateAdminOrder(
       orderId,
@@ -65,7 +68,7 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
     );
     setSaving(false);
     if (!result.data) {
-      setError(result.error ?? "Sipariş güncellenemedi.");
+      setActionError(result.error ?? "Sipariş güncellenemedi.");
       return;
     }
     setNotice("Sipariş başarıyla güncellendi.");
@@ -106,6 +109,8 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
   const runPaymentAction = async (
     action: "paid" | "rejected" | "unreachable" | "waiting",
   ) => {
+    setActionError("");
+    setNotice("");
     setPaymentAction(action);
     const result = await updateManualPayment(
       orderId,
@@ -113,7 +118,7 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
       order.admin_note ?? "",
     );
     setPaymentAction(null);
-    if (result.error) setError(result.error);
+    if (result.error) setActionError(result.error);
     else {
       setNotice("Ödeme durumu güncellendi.");
       await load();
@@ -135,6 +140,14 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
         >
           <Check className="size-4" />
           {notice}
+        </p>
+      ) : null}
+      {actionError ? (
+        <p
+          className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700"
+          role="alert"
+        >
+          {actionError}
         </p>
       ) : null}
       <div className="grid gap-5 xl:grid-cols-[1fr_380px]">

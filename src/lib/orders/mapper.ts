@@ -4,6 +4,18 @@ import type { Json } from "@/types/database";
 
 const record = (value: Json): Record<string, Json | undefined> =>
   value && typeof value === "object" && !Array.isArray(value) ? value : {};
+
+const paymentStatusLabels: Record<string, string> = {
+  pending: "Ödeme bekliyor",
+  awaiting_payment: "Ödeme bekleniyor",
+  awaiting_phone_approval: "Telefon ile onay bekleniyor",
+  customer_unreachable: "Müşteriye ulaşılamadı",
+  paid: "Ödeme alındı",
+  failed: "Ödeme reddedildi",
+  cancelled: "Ödeme iptal edildi",
+  refunded: "Ödeme iade edildi",
+};
+
 export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
   const delivery = record(detail.order.delivery_address);
   const billing = record(detail.order.billing_address);
@@ -32,6 +44,9 @@ export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
       timeStyle: "short",
     }).format(new Date(detail.order.created_at)),
     stage,
+    paymentStatus: detail.order.payment_status,
+    paymentStatusLabel:
+      paymentStatusLabels[detail.order.payment_status] ?? "Ödeme bekleniyor",
     paymentMethod:
       detail.order.payment_method === "transfer"
         ? "Havale / EFT"

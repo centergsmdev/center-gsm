@@ -73,6 +73,24 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
       <Card className="mt-5 max-w-full p-4 shadow-sm sm:mt-7 sm:p-7">
         <OrderTimeline currentStage={order.stage} />
       </Card>
+      <Card className="mt-5 max-w-full p-4 shadow-sm sm:p-5">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          Ödeme durumu
+        </p>
+        <p
+          className={`mt-1 text-sm font-black ${
+            order.paymentStatus === "customer_unreachable" ||
+            order.paymentStatus === "failed" ||
+            order.paymentStatus === "cancelled"
+              ? "text-red-700"
+              : order.paymentStatus === "paid"
+                ? "text-emerald-700"
+                : "text-amber-700"
+          }`}
+        >
+          {order.paymentStatusLabel}
+        </p>
+      </Card>
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <div className="space-y-5">
           <OrderItems order={order} />
@@ -301,6 +319,7 @@ function OrderInformation({ order }: { order: TrackedOrder }) {
       <h2 className="font-black">Sipariş Bilgileri</h2>
       <dl className="mt-4 space-y-4">
         <Info label="Ödeme yöntemi" value={order.paymentMethod} />
+        <Info label="Ödeme durumu" value={order.paymentStatusLabel} />
         <Info label="Teslimat yöntemi" value={order.deliveryMethod} />
       </dl>
       <Divider className="my-5" />
