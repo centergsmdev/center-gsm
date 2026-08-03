@@ -49,18 +49,9 @@ export function ProductInfo({
   cartVariant,
 }: ProductInfoProps) {
   const productName = productDisplayName(product);
-  const stockLabel =
-    product.stockStatus === "in-stock"
-      ? `Stokta${product.availableStock !== undefined ? ` · ${product.availableStock} adet` : ""}`
-      : product.stockStatus === "limited"
-        ? `Son birkaç ürün${product.availableStock !== undefined ? ` · ${product.availableStock} adet` : ""}`
-        : "Tükendi";
-  const stockVariant =
-    product.stockStatus === "in-stock"
-      ? "success"
-      : product.stockStatus === "limited"
-        ? "warning"
-        : "danger";
+  const inStock = product.stockStatus !== "out-of-stock";
+  const stockLabel = inStock ? "Stokta Var" : "Tükendi";
+  const stockVariant = inStock ? "success" : "danger";
 
   return (
     <section
