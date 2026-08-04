@@ -186,7 +186,7 @@ export function PaymentMethods({
 
       {showTransferNotice ? (
         <div
-          className="fixed inset-0 z-modal grid place-items-center bg-zinc-950/50 p-4"
+          className="fixed inset-0 z-modal grid place-items-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="transfer-notice-title"
