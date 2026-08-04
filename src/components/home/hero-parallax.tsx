@@ -7,10 +7,12 @@ export function HeroParallax({
   copy,
   visual,
   index,
+  variant = "original",
 }: {
   copy: ReactNode;
   visual: ReactNode;
   index: ReactNode;
+  variant?: "original" | "workspace";
 }) {
   const sceneRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
@@ -26,7 +28,7 @@ export function HeroParallax({
   return (
     <m.div
       ref={sceneRef}
-      className="launch-hero"
+      className={`launch-hero ${variant === "workspace" ? "launch-hero-workspace" : ""}`}
       initial={reducedMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}

@@ -331,6 +331,32 @@
       inset 0 -70px 90px rgb(0 0 0 / 0.3);
   }
 
+  .launch-hero-workspace {
+    background:
+      radial-gradient(
+        circle at 77% 42%,
+        rgb(38 198 218 / 0.2),
+        transparent 30%
+      ),
+      radial-gradient(
+        circle at 92% 58%,
+        rgb(124 58 237 / 0.32),
+        transparent 38%
+      ),
+      linear-gradient(112deg, #060b1e 0%, #08081a 48%, #160b2c 100%);
+  }
+
+  .launch-hero-workspace .launch-hero-kicker svg {
+    color: #67e8f9;
+  }
+
+  .launch-hero-workspace .launch-hero-cta {
+    background: linear-gradient(135deg, #0891b2, #7c3aed);
+    box-shadow:
+      0 12px 30px rgb(8 145 178 / 0.26),
+      inset 0 1px 0 rgb(255 255 255 / 0.24);
+  }
+
   .launch-hero-atmosphere {
     position: absolute;
     inset: 0;
@@ -451,10 +477,25 @@
     font-weight: 650;
   }
 
-  .launch-hero-index span {
-    width: 28px;
+  .launch-hero-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .launch-hero-dots button {
+    width: 8px;
     height: 3px;
     border-radius: 9999px;
+    background: rgb(255 255 255 / 0.25);
+    transition:
+      width 240ms var(--ease-premium),
+      background-color 240ms var(--ease-premium),
+      box-shadow 240ms var(--ease-premium);
+  }
+
+  .launch-hero-dots button.is-active {
+    width: 28px;
     background: #ed1627;
     box-shadow: 0 0 14px rgb(237 22 39 / 0.5);
   }
@@ -570,6 +611,20 @@
     will-change: transform;
   }
 
+  .launch-hero-visual-workspace::before {
+    display: none;
+  }
+
+  .launch-product-stage-workspace {
+    inset: 0;
+  }
+
+  .launch-product-stage-workspace .launch-product-image {
+    filter: none;
+    transform: scale(1.02);
+    transform-origin: center;
+  }
+
   @media (min-width: 640px) {
     .launch-hero {
       min-height: 540px;
@@ -625,6 +680,10 @@
 
     .launch-product-stage {
       inset: -10% -3% -7% -13%;
+    }
+
+    .launch-product-stage-workspace {
+      inset: 0;
     }
 
     .launch-light-blue {
