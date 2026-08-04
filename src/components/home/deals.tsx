@@ -23,7 +23,7 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
     <RevealSection
       id="deals"
       aria-label="Kampanyalar"
-      className="tech-panel-dark py-5 sm:py-11"
+      className="tech-panel-dark scroll-mt-36 py-5 sm:scroll-mt-44 sm:py-11"
     >
       <Container>
         <MobileSectionHeading id="deals-title" inverted>
