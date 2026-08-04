@@ -370,7 +370,10 @@
       ),
       linear-gradient(rgb(255 255 255 / 0.023) 1px, transparent 1px),
       linear-gradient(90deg, rgb(255 255 255 / 0.023) 1px, transparent 1px);
-    background-size: 42px 42px;
+    background-size:
+      100% 100%,
+      42px 42px,
+      42px 42px;
     mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent 88%);
   }
 
@@ -554,6 +557,11 @@
       font-size: clamp(3.25rem, 4.45vw, 4.4rem);
     }
 
+    .launch-hero-workspace .launch-hero-title {
+      max-width: 620px;
+      font-size: clamp(3.1rem, 3.8vw, 3.85rem);
+    }
+
     .launch-hero-description {
       margin-top: 20px;
     }
@@ -570,12 +578,14 @@
 
   @media (max-width: 1023px) {
     .launch-hero::after {
-      background-image: url("/images/home/hero-premium-selection-mobile.webp");
+      background-image: url("/images/home/hero-premium-selection-mobile.webp?v=3");
       background-position: center;
+      background-size: cover;
     }
 
     .launch-hero-workspace::after {
-      background-image: url("/images/home/hero-workspace-mobile.webp");
+      background-image: url("/images/home/hero-workspace-mobile.webp?v=3");
+      background-position: center;
     }
 
     .launch-hero-atmosphere {
@@ -589,6 +599,10 @@
         ),
         linear-gradient(rgb(255 255 255 / 0.023) 1px, transparent 1px),
         linear-gradient(90deg, rgb(255 255 255 / 0.023) 1px, transparent 1px);
+      background-size:
+        100% 100%,
+        42px 42px,
+        42px 42px;
     }
   }
 
