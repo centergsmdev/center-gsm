@@ -18,9 +18,9 @@ export default function Layout({ children }: { children: ReactNode }) {
       <Header />
       <main className="min-h-screen bg-zinc-50 py-8">
         <Container>
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
             <AccountNavigation />
-            {children}
+            <div className="min-w-0">{children}</div>
           </div>
         </Container>
       </main>

@@ -41,7 +41,7 @@ export function AccountNavigation() {
     router.push("/");
   }
   return (
-    <aside className="rounded-xl border border-border bg-white p-3 shadow-sm lg:sticky lg:top-36">
+    <aside className="min-w-0 max-w-full rounded-xl border border-border bg-white p-3 shadow-sm lg:sticky lg:top-36">
       <div className="flex items-center gap-3 p-3">
         <span className="grid size-11 place-items-center rounded-full bg-zinc-950 text-sm font-black text-white">
           {user.firstName.charAt(0)}
