@@ -14,6 +14,21 @@ const object = (
 ): value is Record<string, Json | undefined> =>
   Boolean(value && typeof value === "object" && !Array.isArray(value));
 
+export async function getMyOrderCount(): Promise<AdminProductResult<number>> {
+  const client = createClient();
+  if (!client)
+    return { data: null, error: "Supabase bağlantısı yapılandırılmamış." };
+  const user = await client.auth.getUser();
+  if (user.error || !user.data.user)
+    return { data: null, error: "Oturum bulunamadı." };
+  const result = await client
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.data.user.id);
+  if (result.error) return { data: null, error: "Sipariş sayısı yüklenemedi." };
+  return { data: result.count ?? 0, error: null };
+}
+
 export async function createOrder(
   payload: OrderCreatePayload,
 ): Promise<AdminProductResult<CreatedOrder>> {

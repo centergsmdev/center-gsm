@@ -17,11 +17,13 @@ const content = {
 export function WishlistAlertCenter() {
   const [items, setItems] = useState<CustomerWishlistAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
     void getCustomerWishlistAlerts().then((result) => {
       if (active) {
         setItems(result.data ?? []);
+        setError(result.error ?? "");
         setLoading(false);
       }
     });
@@ -43,6 +45,13 @@ export function WishlistAlertCenter() {
       {loading ? (
         <p className="mt-5 text-sm text-muted" role="status">
           Bildirimler yükleniyor…
+        </p>
+      ) : error ? (
+        <p
+          className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700"
+          role="alert"
+        >
+          {error}
         </p>
       ) : items.length ? (
         <ul className="mt-5 divide-y divide-border">

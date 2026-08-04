@@ -23,7 +23,9 @@ export function AddressManager() {
     setDefaultAddress,
   } = useAuth();
   const [editing, setEditing] = useState<DemoAddress | "new" | null>(null);
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const values = {
@@ -36,8 +38,19 @@ export function AddressManager() {
       neighborhood: String(data.get("neighborhood")),
       postalCode: String(data.get("postalCode")),
     };
-    if (editing === "new") addAddress(values);
-    else if (editing) updateAddress({ ...editing, ...values });
+    setBusy(true);
+    setError("");
+    const result =
+      editing === "new"
+        ? await addAddress(values)
+        : editing
+          ? await updateAddress({ ...editing, ...values })
+          : { success: false, error: "Adres bilgisi bulunamadı." };
+    setBusy(false);
+    if (!result.success) {
+      setError(result.error ?? "Adres kaydedilemedi.");
+      return;
+    }
     setEditing(null);
   }
   return (
@@ -75,7 +88,13 @@ export function AddressManager() {
                   <IconButton
                     label={`${address.title} adresini sil`}
                     size="sm"
-                    onClick={() => deleteAddress(address.id)}
+                    onClick={() => {
+                      setError("");
+                      void deleteAddress(address.id).then((result) => {
+                        if (!result.success)
+                          setError(result.error ?? "Adres silinemedi.");
+                      });
+                    }}
                   >
                     <Trash2 className="size-4 text-danger" />
                   </IconButton>
@@ -99,7 +118,15 @@ export function AddressManager() {
                   variant="ghost"
                   size="sm"
                   className="mt-4"
-                  onClick={() => setDefaultAddress(address.id)}
+                  onClick={() => {
+                    setError("");
+                    void setDefaultAddress(address.id).then((result) => {
+                      if (!result.success)
+                        setError(
+                          result.error ?? "Varsayılan adres değiştirilemedi.",
+                        );
+                    });
+                  }}
                 >
                   Varsayılan Yap
                 </Button>
@@ -108,6 +135,14 @@ export function AddressManager() {
           ))}
         </div>
       )}
+      {error && !editing ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700"
+        >
+          {error}
+        </p>
+      ) : null}
       {editing ? (
         <div
           className="fixed inset-0 z-[100] grid place-items-center bg-zinc-950/60 p-4 backdrop-blur-sm"
@@ -184,10 +219,25 @@ export function AddressManager() {
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setEditing(null)}>
+              {error ? (
+                <p
+                  role="alert"
+                  className="mr-auto self-center text-xs font-semibold text-red-700"
+                >
+                  {error}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setEditing(null)}
+              >
                 Vazgeç
               </Button>
-              <Button type="submit">Kaydet</Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? "Kaydediliyor…" : "Kaydet"}
+              </Button>
             </div>
           </form>
         </div>

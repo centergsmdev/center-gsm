@@ -10,10 +10,12 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { useFavorites } from "@/providers/favorites-provider";
 import { useAuth } from "@/providers/auth-provider";
+import { getMyOrderCount } from "@/lib/orders/client";
 
 const shortcuts = [
   {
@@ -55,7 +57,21 @@ const shortcuts = [
 ];
 export function AccountDashboard() {
   const { user, addresses } = useAuth();
-  const { count } = useFavorites();
+  const { count, isLoading: favoritesLoading } = useFavorites();
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+  const [orderCountError, setOrderCountError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void getMyOrderCount().then((result) => {
+      if (!active) return;
+      setOrderCount(result.data);
+      setOrderCountError(result.error ?? "");
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   return (
     <div>
       <Card className="overflow-hidden bg-zinc-950 p-6 text-white shadow-lg sm:p-8">
@@ -67,10 +83,21 @@ export function AccountDashboard() {
           Siparişlerinizi ve hesap tercihlerinizi güvenle tek noktadan yönetin.
         </p>
         <div className="mt-6 grid grid-cols-3 gap-3">
-          <Metric value="—" label="Sipariş" />
-          <Metric value={String(count)} label="Favori" />
+          <Metric
+            value={orderCount === null ? "…" : String(orderCount)}
+            label="Sipariş"
+          />
+          <Metric
+            value={favoritesLoading ? "…" : String(count)}
+            label="Favori"
+          />
           <Metric value={String(addresses.length)} label="Adres" />
         </div>
+        {orderCountError ? (
+          <p role="alert" className="mt-3 text-xs font-semibold text-red-300">
+            {orderCountError}
+          </p>
+        ) : null}
       </Card>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         {shortcuts.map(({ href, label, description, icon: Icon }) => (

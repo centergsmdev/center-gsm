@@ -10,6 +10,19 @@ import { createClient } from "@/lib/supabase/client";
 import { authApi } from "@/lib/supabase/auth-api";
 import { formatCurrency } from "@/lib/format";
 import type { Tables } from "@/types/database";
+const orderStatusLabels: Record<string, string> = {
+  received: "Sipariş alındı",
+  paid: "Ödeme alındı",
+  preparing: "Hazırlanıyor",
+  shipped: "Kargoya verildi",
+  delivered: "Teslim edildi",
+  cancelled: "İptal edildi",
+};
+const orderStatusClasses: Record<string, string> = {
+  cancelled: "bg-red-100 text-red-800",
+  delivered: "bg-emerald-100 text-emerald-800",
+  shipped: "bg-blue-100 text-blue-800",
+};
 export function AccountOrders() {
   const [orders, setOrders] = useState<Tables<"orders">[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,11 +78,13 @@ export function AccountOrders() {
               </p>
               <p className="mt-1 font-black">{order.order_number}</p>
             </div>
-            <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800">
-              {order.status}
+            <span
+              className={`w-fit rounded-full px-3 py-1.5 text-xs font-black ${orderStatusClasses[order.status] ?? "bg-amber-100 text-amber-800"}`}
+            >
+              {orderStatusLabels[order.status] ?? "Sipariş işleniyor"}
             </span>
           </div>
-          <div className="flex items-center gap-4 p-5">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
             <span className="grid size-12 place-items-center rounded-lg bg-red-50 text-primary">
               <Package className="size-5" />
             </span>
@@ -90,7 +105,7 @@ export function AccountOrders() {
                   : ""}
               </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Link
                 href={`/hesabim/iadeler/yeni?orderId=${order.id}`}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
