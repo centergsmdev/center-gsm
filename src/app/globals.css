@@ -306,17 +306,22 @@
     border: 1px solid rgb(255 255 255 / 0.1);
     border-radius: clamp(24px, 3vw, 34px);
     color: white;
-    background:
-      radial-gradient(
-        circle at 74% 46%,
-        rgb(32 87 160 / 0.26),
-        transparent 27%
-      ),
-      radial-gradient(circle at 94% 54%, rgb(141 25 51 / 0.3), transparent 32%),
-      linear-gradient(112deg, #07111f 0%, #03050a 48%, #16070d 100%);
+    background: #030711;
     box-shadow:
       0 28px 70px rgb(2 6 23 / 0.22),
       inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  .launch-hero::after {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    content: "";
+    pointer-events: none;
+    background-image: url("/images/home/hero-premium-selection-desktop.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
 
   .launch-hero::before {
@@ -332,36 +337,11 @@
   }
 
   .launch-hero-workspace {
-    background:
-      radial-gradient(
-        circle at 77% 42%,
-        rgb(38 198 218 / 0.2),
-        transparent 30%
-      ),
-      radial-gradient(
-        circle at 92% 58%,
-        rgb(124 58 237 / 0.32),
-        transparent 38%
-      ),
-      linear-gradient(112deg, #060b1e 0%, #08081a 48%, #160b2c 100%);
+    background: #030619;
   }
 
   .launch-hero-workspace::after {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    content: "";
-    pointer-events: none;
-    background-image: url("/images/home/premium-workspace-hero-v2.webp");
-    background-position: right center;
-    background-repeat: no-repeat;
-    background-size: auto 100%;
-    mask-image: linear-gradient(
-      to right,
-      transparent 30%,
-      rgb(0 0 0 / 0.18) 39%,
-      black 52%
-    );
+    background-image: url("/images/home/hero-workspace-desktop.webp");
   }
 
   .launch-hero-workspace .launch-hero-kicker svg {
@@ -378,9 +358,16 @@
   .launch-hero-atmosphere {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 1;
     pointer-events: none;
     background-image:
+      linear-gradient(
+        90deg,
+        rgb(1 4 13 / 0.72) 0%,
+        rgb(1 4 13 / 0.46) 31%,
+        rgb(1 4 13 / 0.12) 56%,
+        transparent 76%
+      ),
       linear-gradient(rgb(255 255 255 / 0.023) 1px, transparent 1px),
       linear-gradient(90deg, rgb(255 255 255 / 0.023) 1px, transparent 1px);
     background-size: 42px 42px;
@@ -521,120 +508,6 @@
   .launch-hero-visual {
     position: relative;
     min-height: 230px;
-    overflow: hidden;
-    isolation: isolate;
-  }
-
-  .launch-hero-visual::before {
-    position: absolute;
-    inset: auto 1% 3% 12%;
-    z-index: 0;
-    height: 26%;
-    border-radius: 50%;
-    content: "";
-    background: radial-gradient(
-      ellipse,
-      rgb(255 255 255 / 0.15),
-      rgb(58 126 211 / 0.11) 35%,
-      transparent 70%
-    );
-    filter: blur(10px);
-    transform: perspective(140px) rotateX(64deg);
-  }
-
-  .launch-light {
-    --launch-light: 68 158 255;
-    position: absolute;
-    top: 7%;
-    bottom: 8%;
-    z-index: 0;
-    width: 58px;
-    opacity: 0.86;
-    animation: launch-light-breathe 7s ease-in-out infinite;
-    pointer-events: none;
-    will-change: transform, opacity;
-  }
-
-  .launch-light-blue {
-    left: 15%;
-  }
-
-  .launch-light-red {
-    --launch-light: 255 45 67;
-    right: 7%;
-    animation-delay: -3.5s;
-  }
-
-  .launch-light::before {
-    position: absolute;
-    inset: 0;
-    content: "";
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgb(var(--launch-light) / 0.12) 20%,
-      rgb(var(--launch-light) / 0.52) 43%,
-      rgb(255 255 255 / 0.96) 50%,
-      rgb(var(--launch-light) / 0.52) 57%,
-      rgb(var(--launch-light) / 0.12) 80%,
-      transparent
-    );
-    filter: blur(1.5px);
-    mask-image: linear-gradient(transparent, black 15%, black 83%, transparent);
-  }
-
-  .launch-light::after {
-    position: absolute;
-    inset: 8% -24px 4%;
-    content: "";
-    background: rgb(var(--launch-light) / 0.24);
-    filter: blur(28px);
-    mask-image: linear-gradient(transparent, black 22%, black 76%, transparent);
-  }
-
-  .launch-light span {
-    position: absolute;
-    bottom: -7%;
-    left: 50%;
-    width: 150px;
-    height: 48px;
-    border-radius: 50%;
-    background: radial-gradient(
-      ellipse,
-      rgb(255 255 255 / 0.38),
-      rgb(var(--launch-light) / 0.32) 20%,
-      rgb(var(--launch-light) / 0.1) 48%,
-      transparent 72%
-    );
-    filter: blur(7px);
-    transform: translate3d(-50%, 0, 0) perspective(130px) rotateX(65deg);
-  }
-
-  .launch-product-stage {
-    --launch-x: 0px;
-    --launch-y: 0px;
-    position: absolute;
-    inset: -14px -2% -6px -4%;
-    z-index: 1;
-    transform: translate3d(var(--launch-x), var(--launch-y), 0);
-    transition: transform 180ms var(--ease-premium);
-    animation: launch-product-float 6s ease-in-out infinite;
-    will-change: transform;
-  }
-
-  .launch-product-image {
-    filter: drop-shadow(0 24px 34px rgb(0 0 0 / 0.38));
-    transform: translate3d(-4%, 0, 0) scale(1.12);
-    transform-origin: 72% 68%;
-    will-change: transform;
-  }
-
-  .launch-hero-visual-workspace::before {
-    display: none;
-  }
-
-  .launch-hero-visual-workspace {
-    height: 100%;
   }
 
   @media (min-width: 640px) {
@@ -690,33 +563,32 @@
       overflow: visible;
     }
 
-    .launch-product-stage {
-      inset: -10% -3% -7% -13%;
-    }
-
-    .launch-light-blue {
-      left: 19%;
-    }
-
-    .launch-light-red {
-      right: 7%;
-    }
-
     .launch-hero-index {
       left: 54px;
     }
   }
 
   @media (max-width: 1023px) {
+    .launch-hero::after {
+      background-image: url("/images/home/hero-premium-selection-mobile.webp");
+      background-position: center;
+    }
+
     .launch-hero-workspace::after {
-      background-position: center bottom;
-      background-size: auto 48%;
-      mask-image: linear-gradient(
-        to bottom,
-        transparent 45%,
-        rgb(0 0 0 / 0.22) 54%,
-        black 64%
-      );
+      background-image: url("/images/home/hero-workspace-mobile.webp");
+    }
+
+    .launch-hero-atmosphere {
+      background-image:
+        linear-gradient(
+          180deg,
+          rgb(1 4 13 / 0.7) 0%,
+          rgb(1 4 13 / 0.42) 42%,
+          rgb(1 4 13 / 0.08) 70%,
+          transparent 100%
+        ),
+        linear-gradient(rgb(255 255 255 / 0.023) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(255 255 255 / 0.023) 1px, transparent 1px);
     }
   }
 
