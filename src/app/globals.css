@@ -346,6 +346,24 @@
       linear-gradient(112deg, #060b1e 0%, #08081a 48%, #160b2c 100%);
   }
 
+  .launch-hero-workspace::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+    pointer-events: none;
+    background-image: url("/images/home/premium-workspace-hero-v2.webp");
+    background-position: right center;
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    mask-image: linear-gradient(
+      to right,
+      transparent 30%,
+      rgb(0 0 0 / 0.18) 39%,
+      black 52%
+    );
+  }
+
   .launch-hero-workspace .launch-hero-kicker svg {
     color: #67e8f9;
   }
@@ -615,14 +633,8 @@
     display: none;
   }
 
-  .launch-product-stage-workspace {
-    inset: 0;
-  }
-
-  .launch-product-stage-workspace .launch-product-image {
-    filter: none;
-    transform: scale(1.02);
-    transform-origin: center;
+  .launch-hero-visual-workspace {
+    height: 100%;
   }
 
   @media (min-width: 640px) {
@@ -682,10 +694,6 @@
       inset: -10% -3% -7% -13%;
     }
 
-    .launch-product-stage-workspace {
-      inset: 0;
-    }
-
     .launch-light-blue {
       left: 19%;
     }
@@ -696,6 +704,19 @@
 
     .launch-hero-index {
       left: 54px;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .launch-hero-workspace::after {
+      background-position: center bottom;
+      background-size: auto 48%;
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 45%,
+        rgb(0 0 0 / 0.22) 54%,
+        black 64%
+      );
     }
   }
 

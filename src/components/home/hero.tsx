@@ -39,15 +39,22 @@ export function Hero() {
   const slide = slides[activeSlide];
   const SlideIcon = slide.icon;
 
+  const [initialTransitionComplete, setInitialTransitionComplete] =
+    useState(false);
+
   useEffect(() => {
     if (paused) return;
 
-    const interval = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % slides.length);
-    }, 2000);
+    const timeout = window.setTimeout(
+      () => {
+        setActiveSlide((current) => (current + 1) % slides.length);
+        setInitialTransitionComplete(true);
+      },
+      initialTransitionComplete ? 5000 : 2000,
+    );
 
-    return () => window.clearInterval(interval);
-  }, [paused, slides.length]);
+    return () => window.clearTimeout(timeout);
+  }, [activeSlide, initialTransitionComplete, paused, slides.length]);
 
   return (
     <section

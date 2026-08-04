@@ -12,6 +12,16 @@ export function HeroVisual({
 }) {
   const productRef = useRef<HTMLDivElement>(null);
 
+  if (variant === "workspace") {
+    return (
+      <div
+        className="launch-hero-visual launch-hero-visual-workspace"
+        role="img"
+        aria-label="Dizüstü bilgisayar, tablet ve kablosuz kulaklık"
+      />
+    );
+  }
+
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "touch") return;
 
@@ -36,44 +46,25 @@ export function HeroVisual({
 
   return (
     <div
-      className={`launch-hero-visual ${variant === "workspace" ? "launch-hero-visual-workspace" : ""}`}
+      className="launch-hero-visual"
       onPointerMove={handlePointerMove}
       onPointerLeave={resetParallax}
     >
-      {variant === "original" ? (
-        <>
-          <div className="launch-light launch-light-blue" aria-hidden="true">
-            <span />
-          </div>
-          <div className="launch-light launch-light-red" aria-hidden="true">
-            <span />
-          </div>
-        </>
-      ) : null}
+      <div className="launch-light launch-light-blue" aria-hidden="true">
+        <span />
+      </div>
+      <div className="launch-light launch-light-red" aria-hidden="true">
+        <span />
+      </div>
 
-      <div
-        ref={productRef}
-        className={`launch-product-stage ${variant === "workspace" ? "launch-product-stage-workspace" : ""}`}
-      >
+      <div ref={productRef} className="launch-product-stage">
         <Image
-          src={
-            variant === "workspace"
-              ? "/images/home/premium-workspace-hero-v2.webp"
-              : "/images/home/premium-tech-hero-transparent.webp"
-          }
-          alt={
-            variant === "workspace"
-              ? "Dizüstü bilgisayar, tablet ve kablosuz kulaklık"
-              : "PlayStation 5, iPhone 17 Pro Max ve Apple Watch Ultra"
-          }
+          src="/images/home/premium-tech-hero-transparent.webp"
+          alt="PlayStation 5, iPhone 17 Pro Max ve Apple Watch Ultra"
           fill
           priority
           sizes="(max-width: 767px) 100vw, (max-width: 1279px) 62vw, 760px"
-          className={`launch-product-image object-center ${
-            variant === "workspace"
-              ? "object-cover"
-              : "object-contain lg:object-right"
-          }`}
+          className="launch-product-image object-contain object-center lg:object-right"
         />
       </div>
     </div>

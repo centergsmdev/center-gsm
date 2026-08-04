@@ -46,7 +46,7 @@ export function HeroParallax({
           {copy}
         </m.div>
         <m.div
-          className="will-change-transform"
+          className="h-full will-change-transform"
           style={{
             y: reducedMotion ? 0 : visualY,
             scale: reducedMotion ? 1 : visualScale,
