@@ -17,11 +17,12 @@ import type { PaymentMethod } from "@/types/checkout";
 export function PaymentMethods({
   value,
   onChange,
+  errors,
   receiptFile,
   onReceiptFileChange,
   receiptError,
 }: {
-  value: PaymentMethod;
+  value: PaymentMethod | null;
   onChange: (value: PaymentMethod) => void;
   errors: Record<string, string>;
   receiptFile: File | null;
@@ -32,7 +33,6 @@ export function PaymentMethods({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showTransferNotice, setShowTransferNotice] = useState(false);
-  const [noticeShown, setNoticeShown] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -53,13 +53,6 @@ export function PaymentMethods({
     }
   }, [account, loading, onChange, value]);
 
-  useEffect(() => {
-    if (!loading && account && value === "transfer" && !noticeShown) {
-      setShowTransferNotice(true);
-      setNoticeShown(true);
-    }
-  }, [account, loading, noticeShown, value]);
-
   const transferUnavailable = !loading && !account;
 
   return (
@@ -74,7 +67,6 @@ export function PaymentMethods({
             onChange={() => {
               onChange("transfer");
               setShowTransferNotice(true);
-              setNoticeShown(true);
             }}
             disabled={transferUnavailable}
             title="Havale / EFT"
@@ -96,6 +88,11 @@ export function PaymentMethods({
           />
         </div>
       </fieldset>
+      {errors.paymentMethod ? (
+        <p className="mt-2 text-xs font-semibold text-danger" role="alert">
+          {errors.paymentMethod}
+        </p>
+      ) : null}
 
       {value === "transfer" ? (
         <div
@@ -177,7 +174,7 @@ export function PaymentMethods({
             </p>
           )}
         </div>
-      ) : (
+      ) : value === "phone_approval" ? (
         <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-950">
           <strong className="block">Telefon ile güvenli onay</strong>
           <span className="mt-1 block">
@@ -185,7 +182,7 @@ export function PaymentMethods({
             Hassas ödeme verileri bu sitede toplanmaz.
           </span>
         </div>
-      )}
+      ) : null}
 
       {showTransferNotice ? (
         <div

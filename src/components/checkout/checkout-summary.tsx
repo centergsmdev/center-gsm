@@ -35,10 +35,10 @@ export function CheckoutSummary({
   );
   return (
     <aside
-      className="lg:sticky lg:top-36"
+      className="min-w-0 max-w-full lg:sticky lg:top-36"
       aria-labelledby="checkout-summary-title"
     >
-      <Card className="home-premium-surface rounded-2xl border-white/80 bg-white/95 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
+      <Card className="home-premium-surface min-w-0 max-w-full overflow-x-clip rounded-2xl border-white/80 bg-white/95 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 id="checkout-summary-title" className="text-lg font-black">

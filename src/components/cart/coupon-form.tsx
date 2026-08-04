@@ -29,7 +29,7 @@ export function CouponForm({ embedded = false }: { embedded?: boolean }) {
         <TicketPercent className="size-4 text-primary" aria-hidden="true" />
         Kupon kodu
       </label>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex min-w-0 gap-2">
         <Input
           id="coupon-code"
           value={code}
@@ -37,8 +37,10 @@ export function CouponForm({ embedded = false }: { embedded?: boolean }) {
           placeholder="Kupon kodunu yazın"
           autoComplete="off"
           invalid={status === "error"}
+          className="min-w-0 flex-1"
         />
         <Button
+          className="shrink-0"
           type={embedded ? "button" : "submit"}
           variant="outline"
           disabled={promotionLoading}

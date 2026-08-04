@@ -71,15 +71,17 @@ export function CreditPaymentInput({
         >
           Gift Card Kodu
         </label>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2">
           <Input
             id="checkout-gift-card-code"
             value={giftCode}
             onChange={(e) => setGiftCode(e.target.value)}
             placeholder="CG-XXXX"
             autoComplete="off"
+            className="min-w-0 flex-1"
           />
           <Button
+            className="shrink-0"
             type="button"
             variant="outline"
             onClick={() => void applyGift()}
@@ -103,7 +105,7 @@ export function CreditPaymentInput({
         <p className="mb-2 text-xs text-muted">
           Bakiyeniz: {formatCurrency(storeBalance)}
         </p>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2">
           <Input
             id="checkout-store-credit-amount"
             type="number"
@@ -112,8 +114,10 @@ export function CreditPaymentInput({
             value={storeAmount}
             onChange={(e) => setStoreAmount(e.target.value)}
             placeholder="Tutar"
+            className="min-w-0 flex-1"
           />
           <Button
+            className="shrink-0"
             type="button"
             variant="outline"
             disabled={!storeBalance}

@@ -4,7 +4,7 @@ import { Container } from "@/components/ui/container";
 
 export default function CheckoutPage() {
   return (
-    <main className="tech-atmosphere min-h-screen pb-32 pt-5 sm:pb-16 sm:pt-7">
+    <main className="tech-atmosphere min-h-screen max-w-full overflow-x-clip pb-32 pt-5 sm:pb-16 sm:pt-7">
       <Container>
         <CheckoutBreadcrumb />
         <div className="mb-8 mt-6">

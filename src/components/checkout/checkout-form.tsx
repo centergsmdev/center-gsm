@@ -79,7 +79,9 @@ export function CheckoutForm() {
   const [sameAddress, setSameAddress] = useState(true);
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("standard");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("transfer");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [carriers, setCarriers] = useState<CheckoutCarrier[]>(
     fallbackCheckoutCarriers,
@@ -162,6 +164,7 @@ export function CheckoutForm() {
       next.distanceAgreement = "Mesafeli satış sözleşmesini onaylayın.";
     if (!formData.get("preInformation"))
       next.preInformation = "Ön bilgilendirme formunu onaylayın.";
+    if (!paymentMethod) next.paymentMethod = "Lütfen bir ödeme yöntemi seçin.";
     if (paymentMethod === "transfer") {
       if (!receiptFile)
         next.paymentReceipt = "Lütfen ödeme dekontunu yükleyin.";
@@ -259,6 +262,7 @@ export function CheckoutForm() {
       );
       return;
     }
+    if (!paymentMethod) return;
     setProcessing(true);
     const delivery = deliveryOptions[deliveryMethod];
     const deliveryAddress = {
@@ -391,7 +395,12 @@ export function CheckoutForm() {
       credits.storeCreditAmount,
   );
   return (
-    <form onSubmit={handleSubmit} onBlur={handleFieldBlur} noValidate>
+    <form
+      className="min-w-0 max-w-full overflow-x-clip"
+      onSubmit={handleSubmit}
+      onBlur={handleFieldBlur}
+      noValidate
+    >
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="min-w-0 space-y-5">
           <CheckoutSection
