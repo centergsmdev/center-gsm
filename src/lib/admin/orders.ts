@@ -7,6 +7,7 @@ import type {
   OrderStatus,
 } from "@/types/order-management";
 import type { Json } from "@/types/database";
+import { PAYMENT_RECEIPTS_BUCKET } from "@/lib/payment-receipts/client";
 
 const SAFE_ERROR =
   "Sipariş bilgileri işlenemedi. Yetkinizi ve bağlantınızı kontrol edin.";
@@ -95,6 +96,50 @@ export async function updateManualPayment(
   return result.error || !result.data
     ? { data: null, error: SAFE_ERROR }
     : { data: true, error: null };
+}
+export async function deleteAdminOrder(
+  id: string,
+  orderNumber: string,
+): Promise<{ data: true | null; error: string | null }> {
+  const client = createClient();
+  if (!client)
+    return { data: null, error: "Supabase bağlantısı yapılandırılmamış." };
+  const result = await client.rpc("admin_hard_delete_order", {
+    p_order_id: id,
+    p_order_number: orderNumber,
+  });
+  if (result.error || !result.data || typeof result.data !== "object")
+    return {
+      data: null,
+      error:
+        "Sipariş silinemedi. Yetkinizi ve sipariş numarasını kontrol edin.",
+    };
+
+  const payload = result.data as Record<string, Json | undefined>;
+  const receiptPaths = Array.isArray(payload.receipt_paths)
+    ? payload.receipt_paths.filter(
+        (path): path is string => typeof path === "string",
+      )
+    : [];
+  const returnPaths = Array.isArray(payload.return_attachment_paths)
+    ? payload.return_attachment_paths.filter(
+        (path): path is string => typeof path === "string",
+      )
+    : [];
+  const removals = await Promise.all([
+    receiptPaths.length
+      ? client.storage.from(PAYMENT_RECEIPTS_BUCKET).remove(receiptPaths)
+      : Promise.resolve({ error: null }),
+    returnPaths.length
+      ? client.storage.from("return-attachments").remove(returnPaths)
+      : Promise.resolve({ error: null }),
+  ]);
+  if (removals.some((item) => item.error))
+    return {
+      data: true,
+      error: "Sipariş silindi ancak bazı özel dosyalar temizlenemedi.",
+    };
+  return { data: true, error: null };
 }
 export const parseOrderAddress = (value: Json) => addressObject(value);
 export const parseOrderHistory = (

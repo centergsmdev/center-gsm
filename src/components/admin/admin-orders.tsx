@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, Search } from "lucide-react";
+import { Eye, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "./admin-badge";
 import { AdminCard, AdminCardHeader } from "./admin-card";
 import { AdminTable, AdminTd, AdminTh } from "./admin-table";
@@ -11,7 +11,7 @@ import {
   AdminErrorState,
   AdminLoadingState,
 } from "./admin-states";
-import { getAdminOrders } from "@/lib/admin/orders";
+import { deleteAdminOrder, getAdminOrders } from "@/lib/admin/orders";
 import { formatCurrency } from "@/lib/format";
 import type { AdminOrder } from "@/types/order-management";
 
@@ -32,6 +32,8 @@ export function AdminOrders() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
     const result = await getAdminOrders();
@@ -54,6 +56,33 @@ export function AdminOrders() {
       ),
     [orders, query],
   );
+  const removeOrder = async (order: AdminOrder) => {
+    const confirmation = window.prompt(
+      `Bu işlem geri alınamaz. Siparişi her yerden silmek için ${order.order_number} yazın.`,
+    );
+    if (confirmation !== order.order_number) {
+      if (confirmation !== null)
+        setError("Sipariş numarası eşleşmedi. Silme iptal edildi.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Sipariş ve bağlantılı tüm kayıtlar kalıcı olarak silinecek. Devam edilsin mi?",
+      )
+    )
+      return;
+    setDeletingId(order.id);
+    setError("");
+    setNotice("");
+    const result = await deleteAdminOrder(order.id, order.order_number);
+    setDeletingId(null);
+    if (!result.data) {
+      setError(result.error ?? "Sipariş silinemedi.");
+      return;
+    }
+    setOrders((current) => current.filter((item) => item.id !== order.id));
+    setNotice(result.error ?? `${order.order_number} kalıcı olarak silindi.`);
+  };
   return (
     <AdminCard>
       <AdminCardHeader
@@ -66,6 +95,22 @@ export function AdminOrders() {
           </AdminBadge>
         }
       />
+      {notice ? (
+        <p
+          className="mx-4 mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700"
+          role="status"
+        >
+          {notice}
+        </p>
+      ) : null}
+      {error && !loading ? (
+        <p
+          className="mx-4 mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
       <div className="border-b border-zinc-100 p-4">
         <label className="flex h-11 max-w-lg items-center gap-2 rounded-xl border border-zinc-200 px-3">
           <Search className="size-4 text-zinc-400" />
@@ -94,7 +139,7 @@ export function AdminOrders() {
               <AdminTh>Durum</AdminTh>
               <AdminTh>Ödeme</AdminTh>
               <AdminTh>Teslimat</AdminTh>
-              <AdminTh className="text-right">Detay</AdminTh>
+              <AdminTh className="text-right">İşlemler</AdminTh>
             </tr>
           </thead>
           <tbody>
@@ -152,13 +197,24 @@ export function AdminOrders() {
                       : "Standart"}
                 </AdminTd>
                 <AdminTd>
-                  <Link
-                    href={`/admin/siparisler/${order.id}`}
-                    className="ml-auto grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100"
-                    aria-label={`${order.order_number} detayını aç`}
-                  >
-                    <Eye className="size-4" />
-                  </Link>
+                  <div className="ml-auto flex w-fit items-center gap-1">
+                    <Link
+                      href={`/admin/siparisler/${order.id}`}
+                      className="grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100"
+                      aria-label={`${order.order_number} detayını aç`}
+                    >
+                      <Eye className="size-4" />
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={deletingId !== null}
+                      onClick={() => void removeOrder(order)}
+                      className="grid size-9 place-items-center rounded-lg text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`${order.order_number} siparişini kalıcı olarak sil`}
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
                 </AdminTd>
               </tr>
             ))}

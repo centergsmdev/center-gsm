@@ -1374,6 +1374,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      admin_hard_delete_order: {
+        Args: { p_order_id: string; p_order_number: string };
+        Returns: Json;
+      };
       admin_set_default_payment_account: {
         Args: { p_account_id: string };
         Returns: boolean;
