@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useDragControls } from "motion/react";
 import { Check, SlidersHorizontal, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function FilterPanel({
 }) {
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dragControls = useDragControls();
   const activeFilterCount = useMemo(
     () => getActiveFilterCount(params),
     [params],
@@ -103,18 +104,31 @@ export function FilterPanel({
                       role="dialog"
                       aria-modal="true"
                       aria-label="Ürün filtreleri"
-                      className="absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-[30px] border-t border-white/20 bg-zinc-50 shadow-[0_-24px_80px_rgba(0,0,0,0.24)]"
+                      className="absolute inset-x-0 bottom-0 flex max-h-[calc(100dvh-env(safe-area-inset-top)-0.75rem)] flex-col overflow-hidden rounded-t-[30px] border-t border-white/20 bg-zinc-50 shadow-[0_-24px_80px_rgba(0,0,0,0.24)]"
                       initial={{ y: "100%" }}
                       animate={{ y: 0 }}
                       exit={{ y: "100%" }}
+                      drag="y"
+                      dragControls={dragControls}
+                      dragListener={false}
+                      dragConstraints={{ top: 0, bottom: 0 }}
+                      dragElastic={{ top: 0, bottom: 0.45 }}
+                      onDragEnd={(_, info) => {
+                        if (info.offset.y > 110 || info.velocity.y > 650) {
+                          setOpen(false);
+                        }
+                      }}
                       transition={{
                         type: "spring",
                         stiffness: 380,
                         damping: 38,
                       }}
                     >
-                      <div className="relative overflow-hidden bg-zinc-950 px-5 pb-5 pt-3 text-white">
-                        <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-white/25" />
+                      <div
+                        className="relative shrink-0 cursor-grab touch-none overflow-hidden bg-zinc-950 px-5 pb-6 pt-3 text-white active:cursor-grabbing"
+                        onPointerDown={(event) => dragControls.start(event)}
+                      >
+                        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/30" />
                         <div className="absolute -right-10 -top-16 size-36 rounded-full bg-red-600/25 blur-3xl" />
                         <div className="relative flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
@@ -123,7 +137,7 @@ export function FilterPanel({
                             </span>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-black">
+                                <h2 className="text-lg font-black leading-tight">
                                   Ürünleri Filtrele
                                 </h2>
                                 {activeFilterCount > 0 ? (
@@ -132,7 +146,7 @@ export function FilterPanel({
                                   </span>
                                 ) : null}
                               </div>
-                              <p className="mt-0.5 text-xs text-zinc-400">
+                              <p className="mt-1 text-xs leading-5 text-zinc-400">
                                 Aradığınız ürüne daha hızlı ulaşın.
                               </p>
                             </div>
@@ -140,6 +154,7 @@ export function FilterPanel({
                           <button
                             ref={closeButtonRef}
                             type="button"
+                            onPointerDown={(event) => event.stopPropagation()}
                             onClick={() => setOpen(false)}
                             aria-label="Filtreleri kapat"
                             className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/15 bg-white/10 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
