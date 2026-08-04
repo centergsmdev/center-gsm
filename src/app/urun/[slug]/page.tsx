@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { ProductDetailExperience } from "@/components/product-detail/product-detail-experience";
+import { ProductReviews } from "@/components/product-detail/product-reviews";
 import { RecentlyViewedProducts } from "@/components/product-detail/recently-viewed-products";
 import { ProductDetailErrorState } from "@/components/product-detail/product-detail-states";
 import { Container } from "@/components/ui/container";
@@ -10,6 +11,7 @@ import { Divider } from "@/components/ui/divider";
 import { catalogProducts } from "@/data/catalog-products";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/data";
 import { sanitizeRichText } from "@/lib/content/rich-text";
+import { getApprovedProductReviews } from "@/lib/reviews/data";
 import { generateSeoMetadata, plainText } from "@/lib/seo/seo";
 import {
   JsonLd,
@@ -111,7 +113,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ...result.data,
     description: sanitizeRichText(result.data.description),
   };
-  const related = await getRelatedProducts(product, 4);
+  const [related, reviews] = await Promise.all([
+    getRelatedProducts(product, 4),
+    getApprovedProductReviews(product.id),
+  ]);
   const hasManagedContent = Boolean(product.description);
   return (
     <main className="tech-atmosphere min-h-screen pb-12 pt-5 sm:pb-16 sm:pt-7">
@@ -138,6 +143,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <ProductTabs product={product} />
           </div>
         ) : null}
+        <ProductReviews
+          productId={product.id}
+          rating={product.rating}
+          reviewCount={product.reviewCount}
+          reviews={reviews}
+        />
         {related.error ? (
           <ProductDetailErrorState />
         ) : (

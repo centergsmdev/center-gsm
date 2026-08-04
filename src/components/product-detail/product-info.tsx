@@ -80,7 +80,12 @@ export function ProductInfo({
           />
           {product.rating.toFixed(1)}
         </span>
-        <span className="text-muted">{product.reviewCount} yorum</span>
+        <a
+          href="#yorumlar"
+          className="text-muted underline-offset-4 hover:text-foreground hover:underline"
+        >
+          {product.reviewCount} yorum
+        </a>
         <Divider orientation="vertical" className="h-4" />
         <span className="text-muted">
           SKU: {product.sku ?? `CG-${product.id.slice(2).padStart(6, "0")}`}

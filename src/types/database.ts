@@ -55,6 +55,20 @@ type Product = Timestamps & {
   review_count: number;
   search_text: string;
 };
+export type ProductReview = Timestamps & {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  author_name: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  status: "pending" | "approved" | "rejected";
+  is_admin_created: boolean;
+  admin_reply: string | null;
+  replied_at: string | null;
+  replied_by: string | null;
+};
 type ProductImage = Timestamps & {
   id: string;
   product_id: string;
@@ -983,6 +997,12 @@ export type Database = {
             "name" | "slug" | "sku" | "category_id" | "brand_id" | "price"
           >
       >;
+      product_reviews: Table<
+        ProductReview,
+        Partial<ProductReview> &
+          Pick<ProductReview, "product_id" | "author_name" | "rating" | "body">,
+        Partial<ProductReview>
+      >;
       product_images: Table<
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">
@@ -1212,6 +1232,34 @@ export type Database = {
       };
     };
     Functions: {
+      submit_product_review: {
+        Args: {
+          p_product_id: string;
+          p_rating: number;
+          p_title: string;
+          p_body: string;
+        };
+        Returns: string;
+      };
+      admin_create_product_review: {
+        Args: {
+          p_product_id: string;
+          p_author_name: string;
+          p_rating: number;
+          p_title: string;
+          p_body: string;
+          p_status?: string;
+        };
+        Returns: string;
+      };
+      admin_manage_product_review: {
+        Args: {
+          p_review_id: string;
+          p_action: string;
+          p_reply?: string | null;
+        };
+        Returns: boolean;
+      };
       admin_save_product_variant_setup: {
         Args: { p_product_id: string; p_colors: Json; p_variants: Json };
         Returns: Json;
