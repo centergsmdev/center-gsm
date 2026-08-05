@@ -57,6 +57,7 @@ export function LiveChatWidget() {
   > | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
+  const stickToBottom = useRef(true);
 
   const loadChat = useCallback(async () => {
     if (!token) return;
@@ -146,11 +147,24 @@ export function LiveChatWidget() {
   }, [isAdminPage, token]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    const scroll = scrollRef.current;
+    if (!scroll || !stickToBottom.current) return;
+    scroll.scrollTo({ top: scroll.scrollHeight, behavior: "smooth" });
   }, [adminTyping, messages]);
+
+  function updateScrollPosition() {
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    stickToBottom.current =
+      scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 48;
+  }
+
+  function toggleChat() {
+    setOpen((current) => {
+      if (!current) stickToBottom.current = true;
+      return !current;
+    });
+  }
 
   function publishTyping(value: string) {
     setMessage(value);
@@ -191,12 +205,13 @@ export function LiveChatWidget() {
         throw new Error(data.error ?? "Mesaj gönderilemedi.");
       window.localStorage.setItem(NAME_KEY, cleanName);
       setConversation(data.conversation);
+      stickToBottom.current = true;
       setMessages((current) => [...current, data.message!]);
       setMessage("");
       void fetch("/api/live-chat/ai", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token, messageId: data.message.id, pathname }),
+        body: JSON.stringify({ token, messageId: data.message.id }),
       });
     } catch (reason) {
       setError(
@@ -231,8 +246,14 @@ export function LiveChatWidget() {
         throw new Error(data.error ?? "Görsel gönderilemedi.");
       window.localStorage.setItem(NAME_KEY, name.trim());
       setConversation(data.conversation);
+      stickToBottom.current = true;
       setMessages((current) => [...current, data.message!]);
       setMessage("");
+      void fetch("/api/live-chat/ai", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, messageId: data.message.id }),
+      });
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "Görsel gönderilemedi.",
@@ -247,7 +268,7 @@ export function LiveChatWidget() {
   return (
     <div className="fixed bottom-4 right-4 z-dropdown sm:bottom-6 sm:right-6">
       {open ? (
-        <section className="mb-3 flex h-[min(580px,calc(100dvh-100px))] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)]">
+        <section className="mb-3 flex h-[calc(100dvh-210px)] min-h-[320px] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:h-[min(580px,calc(100dvh-100px))]">
           <header className="flex items-center justify-between bg-zinc-950 px-4 py-3 text-white">
             <div>
               <h2 className="font-black">Canlı Destek</h2>
@@ -270,7 +291,8 @@ export function LiveChatWidget() {
           </header>
           <div
             ref={scrollRef}
-            className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4"
+            onScroll={updateScrollPosition}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50 p-4"
           >
             {messages.length ? (
               messages.map((item, index) => {
@@ -418,7 +440,7 @@ export function LiveChatWidget() {
       ) : null}
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggleChat}
         className="ml-auto flex h-12 items-center gap-2 rounded-full bg-zinc-950 px-4 text-sm font-bold text-white shadow-xl transition hover:bg-red-600"
         aria-label="Canlı desteği aç"
       >

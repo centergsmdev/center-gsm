@@ -43,6 +43,9 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [aiEnabled, setAiEnabled] = useState(true);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
+  const messageScrollRef = useRef<HTMLDivElement>(null);
+  const stickToBottom = useRef(true);
+  const previousSelectedId = useRef<string | null>(null);
   const selected = useMemo(
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
@@ -220,7 +223,12 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   useEffect(() => {
     if (!selected) {
       setMessages([]);
+      previousSelectedId.current = null;
       return;
+    }
+    if (previousSelectedId.current !== selected.id) {
+      stickToBottom.current = true;
+      previousSelectedId.current = selected.id;
     }
     void loadMessages(selected.id);
     const client = createClient();
@@ -235,6 +243,19 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
       .subscribe();
     return () => void client.removeChannel(channel);
   }, [loadMessages, selected]);
+
+  useEffect(() => {
+    const scroll = messageScrollRef.current;
+    if (!scroll || !stickToBottom.current) return;
+    scroll.scrollTo({ top: scroll.scrollHeight, behavior: "smooth" });
+  }, [customerTyping, messages]);
+
+  function updateMessageScrollPosition() {
+    const scroll = messageScrollRef.current;
+    if (!scroll) return;
+    stickToBottom.current =
+      scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 48;
+  }
 
   function publishTyping(value: string) {
     setReply(value);
@@ -271,6 +292,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
       .select("*")
       .single();
     if (result.error) return setError("Yanıt gönderilemedi.");
+    stickToBottom.current = true;
     setMessages((current) => [...current, result.data]);
     setReply("");
     const channel = client.channel(`live-chat:${selected.visitor_token}`);
@@ -280,8 +302,8 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   }
 
   return (
-    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:grid-cols-[340px_1fr]">
-      <aside className="max-h-72 border-b border-zinc-200 lg:max-h-none lg:border-b-0 lg:border-r">
+    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr]">
+      <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
           <div>
             <h2 className="font-black">Sohbetler</h2>
@@ -318,7 +340,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
             ) : null}
           </div>
         </div>
-        <div className="max-h-[220px] overflow-y-auto p-2 lg:max-h-[560px]">
+        <div className="max-h-[220px] overflow-y-auto overscroll-contain p-2 lg:max-h-none lg:min-h-0 lg:flex-1">
           {conversations.map((item) => (
             <button
               key={item.id}
@@ -346,7 +368,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
           ) : null}
         </div>
       </aside>
-      <section className="flex min-h-[500px] min-w-0 flex-col">
+      <section className="flex min-h-[500px] min-w-0 flex-col lg:min-h-0">
         {selected ? (
           <>
             <header className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
@@ -366,7 +388,11 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                 {selected.ai_active ? "Sohbeti Devral" : "AI'ya Devret"}
               </button>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4">
+            <div
+              ref={messageScrollRef}
+              onScroll={updateMessageScrollPosition}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50 p-4"
+            >
               {messages.map((item, index) => {
                 const previous = messages[index - 1];
                 const showDay =

@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { createAiAnswer } from "@/lib/live-chat/ai";
 import { isLiveChatToken } from "@/lib/live-chat/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+
+const WAIT_MESSAGE =
+  "Şu anda işlem yoğunluğu nedeniyle sizi kısa süre bekleteceğim. Birazdan yanıt alacaksınız.";
 
 function quiet() {
   return NextResponse.json({ ok: true });
 }
 
 export async function POST(request: Request) {
-  let payload: { token?: string; messageId?: string; pathname?: string };
+  let payload: { token?: string; messageId?: string };
   try {
     payload = (await request.json()) as typeof payload;
   } catch {
@@ -20,7 +21,6 @@ export async function POST(request: Request) {
   }
   const token = payload.token?.trim() ?? "";
   const messageId = payload.messageId?.trim() ?? "";
-  const pathname = payload.pathname?.trim() ?? "";
   if (!isLiveChatToken(token) || !messageId) return quiet();
   const client = createServiceClient();
   if (!client) return quiet();
@@ -52,22 +52,8 @@ export async function POST(request: Request) {
     .eq("sender", "ai")
     .maybeSingle();
   if (existing.data) return quiet();
-  const history = await client
-    .from("live_chat_messages")
-    .select("*")
-    .eq("conversation_id", conversation.data.id)
-    .order("created_at", { ascending: true })
-    .limit(20);
-  if (history.error) return quiet();
-
   const channel = client.channel(`live-chat:${token}`);
   await channel.httpSend("typing", { role: "ai", typing: true });
-  const answer = await createAiAnswer(
-    source.data.body,
-    history.data,
-    conversation.data.id,
-    pathname,
-  );
 
   const [latestConversation, latestSettings] = await Promise.all([
     client
@@ -91,7 +77,7 @@ export async function POST(request: Request) {
     .insert({
       conversation_id: conversation.data.id,
       sender: "ai",
-      body: answer,
+      body: WAIT_MESSAGE,
       reply_to_message_id: messageId,
     })
     .select("*")
