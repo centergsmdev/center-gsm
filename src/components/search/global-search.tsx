@@ -267,7 +267,7 @@ export function GlobalSearch({
       role="listbox"
       aria-label="Arama önerileri"
       className={cn(
-        "overflow-y-auto bg-white",
+        "overflow-y-auto overflow-x-hidden bg-white",
         variant === "desktop" &&
           "absolute inset-x-0 top-[calc(100%+0.5rem)] z-dropdown max-h-[72vh] rounded-2xl border border-zinc-200 shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
         variant === "mobile" && "min-h-0 flex-1",
@@ -451,12 +451,17 @@ function SuggestionSection({
 }) {
   if (suggestions.length === 0) return null;
   return (
-    <section className="mb-5 last:mb-0">
+    <section className="mb-5 min-w-0 max-w-full overflow-hidden last:mb-0">
       <h2 className="mb-2 flex items-center gap-2 px-2 text-[10px] font-black uppercase tracking-[0.16em] text-muted">
         <Icon className="size-3.5" aria-hidden="true" />
         {title}
       </h2>
-      <div className={cn(compact && "flex flex-wrap gap-2")}>
+      <div
+        className={cn(
+          "min-w-0 max-w-full overflow-hidden",
+          compact && "flex flex-wrap gap-2",
+        )}
+      >
         {suggestions.map((suggestion) => {
           const index = allSuggestions.findIndex(
             (item) => item.id === suggestion.id,
@@ -494,7 +499,7 @@ function SuggestionSection({
                 onSelect(suggestion);
               }}
               className={cn(
-                "flex items-center gap-3 rounded-xl p-2.5 transition-all duration-200 hover:bg-surface-subtle",
+                "flex w-full min-w-0 max-w-full items-center gap-3 overflow-hidden rounded-xl p-2.5 transition-all duration-200 hover:bg-surface-subtle",
                 activeIndex === index && "bg-surface-muted shadow-inner",
               )}
             >
@@ -503,8 +508,8 @@ function SuggestionSection({
                   <ProductVisual product={suggestion.product} />
                 </div>
               ) : null}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black text-foreground">
+              <div className="min-w-0 max-w-full flex-1 overflow-hidden">
+                <p className="line-clamp-2 min-w-0 max-w-full overflow-hidden break-words text-sm font-black leading-5 text-foreground">
                   {suggestion.product?.model ?? suggestion.label}
                 </p>
                 {suggestion.product ? (
