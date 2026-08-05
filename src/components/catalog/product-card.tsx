@@ -55,7 +55,7 @@ export function ProductCard({
   }[product.stockStatus];
 
   return (
-    <Card className="home-premium-interactive home-premium-surface group relative flex h-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
+    <Card className="home-premium-interactive home-premium-surface group relative flex h-full min-w-0 max-w-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
       <div
         className={cn(
           "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
@@ -90,17 +90,17 @@ export function ProductCard({
 
       <div
         className={cn(
-          "flex flex-1 flex-col p-2.5 sm:p-3.5",
+          "flex min-w-0 max-w-full flex-1 flex-col overflow-hidden p-2.5 sm:p-3.5",
           compactMobile && "max-sm:p-2",
           denseMobile && "max-sm:p-1.5",
         )}
       >
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <p className="min-w-0 truncate text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             {product.brand}
           </p>
           <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${stock.className}`}
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${stock.className}`}
           >
             {stock.label}
           </span>
@@ -108,27 +108,27 @@ export function ProductCard({
 
         <h2
           className={cn(
-            "mt-0.5 line-clamp-2 min-h-8 text-sm font-black leading-4 tracking-[-0.03em] text-zinc-950 sm:mt-1 sm:min-h-9 sm:text-[15px] sm:leading-[1.125rem]",
+            "mt-0.5 line-clamp-2 min-h-8 w-full min-w-0 max-w-full overflow-hidden break-words text-sm font-black leading-4 tracking-[-0.03em] text-zinc-950 sm:mt-1 sm:min-h-9 sm:text-[15px] sm:leading-[1.125rem]",
             denseMobile && "max-sm:min-h-8 max-sm:text-[13px] max-sm:leading-4",
           )}
         >
           <Link
             href={productHref}
-            className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            className="block min-w-0 max-w-full overflow-hidden after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
             {productTitle}
           </Link>
         </h2>
         <p
           className={cn(
-            "leading-3.5 mt-0.5 line-clamp-2 min-h-7 text-[10px] text-zinc-500 sm:mt-1 sm:min-h-8 sm:text-xs sm:leading-4",
+            "leading-3.5 mt-0.5 line-clamp-2 min-h-7 min-w-0 max-w-full overflow-hidden break-words text-[10px] text-zinc-500 sm:mt-1 sm:min-h-8 sm:text-xs sm:leading-4",
             denseMobile && "max-sm:leading-3.5 max-sm:mt-0.5 max-sm:min-h-7",
           )}
         >
           {product.shortDescription ?? ""}
         </p>
 
-        <div className="mt-1 flex items-center gap-1.5 text-[10px] sm:mt-1.5 sm:gap-2">
+        <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10px] sm:mt-1.5 sm:gap-2">
           <span
             className="flex items-center gap-1 font-bold text-zinc-800"
             aria-label={`${product.rating} puan`}
@@ -139,7 +139,9 @@ export function ProductCard({
             />
             {product.rating.toFixed(1)}
           </span>
-          <span className="text-zinc-400">({product.reviewCount} yorum)</span>
+          <span className="min-w-0 truncate text-zinc-400">
+            ({product.reviewCount} yorum)
+          </span>
         </div>
 
         <div

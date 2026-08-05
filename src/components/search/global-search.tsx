@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import type { SearchSuggestion, SearchSuggestionGroups } from "@/types/search";
 
 const RECENT_SEARCHES_KEY = "center-gsm-recent-searches";
-const MAX_RECENT_SEARCHES = 6;
+const MAX_RECENT_SEARCHES = 5;
 const popularTerms = [
   "iPhone",
   "PlayStation",
@@ -81,7 +81,9 @@ export function GlobalSearch({
       const parsed: unknown = stored ? JSON.parse(stored) : [];
       if (Array.isArray(parsed)) {
         setRecentTerms(
-          parsed.filter((item): item is string => typeof item === "string"),
+          parsed
+            .filter((item): item is string => typeof item === "string")
+            .slice(0, MAX_RECENT_SEARCHES),
         );
       }
     } catch {

@@ -11,6 +11,11 @@ import type {
 } from "@/lib/catalog/types";
 import { createPublicClient as createClient } from "@/lib/supabase/public";
 import { normalizeSearchTerm } from "@/lib/search/normalize-search";
+import {
+  loadSmartSearchIndex,
+  smartProductIds,
+  smartSearchScore,
+} from "@/lib/search/smart-search";
 import type { Tables } from "@/types/database";
 import type { CatalogProduct } from "@/types/product";
 
@@ -30,14 +35,35 @@ function fallbackProducts(filters: CatalogFilters): CatalogListResult {
   const query = normalizeSearchTerm(filters.query ?? "");
   if (query)
     data = data.filter((product) =>
-      normalizeSearchTerm(
-        [
-          product.brand,
-          product.model,
-          product.description,
-          product.category,
-        ].join(" "),
-      ).includes(query),
+      Boolean(
+        smartSearchScore(
+          query,
+          [
+            product.brand,
+            product.model,
+            product.description,
+            product.shortDescription,
+            product.category,
+            product.sku,
+            ...(product.colors ?? []).flatMap((color) => [
+              color.name,
+              color.displayName,
+            ]),
+            ...(product.variants ?? []).flatMap((variant) => [
+              variant.name,
+              variant.variantTitle,
+              variant.sku,
+              variant.barcode,
+              variant.storageValue,
+              variant.storageValue && variant.storageUnit
+                ? `${variant.storageValue} ${variant.storageUnit}`
+                : null,
+            ]),
+          ]
+            .filter(Boolean)
+            .join(" "),
+        ),
+      ),
     );
   if (filters.categories?.length)
     data = data.filter((product) =>
@@ -230,22 +256,10 @@ export async function getProducts(
       Math.max(1, filters.pageSize ?? DEFAULT_PAGE_SIZE),
     );
     const safeQuery = normalizeSearchTerm(filters.query ?? "");
-    let searchCategoryIds: string[] = [];
-    let searchBrandIds: string[] = [];
+    let matchedProductIds: string[] | null = null;
     if (safeQuery) {
-      const [matchingCategories, matchingBrands] = await Promise.all([
-        client
-          .from("categories")
-          .select("*")
-          .eq("is_active", true)
-          .like("search_name", `%${safeQuery}%`),
-        client
-          .from("brands")
-          .select("*")
-          .eq("is_active", true)
-          .like("search_name", `%${safeQuery}%`),
-      ]);
-      if (matchingCategories.error || matchingBrands.error)
+      const searchIndex = await loadSmartSearchIndex(client);
+      if (!searchIndex)
         return {
           data: [],
           total: 0,
@@ -254,8 +268,16 @@ export async function getProducts(
           error: true,
           source: "supabase",
         };
-      searchCategoryIds = matchingCategories.data.map((item) => item.id);
-      searchBrandIds = matchingBrands.data.map((item) => item.id);
+      matchedProductIds = smartProductIds(searchIndex, safeQuery).slice(0, 500);
+      if (!matchedProductIds.length)
+        return {
+          data: [],
+          total: 0,
+          page,
+          pageSize,
+          error: false,
+          source: "supabase",
+        };
     }
     let query = client
       .from("products")
@@ -272,14 +294,7 @@ export async function getProducts(
     if (filters.featured) query = query.eq("is_featured", true);
     if (filters.weeklyDeal) query = query.eq("is_weekly_deal", true);
     if (filters.latestPhone) query = query.eq("is_latest_phone", true);
-    if (safeQuery) {
-      const clauses = [`search_text.like.%${safeQuery}%`];
-      if (searchCategoryIds.length)
-        clauses.push(`category_id.in.(${searchCategoryIds.join(",")})`);
-      if (searchBrandIds.length)
-        clauses.push(`brand_id.in.(${searchBrandIds.join(",")})`);
-      query = query.or(clauses.join(","));
-    }
+    if (matchedProductIds) query = query.in("id", matchedProductIds);
     if (filters.sort === "price-asc")
       query = query.order("price", { ascending: true });
     else if (filters.sort === "price-desc")
