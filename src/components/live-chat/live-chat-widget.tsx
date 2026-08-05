@@ -107,6 +107,38 @@ export function LiveChatWidget() {
   }, [isAdminPage, loadChat, open, token]);
 
   useEffect(() => {
+    if (
+      isAdminPage ||
+      !open ||
+      !window.matchMedia("(max-width: 639px)").matches
+    )
+      return;
+    const body = document.body;
+    const html = document.documentElement;
+    const scrollY = window.scrollY;
+    const previous = {
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      htmlOverflow: html.style.overflow,
+    };
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previous.bodyOverflow;
+      body.style.position = previous.bodyPosition;
+      body.style.top = previous.bodyTop;
+      body.style.width = previous.bodyWidth;
+      html.style.overflow = previous.htmlOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isAdminPage, open]);
+
+  useEffect(() => {
     if (isAdminPage) return;
     const client = createClient();
     if (!client || !token) return;
@@ -417,6 +449,17 @@ export function LiveChatWidget() {
               <textarea
                 value={message}
                 onChange={(event) => publishTyping(event.target.value)}
+                onKeyDown={(event) => {
+                  if (
+                    event.key !== "Enter" ||
+                    event.shiftKey ||
+                    event.nativeEvent.isComposing
+                  )
+                    return;
+                  event.preventDefault();
+                  if (!sending && message.trim())
+                    event.currentTarget.form?.requestSubmit();
+                }}
                 placeholder="Mesajınızı yazın…"
                 maxLength={2000}
                 rows={2}
