@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { productPath } from "@/lib/catalog/product-url";
 import { CalendarDays, Check, MapPin, PackageCheck } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -72,7 +73,7 @@ export function OrderSuccess() {
               <li key={line.id} className="flex justify-between gap-4 text-sm">
                 <div>
                   <Link
-                    href={`/urun/${line.slug}`}
+                    href={productPath(line.slug)}
                     className="font-bold hover:text-primary"
                   >
                     {line.name}

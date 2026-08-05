@@ -13,6 +13,7 @@ import {
   resolveDefaultVariant,
   variantStorageKey,
 } from "@/lib/catalog/variants";
+import { productPath } from "@/lib/catalog/product-url";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -44,7 +45,7 @@ export function ProductCard({
   if (defaultColor) productParams.set("color", defaultColor.name);
   if (defaultStorage) productParams.set("storage", defaultStorage);
   const productQuery = productParams.toString();
-  const productHref = `/urun/${product.slug}${productQuery ? `?${productQuery}` : ""}`;
+  const productHref = `${productPath(product.slug)}${productQuery ? `?${productQuery}` : ""}`;
   const stock = {
     "in-stock": {
       label: "Stokta",

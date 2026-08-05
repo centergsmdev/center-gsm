@@ -13,6 +13,11 @@ import {
 } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  formatChatDay,
+  formatChatTime,
+  turkeyDateKey,
+} from "@/lib/format/date-time";
 import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
 
 const TOKEN_KEY = "center-gsm-live-chat-token";
@@ -26,13 +31,6 @@ type ChatResponse = {
   message?: ChatMessage;
   error?: string;
 };
-
-function dayLabel(value: string) {
-  const date = new Date(value);
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) return "Bugün";
-  return date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-}
 
 export function LiveChatWidget() {
   const pathname = usePathname();
@@ -52,6 +50,9 @@ export function LiveChatWidget() {
   const [adminOnline, setAdminOnline] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const chatChannelRef = useRef<ReturnType<
     NonNullable<ReturnType<typeof createClient>>["channel"]
   > | null>(null);
@@ -85,7 +86,7 @@ export function LiveChatWidget() {
   }, [open, token]);
 
   useEffect(() => {
-    if (isAdminPage) return;
+    if (isAdminPage || !open) return;
     let storedToken = window.localStorage.getItem(TOKEN_KEY);
     if (!storedToken) {
       storedToken = crypto.randomUUID();
@@ -93,7 +94,7 @@ export function LiveChatWidget() {
     }
     setToken(storedToken);
     setName(window.localStorage.getItem(NAME_KEY) ?? "");
-  }, [isAdminPage]);
+  }, [isAdminPage, open]);
 
   useEffect(() => {
     if (isAdminPage || !open || !token) return;
@@ -139,7 +140,7 @@ export function LiveChatWidget() {
   }, [isAdminPage, open]);
 
   useEffect(() => {
-    if (isAdminPage) return;
+    if (isAdminPage || !open) return;
     const client = createClient();
     if (!client || !token) return;
     const channel = client
@@ -156,10 +157,10 @@ export function LiveChatWidget() {
       chatChannelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [isAdminPage, loadChat, token]);
+  }, [isAdminPage, loadChat, open, token]);
 
   useEffect(() => {
-    if (isAdminPage) return;
+    if (isAdminPage || !open) return;
     const client = createClient();
     if (!client) return;
     const channel = client
@@ -176,7 +177,43 @@ export function LiveChatWidget() {
       })
       .subscribe();
     return () => void client.removeChannel(channel);
-  }, [isAdminPage, token]);
+  }, [isAdminPage, open, token]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const activeDialog = dialog;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        window.requestAnimationFrame(() => launcherRef.current?.focus());
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        activeDialog.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href]",
+        ),
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    activeDialog.addEventListener("keydown", handleKeyDown);
+    return () => activeDialog.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   useEffect(() => {
     const scroll = scrollRef.current;
@@ -300,10 +337,19 @@ export function LiveChatWidget() {
   return (
     <div className="fixed bottom-4 right-4 z-dropdown sm:bottom-6 sm:right-6">
       {open ? (
-        <section className="mb-3 flex h-[calc(100dvh-210px)] min-h-[320px] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:h-[min(580px,calc(100dvh-100px))]">
+        <section
+          id="live-chat-dialog"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="live-chat-title"
+          className="mb-3 flex h-[calc(100dvh-210px)] min-h-[320px] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:h-[min(580px,calc(100dvh-100px))]"
+        >
           <header className="flex items-center justify-between bg-zinc-950 px-4 py-3 text-white">
             <div>
-              <h2 className="font-black">Canlı Destek</h2>
+              <h2 id="live-chat-title" className="font-black">
+                Canlı Destek
+              </h2>
               <p
                 className={`text-xs ${adminOnline ? "text-emerald-400" : "text-zinc-400"}`}
               >
@@ -313,8 +359,14 @@ export function LiveChatWidget() {
               </p>
             </div>
             <button
+              ref={closeButtonRef}
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                window.requestAnimationFrame(() =>
+                  launcherRef.current?.focus(),
+                );
+              }}
               className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10"
               aria-label="Sohbeti kapat"
             >
@@ -331,13 +383,13 @@ export function LiveChatWidget() {
                 const previous = messages[index - 1];
                 const showDay =
                   !previous ||
-                  new Date(previous.created_at).toDateString() !==
-                    new Date(item.created_at).toDateString();
+                  turkeyDateKey(previous.created_at) !==
+                    turkeyDateKey(item.created_at);
                 return (
                   <div key={item.id}>
                     {showDay ? (
                       <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
-                        {dayLabel(item.created_at)}
+                        {formatChatDay(item.created_at)}
                       </div>
                     ) : null}
                     <div
@@ -370,10 +422,7 @@ export function LiveChatWidget() {
                       <p
                         className={`mt-1 text-right text-[10px] ${item.sender === "customer" ? "text-red-100" : "text-zinc-400"}`}
                       >
-                        {new Date(item.created_at).toLocaleTimeString("tr-TR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatChatTime(item.created_at)}
                         {item.sender === "customer"
                           ? ` · ${item.read_at ? "✓✓ Okundu" : "✓ Gönderildi"}`
                           : ""}
@@ -482,10 +531,13 @@ export function LiveChatWidget() {
         </section>
       ) : null}
       <button
+        ref={launcherRef}
         type="button"
         onClick={toggleChat}
         className="ml-auto flex h-12 items-center gap-2 rounded-full bg-zinc-950 px-4 text-sm font-bold text-white shadow-xl transition hover:bg-red-600"
-        aria-label="Canlı desteği aç"
+        aria-label={open ? "Canlı desteği kapat" : "Canlı desteği aç"}
+        aria-expanded={open}
+        aria-controls="live-chat-dialog"
       >
         <MessageCircle className="size-5" /> Canlı Destek
       </button>

@@ -1,4 +1,5 @@
 import { mapSupabaseProduct } from "@/lib/catalog/mapper";
+import { productPath } from "@/lib/catalog/product-url";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/database";
 import type { SearchDataSource, SearchSuggestionGroups } from "@/types/search";
@@ -150,7 +151,7 @@ export const supabaseSearchDataSource: SearchDataSource = {
           kind: "product",
           label: `${product.brand} ${product.model}`,
           description: product.description,
-          href: `/urun/${product.slug}`,
+          href: productPath(product.slug),
           product,
         })),
         brands: brands.map((brand) => ({

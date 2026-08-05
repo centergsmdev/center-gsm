@@ -1,4 +1,5 @@
 import { catalogProducts } from "@/data/catalog-products";
+import { productPath } from "@/lib/catalog/product-url";
 import type {
   SearchDataSource,
   SearchSuggestion,
@@ -69,7 +70,7 @@ export function getCatalogSuggestions(query: string): SearchSuggestionGroups {
       kind: "product",
       label: `${product.brand} ${product.model}`,
       description: product.description,
-      href: `/urun/${product.slug}`,
+      href: productPath(product.slug),
       product,
     })),
     brands: termSuggestions(brands, "brand", query),

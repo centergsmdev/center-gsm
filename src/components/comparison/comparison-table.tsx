@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { productPath } from "@/lib/catalog/product-url";
 import { Star, Trash2 } from "lucide-react";
 
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
@@ -65,7 +66,7 @@ export function ComparisonTable() {
                     <ProductVisual product={product} />
                   </div>
                   <Link
-                    href={`/urun/${product.slug}`}
+                    href={productPath(product.slug)}
                     className="mt-4 block rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-primary">

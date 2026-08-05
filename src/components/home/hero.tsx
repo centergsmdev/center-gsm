@@ -9,35 +9,36 @@ import { HeroVisual } from "@/components/home/hero-visual";
 import { HeroParallax } from "@/components/home/hero-parallax";
 import { Container } from "@/components/ui/container";
 
+const HERO_SLIDES = [
+  {
+    kicker: "Premium teknoloji seçkisi",
+    icon: Sparkles,
+    title: "Teknolojinin",
+    accent: "yeni standardı.",
+    description:
+      "Günlük hayatınıza değer katan seçkin teknolojiler. Güvenilir, yalın ve ayrıcalıklı bir alışveriş deneyimi.",
+    cta: "Fırsatları keşfet",
+    href: "/#deals",
+    visual: "original" as const,
+  },
+  {
+    kicker: "Yeni nesil çalışma deneyimi",
+    icon: Laptop,
+    title: "Gücünü her yere",
+    accent: "yanında taşı.",
+    description:
+      "İş, eğitim ve yaratıcılık için seçilmiş laptop, tablet ve ses teknolojilerini keşfedin.",
+    cta: "Laptopları keşfet",
+    href: "/kategori/laptoplar",
+    visual: "workspace" as const,
+  },
+] as const;
+
 export function Hero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const slides = [
-    {
-      kicker: "Premium teknoloji seçkisi",
-      icon: Sparkles,
-      title: "Teknolojinin",
-      accent: "yeni standardı.",
-      description:
-        "Günlük hayatınıza değer katan seçkin teknolojiler. Güvenilir, yalın ve ayrıcalıklı bir alışveriş deneyimi.",
-      cta: "Fırsatları keşfet",
-      href: "/#deals",
-      visual: "original" as const,
-    },
-    {
-      kicker: "Yeni nesil çalışma deneyimi",
-      icon: Laptop,
-      title: "Gücünü her yere",
-      accent: "yanında taşı.",
-      description:
-        "İş, eğitim ve yaratıcılık için seçilmiş laptop, tablet ve ses teknolojilerini keşfedin.",
-      cta: "Laptopları keşfet",
-      href: "/kategori/laptoplar",
-      visual: "workspace" as const,
-    },
-  ];
-  const slide = slides[activeSlide];
+  const slide = HERO_SLIDES[activeSlide];
   const SlideIcon = slide.icon;
 
   const [initialTransitionComplete, setInitialTransitionComplete] =
@@ -56,20 +57,14 @@ export function Hero() {
 
     const timeout = window.setTimeout(
       () => {
-        setActiveSlide((current) => (current + 1) % slides.length);
+        setActiveSlide((current) => (current + 1) % HERO_SLIDES.length);
         setInitialTransitionComplete(true);
       },
       initialTransitionComplete ? 5000 : 2000,
     );
 
     return () => window.clearTimeout(timeout);
-  }, [
-    activeSlide,
-    initialTransitionComplete,
-    paused,
-    prefersReducedMotion,
-    slides.length,
-  ]);
+  }, [activeSlide, initialTransitionComplete, paused, prefersReducedMotion]);
 
   return (
     <section
@@ -132,10 +127,10 @@ export function Hero() {
           index={
             <div
               className="launch-hero-index"
-              aria-label={`Slayt ${activeSlide + 1} / ${slides.length}`}
+              aria-label={`Slayt ${activeSlide + 1} / ${HERO_SLIDES.length}`}
             >
               <div className="launch-hero-dots" aria-label="Hero slaytları">
-                {slides.map((item, index) => (
+                {HERO_SLIDES.map((item, index) => (
                   <button
                     key={item.kicker}
                     type="button"
@@ -147,7 +142,7 @@ export function Hero() {
                 ))}
               </div>
               {String(activeSlide + 1).padStart(2, "0")} /{" "}
-              {String(slides.length).padStart(2, "0")}
+              {String(HERO_SLIDES.length).padStart(2, "0")}
             </div>
           }
         />

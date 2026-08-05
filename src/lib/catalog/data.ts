@@ -212,12 +212,20 @@ async function taxonomyIds(
     Boolean,
   );
   if (!uniqueSlugs.length) return null;
+  const requestedSlugs = new Set(
+    uniqueSlugs.map((slug) => slug.toLocaleLowerCase("tr-TR")),
+  );
   const { data, error } = await client
     .from(table)
-    .select("*")
-    .or(uniqueSlugs.map((slug) => `slug.ilike.${slug}`).join(","))
+    .select("id,slug")
     .eq("is_active", true);
-  return error ? undefined : data.map((item) => item.id);
+  return error
+    ? undefined
+    : data
+        .filter((item) =>
+          requestedSlugs.has(item.slug.trim().toLocaleLowerCase("tr-TR")),
+        )
+        .map((item) => item.id);
 }
 
 export async function getProducts(
@@ -372,15 +380,39 @@ export async function getProductBySlug(
       source: "fallback",
     };
   try {
-    const result = await client
+    const exactResult = await client
       .from("products")
       .select("*")
       .eq("slug", resolvedSlug)
       .eq("is_active", true)
       .maybeSingle();
-    if (result.error) return { data: null, error: true, source: "supabase" };
-    if (!result.data) return { data: null, error: false, source: "supabase" };
-    const rows = await hydrateProducts(client, [result.data]);
+    if (exactResult.error)
+      return { data: null, error: true, source: "supabase" };
+    let product = exactResult.data;
+    if (!product) {
+      const candidates = await client
+        .from("products")
+        .select("id,slug")
+        .eq("is_active", true);
+      if (candidates.error)
+        return { data: null, error: true, source: "supabase" };
+      const normalizedSlug = resolvedSlug.toLocaleLowerCase("tr-TR");
+      const match = candidates.data.find(
+        (item) => item.slug.toLocaleLowerCase("tr-TR") === normalizedSlug,
+      );
+      if (!match) return { data: null, error: false, source: "supabase" };
+      const matchedResult = await client
+        .from("products")
+        .select("*")
+        .eq("id", match.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (matchedResult.error)
+        return { data: null, error: true, source: "supabase" };
+      product = matchedResult.data;
+    }
+    if (!product) return { data: null, error: false, source: "supabase" };
+    const rows = await hydrateProducts(client, [product]);
     return rows
       ? {
           data: rows[0] ? mapSupabaseProduct(rows[0]) : null,

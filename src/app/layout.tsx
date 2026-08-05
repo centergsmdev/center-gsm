@@ -5,7 +5,7 @@ import { FavoritesProvider } from "@/providers/favorites-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { generateSeoMetadata } from "@/lib/seo/seo";
 import { applyCoreResourceHints } from "@/lib/performance/resource-hints";
-import { LiveChatWidget } from "@/components/live-chat/live-chat-widget";
+import { DeferredLiveChat } from "@/components/live-chat/deferred-live-chat";
 import "./globals.css";
 export const metadata = generateSeoMetadata({ canonical: "/" });
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
             <ComparisonProvider>
               <CartProvider>
                 {children}
-                <LiveChatWidget />
+                <DeferredLiveChat />
               </CartProvider>
             </ComparisonProvider>
           </FavoritesProvider>

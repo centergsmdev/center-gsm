@@ -10,6 +10,7 @@ import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
 import { catalogProducts } from "@/data/catalog-products";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog/data";
+import { productPath } from "@/lib/catalog/product-url";
 import { sanitizeRichText } from "@/lib/content/rich-text";
 import { getApprovedProductReviews } from "@/lib/reviews/data";
 import { generateSeoMetadata, plainText } from "@/lib/seo/seo";
@@ -69,12 +70,12 @@ export async function generateMetadata({
           result.data.sku ?? "",
           result.data.model,
         ],
-        canonical: `/urun/${result.data.slug}`,
+        canonical: productPath(result.data.slug),
         category: result.data.category,
         social: {
           title: productName,
           description: productDescription,
-          canonical: `/urun/${result.data.slug}`,
+          canonical: productPath(result.data.slug),
           image: result.data.mainImageUrl ?? result.data.imageUrls?.[0],
           product: {
             name: productName,
@@ -92,7 +93,7 @@ export async function generateMetadata({
       })
     : generateSeoMetadata({
         title: "Ürün Bulunamadı",
-        canonical: `/urun/${slug}`,
+        canonical: productPath(slug),
         robots: { index: false, follow: false },
       });
 }
@@ -132,7 +133,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           },
           {
             name: `${product.brand} ${product.model}`,
-            path: `/urun/${product.slug}`,
+            path: productPath(product.slug),
           },
         ])}
       />

@@ -42,7 +42,7 @@ export async function Brands() {
           {brands.map((brand) => (
             <AnimatedCard key={brand.id} className="h-full">
               <Link
-                href={`/urunler?brand=${brand.slug}`}
+                href={`/urunler?brand=${encodeURIComponent(brand.slug)}`}
                 aria-label={`${brand.name} ürünlerini incele`}
                 className="brand-premium-card home-premium-interactive home-premium-surface group relative grid h-full min-h-24 place-items-center overflow-hidden border border-zinc-200/80 bg-white px-4 sm:min-h-36 sm:px-6"
               >

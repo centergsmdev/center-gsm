@@ -12,22 +12,16 @@ import {
 } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  formatChatDateTime,
+  formatChatDay,
+  formatChatTime,
+  turkeyDateKey,
+} from "@/lib/format/date-time";
 import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
 
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
 type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
-
-function dayLabel(value: string) {
-  const date = new Date(value);
-  const today = new Date();
-  return date.toDateString() === today.toDateString()
-    ? "Bugün"
-    : date.toLocaleDateString("tr-TR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-}
 
 export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [conversations, setConversations] = useState<LiveChatConversation[]>(
@@ -353,7 +347,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                   {item.customer_name}
                 </span>
                 <span className="mt-1 block text-xs opacity-60">
-                  {new Date(item.last_message_at).toLocaleString("tr-TR")}
+                  {formatChatDateTime(item.last_message_at)}
                 </span>
               </span>
               {unread[item.id] ? (
@@ -397,13 +391,13 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                 const previous = messages[index - 1];
                 const showDay =
                   !previous ||
-                  new Date(previous.created_at).toDateString() !==
-                    new Date(item.created_at).toDateString();
+                  turkeyDateKey(previous.created_at) !==
+                    turkeyDateKey(item.created_at);
                 return (
                   <div key={item.id}>
                     {showDay ? (
                       <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
-                        {dayLabel(item.created_at)}
+                        {formatChatDay(item.created_at)}
                       </div>
                     ) : null}
                     <div
@@ -440,10 +434,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                       <p
                         className={`mt-1 text-right text-[10px] ${item.sender === "admin" ? "text-red-100" : item.sender === "ai" ? "text-violet-100" : "text-zinc-400"}`}
                       >
-                        {new Date(item.created_at).toLocaleTimeString("tr-TR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatChatTime(item.created_at)}
                         {item.sender !== "customer"
                           ? ` · ${item.read_at ? "✓✓ Okundu" : "✓ Gönderildi"}`
                           : ""}

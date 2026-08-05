@@ -1,4 +1,5 @@
 import { canonicalUrl } from "@/lib/seo/canonical";
+import { productPath } from "@/lib/catalog/product-url";
 import { SEO_CONFIG } from "@/lib/seo/constants";
 import { plainText } from "@/lib/seo/helpers";
 import type { CatalogProduct } from "@/types/product";
@@ -43,11 +44,11 @@ export function createProductSchema(product: CatalogProduct): JsonLdObject {
     category: product.category,
     description,
     image: images,
-    url: canonicalUrl(`/urun/${product.slug}`),
+    url: canonicalUrl(productPath(product.slug)),
     aggregateRating,
     offers: {
       "@type": "Offer",
-      url: canonicalUrl(`/urun/${product.slug}`),
+      url: canonicalUrl(productPath(product.slug)),
       price: price.toFixed(2),
       priceCurrency: "TRY",
       availability: `https://schema.org/${available ? "InStock" : "OutOfStock"}`,

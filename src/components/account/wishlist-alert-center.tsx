@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { productPath } from "@/lib/catalog/product-url";
 import { BellRing, PackageCheck, Percent, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -70,7 +71,7 @@ export function WishlistAlertCenter() {
                   </p>
                 </div>
                 <Link
-                  href={`/urun/${item.productSlug}?wishlistAlert=${item.id}`}
+                  href={`${productPath(item.productSlug)}?wishlistAlert=${encodeURIComponent(item.id)}`}
                   className="text-xs font-black text-primary hover:underline"
                 >
                   Ürüne git

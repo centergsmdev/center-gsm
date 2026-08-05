@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { productPath } from "@/lib/catalog/product-url";
 import { Heart, Minus, Plus, Trash2 } from "lucide-react";
 
 import { ProductVisual } from "@/components/catalog/product-visual";
@@ -30,7 +31,7 @@ export function CartItemCard({
     <Card className="home-premium-surface overflow-hidden border-white/80 bg-white/95 p-2 shadow-md backdrop-blur transition-shadow hover:shadow-xl sm:p-4">
       <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] gap-2 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-5">
         <Link
-          href={`/urun/${product.slug}`}
+          href={productPath(product.slug)}
           aria-label={`${productName} ürün detayını aç`}
           className="aspect-square w-full overflow-hidden rounded-xl border border-zinc-100 bg-white transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&_span]:hidden"
         >
@@ -44,7 +45,7 @@ export function CartItemCard({
               </p>
               <h2 className="mt-0.5 line-clamp-2 text-sm font-black leading-4 tracking-[-0.02em] sm:mt-1 sm:text-base sm:leading-normal">
                 <Link
-                  href={`/urun/${product.slug}`}
+                  href={productPath(product.slug)}
                   className="hover:text-primary"
                 >
                   {productName}

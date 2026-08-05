@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createPublicClient as createClient } from "@/lib/supabase/public";
+import { productPath } from "@/lib/catalog/product-url";
 import { sitemapEntry, safeDate } from "./helpers";
 export async function getProductSitemap(): Promise<MetadataRoute.Sitemap> {
   try {
@@ -13,7 +14,7 @@ export async function getProductSitemap(): Promise<MetadataRoute.Sitemap> {
       if (!error)
         return data.map((x) =>
           sitemapEntry(
-            `/urun/${x.slug}`,
+            productPath(x.slug),
             safeDate(x.updated_at, x.created_at),
             "weekly",
             0.8,
