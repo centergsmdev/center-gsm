@@ -29,7 +29,7 @@ function dayLabel(value: string) {
       });
 }
 
-export function AdminLiveChat() {
+export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [conversations, setConversations] = useState<LiveChatConversation[]>(
     [],
   );
@@ -40,12 +40,51 @@ export function AdminLiveChat() {
   const [error, setError] = useState("");
   const [customerTyping, setCustomerTyping] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   const selected = useMemo(
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
   );
+
+  const loadAiSettings = useCallback(async () => {
+    const client = createClient();
+    if (!client) return;
+    const result = await client
+      .from("live_chat_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    if (result.data) setAiEnabled(result.data.ai_enabled);
+  }, []);
+
+  async function setGlobalAi(enabled: boolean) {
+    const client = createClient();
+    if (!client) return;
+    const result = await client
+      .from("live_chat_settings")
+      .update({ ai_enabled: enabled, updated_at: new Date().toISOString() })
+      .eq("id", true);
+    if (result.error) return setError("AI modu güncellenemedi.");
+    setAiEnabled(enabled);
+  }
+
+  async function setConversationAi(enabled: boolean) {
+    if (!selected) return;
+    const client = createClient();
+    if (!client) return;
+    const result = await client
+      .from("live_chat_conversations")
+      .update({ ai_active: enabled })
+      .eq("id", selected.id);
+    if (result.error) return setError("Sohbet yönetimi güncellenemedi.");
+    setConversations((current) =>
+      current.map((item) =>
+        item.id === selected.id ? { ...item, ai_active: enabled } : item,
+      ),
+    );
+  }
 
   const loadConversations = useCallback(async () => {
     const client = createClient();
@@ -133,6 +172,7 @@ export function AdminLiveChat() {
 
   useEffect(() => {
     void loadConversations();
+    void loadAiSettings();
     const client = createClient();
     if (!client) return;
     const channel = client
@@ -152,9 +192,14 @@ export function AdminLiveChat() {
           void loadConversations();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "live_chat_settings" },
+        () => void loadAiSettings(),
+      )
       .subscribe();
     return () => void client.removeChannel(channel);
-  }, [loadConversations, loadMessages, selectedId]);
+  }, [loadAiSettings, loadConversations, loadMessages, selectedId]);
 
   useEffect(() => {
     const client = createClient();
@@ -237,11 +282,41 @@ export function AdminLiveChat() {
   return (
     <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:grid-cols-[340px_1fr]">
       <aside className="max-h-72 border-b border-zinc-200 lg:max-h-none lg:border-b-0 lg:border-r">
-        <div className="border-b border-zinc-200 p-4">
-          <h2 className="font-black">Sohbetler</h2>
-          <p className="text-xs text-zinc-500">
-            {conversations.length} görüşme
-          </p>
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
+          <div>
+            <h2 className="font-black">Sohbetler</h2>
+            <p className="text-xs text-zinc-500">
+              {conversations.length} görüşme
+            </p>
+          </div>
+          <div className="text-right">
+            <div
+              className="flex rounded-full bg-zinc-100 p-1 text-[11px] font-black"
+              aria-label="AI Modu"
+            >
+              <button
+                type="button"
+                onClick={() => void setGlobalAi(true)}
+                disabled={!aiConfigured}
+                className={`rounded-full px-2 py-1.5 ${aiEnabled ? "bg-emerald-600 text-white" : "text-zinc-500"}`}
+              >
+                ● Açık
+              </button>
+              <button
+                type="button"
+                onClick={() => void setGlobalAi(false)}
+                disabled={!aiConfigured}
+                className={`rounded-full px-2 py-1.5 ${!aiEnabled ? "bg-zinc-700 text-white" : "text-zinc-500"}`}
+              >
+                ● Kapalı
+              </button>
+            </div>
+            {!aiConfigured ? (
+              <p className="mt-1 text-[9px] font-bold text-amber-600">
+                AI yapılandırması bekleniyor
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="max-h-[220px] overflow-y-auto p-2 lg:max-h-[560px]">
           {conversations.map((item) => (
@@ -274,9 +349,22 @@ export function AdminLiveChat() {
       <section className="flex min-h-[500px] min-w-0 flex-col">
         {selected ? (
           <>
-            <header className="border-b border-zinc-200 p-4">
-              <h2 className="font-black">{selected.customer_name}</h2>
-              <p className="text-xs text-emerald-600">Canlı destek görüşmesi</p>
+            <header className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
+              <div>
+                <h2 className="font-black">{selected.customer_name}</h2>
+                <p className="text-xs text-emerald-600">
+                  {aiEnabled && selected.ai_active
+                    ? "AI destekli canlı görüşme"
+                    : "Yalnızca müşteri temsilcisi"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void setConversationAi(!selected.ai_active)}
+                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-black ${selected.ai_active ? "bg-zinc-950 text-white" : "bg-violet-600 text-white"}`}
+              >
+                {selected.ai_active ? "Sohbeti Devral" : "AI'ya Devret"}
+              </button>
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4">
               {messages.map((item, index) => {
@@ -293,7 +381,7 @@ export function AdminLiveChat() {
                       </div>
                     ) : null}
                     <div
-                      className={`mb-2 max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%] ${item.sender === "admin" ? "ml-auto rounded-br-md bg-red-600 text-white" : "rounded-bl-md bg-white text-zinc-900"}`}
+                      className={`mb-2 max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%] ${item.sender === "admin" ? "ml-auto rounded-br-md bg-red-600 text-white" : item.sender === "ai" ? "ml-auto rounded-br-md bg-violet-600 text-white" : "rounded-bl-md bg-white text-zinc-900"}`}
                     >
                       {item.attachment_url ? (
                         <a
@@ -314,14 +402,23 @@ export function AdminLiveChat() {
                       <p className="whitespace-pre-wrap break-words">
                         {item.body}
                       </p>
+                      {item.sender === "ai" ? (
+                        <p className="mt-1 text-[10px] font-bold text-violet-100">
+                          AI tarafından oluşturuldu
+                        </p>
+                      ) : item.sender === "admin" ? (
+                        <p className="mt-1 text-[10px] font-bold text-red-100">
+                          Admin yanıtı
+                        </p>
+                      ) : null}
                       <p
-                        className={`mt-1 text-right text-[10px] ${item.sender === "admin" ? "text-red-100" : "text-zinc-400"}`}
+                        className={`mt-1 text-right text-[10px] ${item.sender === "admin" ? "text-red-100" : item.sender === "ai" ? "text-violet-100" : "text-zinc-400"}`}
                       >
                         {new Date(item.created_at).toLocaleTimeString("tr-TR", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                        {item.sender === "admin"
+                        {item.sender !== "customer"
                           ? ` · ${item.read_at ? "✓✓ Okundu" : "✓ Gönderildi"}`
                           : ""}
                       </p>

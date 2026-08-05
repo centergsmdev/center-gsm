@@ -111,7 +111,7 @@ export function LiveChatWidget() {
       .on("broadcast", { event: "message" }, () => void loadChat())
       .on("broadcast", { event: "read" }, () => void loadChat())
       .on("broadcast", { event: "typing" }, ({ payload }) => {
-        if (payload?.role !== "admin") return;
+        if (payload?.role !== "admin" && payload?.role !== "ai") return;
         setAdminTyping(Boolean(payload.typing));
       })
       .subscribe();
@@ -189,6 +189,11 @@ export function LiveChatWidget() {
       setConversation(data.conversation);
       setMessages((current) => [...current, data.message!]);
       setMessage("");
+      void fetch("/api/live-chat/ai", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, messageId: data.message.id }),
+      });
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "Mesaj gönderilemedi.",
@@ -299,6 +304,11 @@ export function LiveChatWidget() {
                       <p className="whitespace-pre-wrap break-words">
                         {item.body}
                       </p>
+                      {item.sender === "ai" ? (
+                        <p className="mt-1 text-[10px] font-bold text-zinc-500">
+                          CENTER GSM AI tarafından oluşturuldu
+                        </p>
+                      ) : null}
                       <p
                         className={`mt-1 text-right text-[10px] ${item.sender === "customer" ? "text-red-100" : "text-zinc-400"}`}
                       >

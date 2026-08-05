@@ -110,6 +110,7 @@ export type LiveChatConversation = {
   visitor_token: string;
   customer_name: string;
   status: "open" | "closed";
+  ai_active: boolean;
   last_message_at: string;
   created_at: string;
   updated_at: string;
@@ -117,13 +118,19 @@ export type LiveChatConversation = {
 export type LiveChatMessage = {
   id: string;
   conversation_id: string;
-  sender: "customer" | "admin";
+  sender: "customer" | "admin" | "ai";
   body: string;
   attachment_path: string | null;
   attachment_name: string | null;
   attachment_mime: string | null;
   read_at: string | null;
+  reply_to_message_id: string | null;
   created_at: string;
+};
+export type LiveChatSettings = {
+  id: boolean;
+  ai_enabled: boolean;
+  updated_at: string;
 };
 type Profile = Timestamps & {
   id: string;
@@ -1034,6 +1041,7 @@ export type Database = {
           Pick<LiveChatMessage, "conversation_id" | "sender" | "body">,
         Partial<LiveChatMessage>
       >;
+      live_chat_settings: Table<LiveChatSettings>;
       product_images: Table<
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">

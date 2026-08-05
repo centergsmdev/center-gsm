@@ -122,7 +122,7 @@ export async function PATCH(request: Request) {
     .from("live_chat_messages")
     .update({ read_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
-    .eq("sender", "admin")
+    .in("sender", ["admin", "ai"])
     .is("read_at", null);
   if (updated.error) return error("Okundu bilgisi güncellenemedi.", 500);
   return NextResponse.json({ ok: true });
