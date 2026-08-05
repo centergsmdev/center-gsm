@@ -101,6 +101,7 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   const [saving, setSaving] = useState(false);
   const [imageUploadProgress, setImageUploadProgress] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [variantsDirty, setVariantsDirty] = useState(false);
   const previewDescription = useMemo(
     () => sanitizeRichText(form.description),
     [form.description],
@@ -193,6 +194,13 @@ export function AdminProductForm({ productId }: { productId?: string }) {
   };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (
+      variantsDirty &&
+      !window.confirm(
+        "Kaydedilmemiş varyant değişiklikleri var. Ürün bilgilerini varyantları kaydetmeden yayınlamak istiyor musunuz?",
+      )
+    )
+      return;
     setPageError("");
     setSaved(false);
     if (!validate()) return;
@@ -497,7 +505,10 @@ export function AdminProductForm({ productId }: { productId?: string }) {
           title="Varyantlar"
           description="Renk, depolama, fiyat, stok ve renk bazlı ortak görselleri yönetin. Varyant kullanımı isteğe bağlıdır."
         >
-          <AdminProductVariants productId={currentProductId} />
+          <AdminProductVariants
+            productId={currentProductId}
+            onDirtyChange={setVariantsDirty}
+          />
         </AdminFormSection>
         <AdminFormSection
           title="SEO"

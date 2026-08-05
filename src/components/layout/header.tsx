@@ -5,6 +5,7 @@ import { CartHeaderAction } from "@/components/cart/cart-header-action";
 import { FavoritesHeaderAction } from "@/components/favorites/favorites-header-action";
 import { ComparisonHeaderAction } from "@/components/comparison/comparison-header-action";
 import { Container } from "@/components/ui/container";
+import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
 import { Divider } from "@/components/ui/divider";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
@@ -89,7 +90,7 @@ export async function Header() {
             {navigationCategories.map((category) => (
               <Link
                 key={category.slug}
-                href={`/kategori/${category.slug}`}
+                href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
                 className="shrink-0 rounded-sm text-sm font-medium text-zinc-600 transition-colors duration-200 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {category.name}

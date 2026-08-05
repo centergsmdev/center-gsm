@@ -12,6 +12,7 @@ import { Container } from "@/components/ui/container";
 export function Hero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const slides = [
     {
       kicker: "Premium teknoloji seçkisi",
@@ -43,7 +44,15 @@ export function Hero() {
     useState(false);
 
   useEffect(() => {
-    if (paused) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setPrefersReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (paused || prefersReducedMotion) return;
 
     const timeout = window.setTimeout(
       () => {
@@ -54,7 +63,13 @@ export function Hero() {
     );
 
     return () => window.clearTimeout(timeout);
-  }, [activeSlide, initialTransitionComplete, paused, slides.length]);
+  }, [
+    activeSlide,
+    initialTransitionComplete,
+    paused,
+    prefersReducedMotion,
+    slides.length,
+  ]);
 
   return (
     <section

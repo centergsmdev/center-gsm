@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
+import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
 import { SectionTitle } from "@/components/ui/section-title";
 import { getCategories } from "@/lib/catalog/data";
 import {
@@ -81,7 +82,7 @@ export async function Categories() {
               <AnimatedCard key={category.id} className="h-full">
                 <Card className="home-premium-surface group h-full overflow-hidden border-zinc-200/80 bg-white">
                   <Link
-                    href={`/kategori/${category.slug}`}
+                    href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
                     className="flex h-full min-h-64 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
                   >
                     <span className="relative block min-h-40 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">

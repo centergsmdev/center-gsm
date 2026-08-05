@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   ImageIcon,
@@ -38,7 +38,34 @@ import type { Tables } from "@/types/database";
 
 const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
-export function AdminProductVariants({ productId }: { productId?: string }) {
+type AdminProductVariantsProps = {
+  productId?: string;
+  onDirtyChange?: (dirty: boolean) => void;
+};
+
+function variantSnapshot(
+  colors: VariantColorDraft[],
+  variants: VariantDraft[],
+  storages: VariantStorageOption[],
+  pendingImages: Record<string, PendingProductImage[]>,
+) {
+  return JSON.stringify({
+    colors,
+    variants,
+    storages,
+    pendingImages: Object.fromEntries(
+      Object.entries(pendingImages).map(([colorId, files]) => [
+        colorId,
+        files.map((item) => ({ name: item.file.name, size: item.file.size })),
+      ]),
+    ),
+  });
+}
+
+export function AdminProductVariants({
+  productId,
+  onDirtyChange,
+}: AdminProductVariantsProps) {
   const [colors, setColors] = useState<VariantColorDraft[]>([]);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [images, setImages] = useState<Tables<"product_images">[]>([]);
@@ -56,36 +83,94 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
   const [bulkValue, setBulkValue] = useState("18");
   const [discountPreset, setDiscountPreset] = useState("10");
   const [showPreview, setShowPreview] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [baseline, setBaseline] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!productId) return;
+    setLoading(true);
+    setLoadError("");
+    let result: Awaited<ReturnType<typeof getAdminVariantSetup>>;
+    try {
+      result = await getAdminVariantSetup(productId);
+    } catch {
+      setLoadError("Varyant bilgileri yüklenemedi. Lütfen tekrar deneyin.");
+      setLoading(false);
+      return;
+    }
+    if (!result.data) {
+      setLoadError(result.error || "Varyant bilgileri yüklenemedi.");
+      setLoading(false);
+      return;
+    }
+    const loadedVariants = result.data.variants.map(toVariantDraft);
+    const loadedStorages = [
+      ...new Map(
+        result.data.variants.flatMap((variant) =>
+          variant.storage_value && variant.storage_unit
+            ? [
+                [
+                  `${variant.storage_value}-${variant.storage_unit}`,
+                  {
+                    value: variant.storage_value,
+                    unit: variant.storage_unit,
+                  },
+                ],
+              ]
+            : [],
+        ),
+      ).values(),
+    ];
+    setColors(result.data.colors);
+    setVariants(loadedVariants);
+    setImages(result.data.images);
+    setStorages(loadedStorages);
+    setPendingImagesByColor({});
+    setBaseline(
+      variantSnapshot(result.data.colors, loadedVariants, loadedStorages, {}),
+    );
+    setMessage("");
+    setLoading(false);
+  }, [productId]);
 
   useEffect(() => {
-    if (!productId) return;
-    void getAdminVariantSetup(productId).then((result) => {
-      if (!result.data) setMessage(result.error);
-      else {
-        setColors(result.data.colors);
-        setVariants(result.data.variants.map(toVariantDraft));
-        setImages(result.data.images);
-        setStorages([
-          ...new Map(
-            result.data.variants.flatMap((variant) =>
-              variant.storage_value && variant.storage_unit
-                ? [
-                    [
-                      `${variant.storage_value}-${variant.storage_unit}`,
-                      {
-                        value: variant.storage_value,
-                        unit: variant.storage_unit,
-                      },
-                    ],
-                  ]
-                : [],
-            ),
-          ).values(),
-        ]);
+    void load();
+  }, [load]);
+
+  const currentSnapshot = useMemo(
+    () => variantSnapshot(colors, variants, storages, pendingImagesByColor),
+    [colors, pendingImagesByColor, storages, variants],
+  );
+  const dirty = baseline !== null && baseline !== currentSnapshot;
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    const confirmNavigation = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest("a[href]");
+      if (
+        link &&
+        !window.confirm(
+          "Kaydedilmemiş varyant değişiklikleri silinecek. Sayfadan ayrılmak istiyor musunuz?",
+        )
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
       }
-      setLoading(false);
-    });
-  }, [productId]);
+    };
+    window.addEventListener("beforeunload", warn);
+    document.addEventListener("click", confirmNavigation, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", confirmNavigation, true);
+    };
+  }, [dirty]);
 
   const addColor = () =>
     setColors((current) => [
@@ -179,8 +264,10 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
     [colors, variants],
   );
   const save = async () => {
-    if (!productId || validationError)
-      return setMessage(validationError || "Önce ürünü kaydedin.");
+    if (!productId || loadError || baseline === null || validationError)
+      return setMessage(
+        loadError || validationError || "Önce varyant bilgilerini yükleyin.",
+      );
     setSaving(true);
     const normalizedVariants = variants.map(normalizeVariantDraft);
     const result = await saveAdminVariantSetup(
@@ -221,6 +308,9 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
     if (uploadedImages.length)
       setImages((current) => [...current, ...uploadedImages]);
     setPendingImagesByColor({});
+    setBaseline(
+      variantSnapshot(result.data.colors, result.data.variants, storages, {}),
+    );
     setSaving(false);
     setMessage(
       uploadedImages.length
@@ -237,6 +327,25 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
     );
   if (loading)
     return <div className="h-28 animate-pulse rounded-xl bg-zinc-100" />;
+  if (loadError)
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+        <p className="text-sm font-bold text-red-700" role="alert">
+          {loadError}
+        </p>
+        <p className="mt-1 text-xs leading-5 text-red-600">
+          Mevcut varyantlar korunuyor. Bilgiler yüklenmeden kayıt yapılamaz.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4"
+          onClick={() => void load()}
+        >
+          Tekrar dene
+        </Button>
+      </div>
+    );
 
   return (
     <div className="space-y-7">
@@ -504,7 +613,12 @@ export function AdminProductVariants({ productId }: { productId?: string }) {
         <Button
           type="button"
           onClick={() => void save()}
-          disabled={saving || Boolean(validationError)}
+          disabled={
+            saving ||
+            Boolean(loadError) ||
+            baseline === null ||
+            Boolean(validationError)
+          }
         >
           <Save className="size-4" />
           {saving ? "Kaydediliyor…" : "Varyantları kaydet"}

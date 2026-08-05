@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight, Grid2X2, Menu, Sparkles, X } from "lucide-react";
+import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
 
 type NavigationCategory = { name: string; slug: string };
 
@@ -15,19 +16,61 @@ export function MobileNavigation({
 }) {
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
+    const triggerButton = triggerButtonRef.current;
+    const portal = document.querySelector<HTMLElement>(
+      "[data-mobile-navigation-portal]",
+    );
+    const backgroundElements = [...document.body.children].filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && element !== portal,
+    );
+    const previousBackgroundState = backgroundElements.map((element) => ({
+      element,
+      inert: element.inert,
+      ariaHidden: element.getAttribute("aria-hidden"),
+    }));
     document.body.style.overflow = "hidden";
+    backgroundElements.forEach((element) => {
+      element.inert = true;
+      element.setAttribute("aria-hidden", "true");
+    });
     closeButtonRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
+      previousBackgroundState.forEach(({ element, inert, ariaHidden }) => {
+        element.inert = inert;
+        if (ariaHidden === null) element.removeAttribute("aria-hidden");
+        else element.setAttribute("aria-hidden", ariaHidden);
+      });
+      window.removeEventListener("keydown", handleKeyDown);
+      triggerButton?.focus();
     };
   }, [open]);
 
@@ -36,6 +79,7 @@ export function MobileNavigation({
   return (
     <div className="lg:hidden">
       <button
+        ref={triggerButtonRef}
         type="button"
         aria-label={open ? "Ana menüyü kapat" : "Ana menüyü aç"}
         aria-expanded={open}
@@ -59,7 +103,10 @@ export function MobileNavigation({
         ? createPortal(
             <AnimatePresence>
               {open ? (
-                <div className="fixed inset-0 z-modal lg:hidden">
+                <div
+                  data-mobile-navigation-portal
+                  className="fixed inset-0 z-modal lg:hidden"
+                >
                   <motion.button
                     type="button"
                     aria-label="Mobil menüyü kapat"
@@ -72,7 +119,10 @@ export function MobileNavigation({
                   />
 
                   <motion.nav
+                    ref={panelRef}
                     id="mobile-navigation"
+                    role="dialog"
+                    aria-modal="true"
                     aria-label="Mobil ürün kategorileri"
                     className="absolute inset-y-0 left-0 flex w-[min(88vw,360px)] flex-col overflow-hidden rounded-r-[28px] border-r border-white/10 bg-white shadow-[24px_0_80px_rgba(0,0,0,0.24)]"
                     initial={{ x: "-100%" }}
@@ -143,7 +193,7 @@ export function MobileNavigation({
                             }}
                           >
                             <Link
-                              href={`/kategori/${category.slug}`}
+                              href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
                               onClick={close}
                               className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
