@@ -105,6 +105,22 @@ type ProductVariant = Timestamps & {
   sort_order: number;
   is_default: boolean;
 };
+export type LiveChatConversation = {
+  id: string;
+  visitor_token: string;
+  customer_name: string;
+  status: "open" | "closed";
+  last_message_at: string;
+  created_at: string;
+  updated_at: string;
+};
+export type LiveChatMessage = {
+  id: string;
+  conversation_id: string;
+  sender: "customer" | "admin";
+  body: string;
+  created_at: string;
+};
 type Profile = Timestamps & {
   id: string;
   first_name: string | null;
@@ -1002,6 +1018,16 @@ export type Database = {
         Partial<ProductReview> &
           Pick<ProductReview, "product_id" | "author_name" | "rating" | "body">,
         Partial<ProductReview>
+      >;
+      live_chat_conversations: Table<
+        LiveChatConversation,
+        Partial<LiveChatConversation> &
+          Pick<LiveChatConversation, "visitor_token" | "customer_name">
+      >;
+      live_chat_messages: Table<
+        LiveChatMessage,
+        Partial<LiveChatMessage> &
+          Pick<LiveChatMessage, "conversation_id" | "sender" | "body">
       >;
       product_images: Table<
         ProductImage,

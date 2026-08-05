@@ -21,6 +21,7 @@ import {
   Gift,
   FileCheck2,
   MessageSquareText,
+  MessagesSquare,
   Users,
   Warehouse,
   Webhook,
@@ -53,6 +54,7 @@ export const adminNavigation = [
   { label: "Depolar", href: "/admin/depolar", icon: Warehouse },
   { label: "Siparişler", href: "/admin/siparisler", icon: ShoppingBag },
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
+  { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
   { label: "Ürün Yorumları", href: "/admin/yorumlar", icon: MessageSquareText },
   { label: "İadeler", href: "/admin/iadeler", icon: RotateCcw },
   { label: "Sadakat", href: "/admin/sadakat", icon: Award },
@@ -168,6 +170,10 @@ export const adminPageTitles: Record<
     title: "Dekontlar",
     description:
       "Havale ve EFT siparişlerine ait ödeme dekontlarını inceleyin.",
+  },
+  "/admin/canli-destek": {
+    title: "Canlı Destek",
+    description: "Müşteri sohbetlerini görüntüleyin ve yanıtlayın.",
   },
   "/admin/yorumlar": {
     title: "Ürün Yorumları",
