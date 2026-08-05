@@ -404,7 +404,7 @@ export function LiveChatWidget() {
                 placeholder="Adınız"
                 maxLength={80}
                 required
-                className="h-10 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-red-500"
+                className="h-10 w-full rounded-xl border border-zinc-200 px-3 text-base outline-none focus:border-red-500 sm:text-sm"
               />
             ) : null}
             {emojiOpen ? (
@@ -463,7 +463,7 @@ export function LiveChatWidget() {
                 placeholder="Mesajınızı yazın…"
                 maxLength={2000}
                 rows={2}
-                className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-500"
+                className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-zinc-200 px-3 py-2 text-base outline-none focus:border-red-500 sm:text-sm"
               />
               <button
                 type="submit"
