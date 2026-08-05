@@ -61,12 +61,11 @@ export async function POST(request: Request) {
 
   const channel = client.channel(`live-chat:${token}`);
   await channel.httpSend("typing", { role: "ai", typing: true });
-  const answer = await createAiAnswer(source.data.body, history.data);
-  if (!answer) {
-    await channel.httpSend("typing", { role: "ai", typing: false });
-    await client.removeChannel(channel);
-    return quiet();
-  }
+  const answer = await createAiAnswer(
+    source.data.body,
+    history.data,
+    conversation.data.id,
+  );
 
   const [latestConversation, latestSettings] = await Promise.all([
     client
