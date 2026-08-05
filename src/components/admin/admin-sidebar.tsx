@@ -35,7 +35,7 @@ export function AdminSidebar({
     };
     void loadUnread();
     const channel = client
-      .channel("admin-live-chat-badge")
+      .channel(`admin-live-chat-badge:${mobile ? "mobile" : "desktop"}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "live_chat_messages" },
@@ -45,7 +45,7 @@ export function AdminSidebar({
     return () => {
       void client.removeChannel(channel);
     };
-  }, []);
+  }, [mobile]);
   const content = (
     <aside
       className={cn(
