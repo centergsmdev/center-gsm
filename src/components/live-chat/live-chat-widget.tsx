@@ -36,6 +36,7 @@ function dayLabel(value: string) {
 
 export function LiveChatWidget() {
   const pathname = usePathname();
+  const isAdminPage = pathname.startsWith("/admin");
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
@@ -83,6 +84,7 @@ export function LiveChatWidget() {
   }, [open, token]);
 
   useEffect(() => {
+    if (isAdminPage) return;
     let storedToken = window.localStorage.getItem(TOKEN_KEY);
     if (!storedToken) {
       storedToken = crypto.randomUUID();
@@ -90,10 +92,10 @@ export function LiveChatWidget() {
     }
     setToken(storedToken);
     setName(window.localStorage.getItem(NAME_KEY) ?? "");
-  }, []);
+  }, [isAdminPage]);
 
   useEffect(() => {
-    if (!open || !token) return;
+    if (isAdminPage || !open || !token) return;
     void loadChat().catch((reason: unknown) =>
       setError(
         reason instanceof Error
@@ -101,9 +103,10 @@ export function LiveChatWidget() {
           : "Sohbet geçmişi yüklenemedi.",
       ),
     );
-  }, [loadChat, open, token]);
+  }, [isAdminPage, loadChat, open, token]);
 
   useEffect(() => {
+    if (isAdminPage) return;
     const client = createClient();
     if (!client || !token) return;
     const channel = client
@@ -120,9 +123,10 @@ export function LiveChatWidget() {
       chatChannelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [loadChat, token]);
+  }, [isAdminPage, loadChat, token]);
 
   useEffect(() => {
+    if (isAdminPage) return;
     const client = createClient();
     if (!client) return;
     const channel = client
@@ -139,7 +143,7 @@ export function LiveChatWidget() {
       })
       .subscribe();
     return () => void client.removeChannel(channel);
-  }, [token]);
+  }, [isAdminPage, token]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -238,7 +242,7 @@ export function LiveChatWidget() {
     }
   }
 
-  if (pathname.startsWith("/admin")) return null;
+  if (isAdminPage) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-dropdown sm:bottom-6 sm:right-6">
