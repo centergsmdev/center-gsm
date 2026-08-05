@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { adminNavigation } from "@/data/admin/navigation";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
+import { createClient } from "@/lib/supabase/client";
 
 export function AdminSidebar({
   mobile = false,
@@ -18,6 +20,32 @@ export function AdminSidebar({
 }) {
   const pathname = usePathname();
   const { logout } = useAdminAuth();
+  const [unreadChats, setUnreadChats] = useState(0);
+
+  useEffect(() => {
+    const client = createClient();
+    if (!client) return;
+    const loadUnread = async () => {
+      const result = await client
+        .from("live_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("sender", "customer")
+        .is("read_at", null);
+      if (!result.error) setUnreadChats(result.count ?? 0);
+    };
+    void loadUnread();
+    const channel = client
+      .channel("admin-live-chat-badge")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "live_chat_messages" },
+        () => void loadUnread(),
+      )
+      .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, []);
   const content = (
     <aside
       className={cn(
@@ -85,6 +113,16 @@ export function AdminSidebar({
               <span className={cn(!mobile && "hidden lg:block")}>
                 {item.label}
               </span>
+              {item.href === "/admin/canli-destek" && unreadChats > 0 ? (
+                <span
+                  className={cn(
+                    "ml-auto grid size-6 place-items-center rounded-full bg-white text-xs font-black text-red-600",
+                    !mobile && "hidden lg:grid",
+                  )}
+                >
+                  {unreadChats > 99 ? "99+" : unreadChats}
+                </span>
+              ) : null}
             </Link>
           );
         })}

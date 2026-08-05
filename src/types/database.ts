@@ -119,6 +119,10 @@ export type LiveChatMessage = {
   conversation_id: string;
   sender: "customer" | "admin";
   body: string;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_mime: string | null;
+  read_at: string | null;
   created_at: string;
 };
 type Profile = Timestamps & {
@@ -1027,7 +1031,8 @@ export type Database = {
       live_chat_messages: Table<
         LiveChatMessage,
         Partial<LiveChatMessage> &
-          Pick<LiveChatMessage, "conversation_id" | "sender" | "body">
+          Pick<LiveChatMessage, "conversation_id" | "sender" | "body">,
+        Partial<LiveChatMessage>
       >;
       product_images: Table<
         ProductImage,

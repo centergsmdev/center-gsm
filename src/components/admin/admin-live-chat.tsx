@@ -1,54 +1,142 @@
 "use client";
 
-import { MessageCircle, Send } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { MessageCircle, Send, Smile } from "lucide-react";
+import Image from "next/image";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
+
+const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
+type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
+
+function dayLabel(value: string) {
+  const date = new Date(value);
+  const today = new Date();
+  return date.toDateString() === today.toDateString()
+    ? "Bugün"
+    : date.toLocaleDateString("tr-TR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+}
 
 export function AdminLiveChat() {
   const [conversations, setConversations] = useState<LiveChatConversation[]>(
     [],
   );
+  const [unread, setUnread] = useState<Record<string, number>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<LiveChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [reply, setReply] = useState("");
   const [error, setError] = useState("");
+  const [customerTyping, setCustomerTyping] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef(0);
   const selected = useMemo(
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
   );
 
-  async function loadConversations() {
+  const loadConversations = useCallback(async () => {
     const client = createClient();
     if (!client) return setError("Supabase bağlantısı bulunamadı.");
-    const result = await client
-      .from("live_chat_conversations")
-      .select("*")
-      .order("last_message_at", { ascending: false });
-    if (result.error) return setError("Sohbetler yüklenemedi.");
-    setConversations(result.data);
-    setSelectedId((current) => current ?? result.data[0]?.id ?? null);
-  }
+    const [conversationResult, unreadResult] = await Promise.all([
+      client
+        .from("live_chat_conversations")
+        .select("*")
+        .order("last_message_at", { ascending: false }),
+      client
+        .from("live_chat_messages")
+        .select("conversation_id")
+        .eq("sender", "customer")
+        .is("read_at", null),
+    ]);
+    if (conversationResult.error || unreadResult.error)
+      return setError("Sohbetler yüklenemedi.");
+    const counts = unreadResult.data.reduce<Record<string, number>>(
+      (current, item) => {
+        current[item.conversation_id] =
+          (current[item.conversation_id] ?? 0) + 1;
+        return current;
+      },
+      {},
+    );
+    setUnread(counts);
+    setConversations(
+      [...conversationResult.data].sort((a, b) => {
+        const unreadDifference =
+          Number(Boolean(counts[b.id])) - Number(Boolean(counts[a.id]));
+        return (
+          unreadDifference ||
+          new Date(b.last_message_at).getTime() -
+            new Date(a.last_message_at).getTime()
+        );
+      }),
+    );
+    setSelectedId(
+      (current) => current ?? conversationResult.data[0]?.id ?? null,
+    );
+  }, []);
 
-  async function loadMessages(conversationId: string) {
-    const client = createClient();
-    if (!client) return;
-    const result = await client
-      .from("live_chat_messages")
-      .select("*")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
-    if (result.error) return setError("Mesajlar yüklenemedi.");
-    setMessages(result.data);
-  }
+  const loadMessages = useCallback(
+    async (conversationId: string) => {
+      const client = createClient();
+      if (!client) return;
+      const result = await client
+        .from("live_chat_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+      if (result.error) return setError("Mesajlar yüklenemedi.");
+      const withUrls = await Promise.all(
+        result.data.map(async (message) => {
+          if (!message.attachment_path) return message;
+          const signed = await client.storage
+            .from("live-chat-images")
+            .createSignedUrl(message.attachment_path, 3600);
+          return { ...message, attachment_url: signed.data?.signedUrl ?? null };
+        }),
+      );
+      setMessages(withUrls);
+      const read = await client
+        .from("live_chat_messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("conversation_id", conversationId)
+        .eq("sender", "customer")
+        .is("read_at", null);
+      if (!read.error) {
+        setUnread((current) => ({ ...current, [conversationId]: 0 }));
+        const conversation = conversations.find(
+          (item) => item.id === conversationId,
+        );
+        if (conversation) {
+          const channel = client.channel(
+            `live-chat:${conversation.visitor_token}`,
+          );
+          await channel.httpSend("read", { role: "admin" });
+          await client.removeChannel(channel);
+        }
+      }
+    },
+    [conversations],
+  );
 
   useEffect(() => {
     void loadConversations();
     const client = createClient();
     if (!client) return;
     const channel = client
-      .channel("admin-live-chat")
+      .channel("admin-live-chat-events")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "live_chat_conversations" },
@@ -56,28 +144,74 @@ export function AdminLiveChat() {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "live_chat_messages" },
+        { event: "*", schema: "public", table: "live_chat_messages" },
         (payload) => {
           const incoming = payload.new as LiveChatMessage;
-          if (incoming.conversation_id === selectedId)
-            setMessages((current) =>
-              current.some((item) => item.id === incoming.id)
-                ? current
-                : [...current, incoming],
-            );
+          if (incoming?.conversation_id === selectedId)
+            void loadMessages(selectedId);
           void loadConversations();
         },
       )
       .subscribe();
-    return () => {
-      void client.removeChannel(channel);
-    };
-  }, [selectedId]);
+    return () => void client.removeChannel(channel);
+  }, [loadConversations, loadMessages, selectedId]);
 
   useEffect(() => {
-    if (selectedId) void loadMessages(selectedId);
-    else setMessages([]);
-  }, [selectedId]);
+    const client = createClient();
+    if (!client) return;
+    const presence = client.channel("live-chat-support", {
+      config: { presence: { key: "admin-support" } },
+    });
+    presence.subscribe(async (status) => {
+      if (status === "SUBSCRIBED")
+        await presence.track({
+          role: "admin",
+          online_at: new Date().toISOString(),
+        });
+    });
+    return () => void client.removeChannel(presence);
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setMessages([]);
+      return;
+    }
+    void loadMessages(selected.id);
+    const client = createClient();
+    if (!client) return;
+    const channel = client
+      .channel(`live-chat:${selected.visitor_token}`)
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (payload?.role === "customer")
+          setCustomerTyping(Boolean(payload.typing));
+      })
+      .on("broadcast", { event: "read" }, () => void loadMessages(selected.id))
+      .subscribe();
+    return () => void client.removeChannel(channel);
+  }, [loadMessages, selected]);
+
+  function publishTyping(value: string) {
+    setReply(value);
+    if (!selected) return;
+    const client = createClient();
+    if (!client) return;
+    const now = Date.now();
+    if (now - lastTypingSent.current > 900) {
+      lastTypingSent.current = now;
+      void client
+        .channel(`live-chat:${selected.visitor_token}`)
+        .httpSend("typing", { role: "admin", typing: true });
+    }
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(
+      () =>
+        void client
+          .channel(`live-chat:${selected.visitor_token}`)
+          .httpSend("typing", { role: "admin", typing: false }),
+      1400,
+    );
+  }
 
   async function sendReply(event: FormEvent) {
     event.preventDefault();
@@ -96,36 +230,40 @@ export function AdminLiveChat() {
     setReply("");
     const channel = client.channel(`live-chat:${selected.visitor_token}`);
     await channel.httpSend("message", result.data);
+    await channel.httpSend("typing", { role: "admin", typing: false });
     await client.removeChannel(channel);
   }
 
   return (
     <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:grid-cols-[340px_1fr]">
-      <aside className="border-b border-zinc-200 lg:border-b-0 lg:border-r">
+      <aside className="max-h-72 border-b border-zinc-200 lg:max-h-none lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-200 p-4">
           <h2 className="font-black">Sohbetler</h2>
           <p className="text-xs text-zinc-500">
             {conversations.length} görüşme
           </p>
         </div>
-        <div className="max-h-[560px] overflow-y-auto p-2">
+        <div className="max-h-[220px] overflow-y-auto p-2 lg:max-h-[560px]">
           {conversations.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setSelectedId(item.id)}
-              className={`mb-1 w-full rounded-xl p-3 text-left ${
-                item.id === selectedId
-                  ? "bg-zinc-950 text-white"
-                  : "hover:bg-zinc-50"
-              }`}
+              className={`mb-1 flex w-full items-center justify-between rounded-xl p-3 text-left ${item.id === selectedId ? "bg-zinc-950 text-white" : "hover:bg-zinc-50"}`}
             >
-              <span className="block truncate text-sm font-bold">
-                {item.customer_name}
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold">
+                  {item.customer_name}
+                </span>
+                <span className="mt-1 block text-xs opacity-60">
+                  {new Date(item.last_message_at).toLocaleString("tr-TR")}
+                </span>
               </span>
-              <span className="mt-1 block text-xs opacity-60">
-                {new Date(item.last_message_at).toLocaleString("tr-TR")}
-              </span>
+              {unread[item.id] ? (
+                <span className="ml-2 grid size-6 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-bold text-white">
+                  {unread[item.id]}
+                </span>
+              ) : null}
             </button>
           ))}
           {!conversations.length ? (
@@ -138,34 +276,100 @@ export function AdminLiveChat() {
           <>
             <header className="border-b border-zinc-200 p-4">
               <h2 className="font-black">{selected.customer_name}</h2>
-              <p className="text-xs text-zinc-500">Canlı destek görüşmesi</p>
+              <p className="text-xs text-emerald-600">Canlı destek görüşmesi</p>
             </header>
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
-              {messages.map((item) => (
-                <div
-                  key={item.id}
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                    item.sender === "admin"
-                      ? "ml-auto bg-red-600 text-white"
-                      : "bg-zinc-100 text-zinc-900"
-                  }`}
-                >
-                  {item.body}
-                </div>
-              ))}
+            <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4">
+              {messages.map((item, index) => {
+                const previous = messages[index - 1];
+                const showDay =
+                  !previous ||
+                  new Date(previous.created_at).toDateString() !==
+                    new Date(item.created_at).toDateString();
+                return (
+                  <div key={item.id}>
+                    {showDay ? (
+                      <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
+                        {dayLabel(item.created_at)}
+                      </div>
+                    ) : null}
+                    <div
+                      className={`mb-2 max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%] ${item.sender === "admin" ? "ml-auto rounded-br-md bg-red-600 text-white" : "rounded-bl-md bg-white text-zinc-900"}`}
+                    >
+                      {item.attachment_url ? (
+                        <a
+                          href={item.attachment_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Image
+                            src={item.attachment_url}
+                            alt={item.attachment_name ?? "Müşteri görseli"}
+                            width={800}
+                            height={600}
+                            unoptimized
+                            className="mb-2 max-h-80 w-full rounded-xl object-contain"
+                          />
+                        </a>
+                      ) : null}
+                      <p className="whitespace-pre-wrap break-words">
+                        {item.body}
+                      </p>
+                      <p
+                        className={`mt-1 text-right text-[10px] ${item.sender === "admin" ? "text-red-100" : "text-zinc-400"}`}
+                      >
+                        {new Date(item.created_at).toLocaleTimeString("tr-TR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        {item.sender === "admin"
+                          ? ` · ${item.read_at ? "✓✓ Okundu" : "✓ Gönderildi"}`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              {customerTyping ? (
+                <p className="text-xs font-semibold text-zinc-500">
+                  Müşteri yazıyor...
+                </p>
+              ) : null}
             </div>
             <form onSubmit={sendReply} className="border-t border-zinc-200 p-3">
+              {emojiOpen ? (
+                <div className="mb-2 flex gap-1 rounded-xl bg-zinc-100 p-2">
+                  {EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setReply((value) => value + emoji)}
+                      className="text-xl"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEmojiOpen((value) => !value)}
+                  className="grid size-12 shrink-0 place-items-center rounded-xl border border-zinc-200"
+                  aria-label="Emoji ekle"
+                >
+                  <Smile className="size-4" />
+                </button>
                 <textarea
                   value={reply}
-                  onChange={(event) => setReply(event.target.value)}
+                  onChange={(event) => publishTyping(event.target.value)}
                   placeholder="Cevabınızı yazın…"
                   maxLength={2000}
                   rows={2}
                   className="min-w-0 flex-1 resize-none rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-red-500"
                 />
                 <button
-                  className="grid size-12 place-items-center self-end rounded-xl bg-red-600 text-white"
+                  disabled={!reply.trim()}
+                  className="grid size-12 shrink-0 place-items-center self-end rounded-xl bg-red-600 text-white disabled:opacity-50"
                   aria-label="Yanıt gönder"
                 >
                   <Send className="size-4" />
