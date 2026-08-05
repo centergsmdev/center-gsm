@@ -196,7 +196,7 @@ export function LiveChatWidget() {
       void fetch("/api/live-chat/ai", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token, messageId: data.message.id }),
+        body: JSON.stringify({ token, messageId: data.message.id, pathname }),
       });
     } catch (reason) {
       setError(

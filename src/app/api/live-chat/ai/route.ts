@@ -12,7 +12,7 @@ function quiet() {
 }
 
 export async function POST(request: Request) {
-  let payload: { token?: string; messageId?: string };
+  let payload: { token?: string; messageId?: string; pathname?: string };
   try {
     payload = (await request.json()) as typeof payload;
   } catch {
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
   }
   const token = payload.token?.trim() ?? "";
   const messageId = payload.messageId?.trim() ?? "";
+  const pathname = payload.pathname?.trim() ?? "";
   if (!isLiveChatToken(token) || !messageId) return quiet();
   const client = createServiceClient();
   if (!client) return quiet();
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
     source.data.body,
     history.data,
     conversation.data.id,
+    pathname,
   );
 
   const [latestConversation, latestSettings] = await Promise.all([
