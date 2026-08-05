@@ -9,6 +9,8 @@ export type PublicShippingCarrier = {
   logoUrl: string | null;
 };
 
+const INTERNAL_SHIPPING_PROVIDERS = new Set(["manual", "mock"]);
+
 export async function getPublicShippingCarriers(): Promise<
   PublicShippingCarrier[]
 > {
@@ -31,10 +33,15 @@ export async function getPublicShippingCarriers(): Promise<
     return [];
   }
 
-  return result.data.map((carrier) => ({
-    id: carrier.id,
-    name: carrier.name,
-    providerKey: carrier.provider_key,
-    logoUrl: carrier.logo_url?.trim() || null,
-  }));
+  return result.data
+    .filter(
+      (carrier) =>
+        !INTERNAL_SHIPPING_PROVIDERS.has(carrier.provider_key.toLowerCase()),
+    )
+    .map((carrier) => ({
+      id: carrier.id,
+      name: carrier.name,
+      providerKey: carrier.provider_key,
+      logoUrl: carrier.logo_url?.trim() || null,
+    }));
 }
