@@ -22,6 +22,9 @@ const SECURITY_PATTERNS = [
 
 const HANDOFF_PATTERNS = [
   /kesin.{0,12}(?:teslim|kargo|stok)/,
+  /(?:yarin|aksama kadar).{0,24}(?:stok|kalir|mevcut)/,
+  /(?:urun|bunu).{0,16}(?:ayir|rezerve)/,
+  /stok.{0,12}garanti/,
   /bugun.{0,20}kargoya.{0,12}(?:verilir|cikar)/,
   /ne zaman.{0,16}(?:gelir|ulasir|teslim)/,
   /(?:pazarlik|ozel indirim|indirim yap|kupon olustur)/,
@@ -48,6 +51,7 @@ const FORBIDDEN_OUTPUT =
 
 type AiProduct = {
   name: string;
+  sku: string;
   slug: string;
   description: string | null;
   price: number;
@@ -61,6 +65,7 @@ type AiProduct = {
   category: string;
   variants: Array<{
     name: string;
+    sku: string;
     price: number;
     old_price: number | null;
     stock_quantity: number;
@@ -70,6 +75,9 @@ type AiProduct = {
     attributes: unknown;
   }>;
 };
+
+type ProductContextResult =
+  { status: "ok"; products: AiProduct[] } | { status: "error"; products: [] };
 
 type CatalogProduct = AiProduct & { url: string };
 type GuardReason = "security" | "handoff" | "out_of_scope";
@@ -118,13 +126,15 @@ function plainText(value: string | null) {
     .slice(0, 700);
 }
 
-export async function loadAiProductContext(query: string) {
+async function loadAiProductContextResult(
+  query: string,
+): Promise<ProductContextResult> {
   const client = createPublicClient();
-  if (!client) return [];
+  if (!client) return { status: "error", products: [] };
   const index = await loadSmartSearchIndex(client);
-  if (!index) return [];
+  if (!index) return { status: "error", products: [] };
   const ids = smartProductIds(index, query).slice(0, 4);
-  if (!ids.length) return [];
+  if (!ids.length) return { status: "ok", products: [] };
   const [products, variants, colors, brands, categories] = await Promise.all([
     client.from("products").select("*").in("id", ids).eq("is_active", true),
     client
@@ -147,7 +157,7 @@ export async function loadAiProductContext(query: string) {
     brands.error ||
     categories.error
   )
-    return [];
+    return { status: "error", products: [] };
   const brandMap = new Map(brands.data.map((item) => [item.id, item.name]));
   const categoryMap = new Map(
     categories.data.map((item) => [item.id, item.name]),
@@ -155,12 +165,13 @@ export async function loadAiProductContext(query: string) {
   const colorMap = new Map(
     colors.data.map((item) => [item.id, item.display_name ?? item.name]),
   );
-  return ids.flatMap<AiProduct>((id) => {
+  const mapped = ids.flatMap<AiProduct>((id) => {
     const product = products.data.find((item) => item.id === id);
     if (!product) return [];
     return [
       {
         name: product.name,
+        sku: product.sku,
         slug: product.slug,
         description: plainText(product.description),
         price: product.price,
@@ -174,9 +185,9 @@ export async function loadAiProductContext(query: string) {
         category: categoryMap.get(product.category_id) ?? "",
         variants: variants.data
           .filter((variant) => variant.product_id === id)
-          .slice(0, 8)
           .map((variant) => ({
             name: variant.name,
+            sku: variant.sku,
             price: variant.price,
             old_price: variant.old_price,
             stock_quantity: variant.stock_quantity,
@@ -190,6 +201,11 @@ export async function loadAiProductContext(query: string) {
       },
     ];
   });
+  return { status: "ok", products: mapped };
+}
+
+export async function loadAiProductContext(query: string) {
+  return (await loadAiProductContextResult(query)).products;
 }
 
 function responseText(payload: unknown) {
@@ -349,6 +365,155 @@ function catalogQuery(customerMessage: string, history: LiveChatMessage[]) {
   return `${priorProductQuestion?.body ?? ""} ${customerMessage}`.trim();
 }
 
+const STOCK_NOT_FOUND_MESSAGE = "Bu isimle doğrulanabilir bir ürün bulamadım.";
+
+export function isCurrentStockQuestion(message: string) {
+  const normalized = normalizeForGuard(message);
+  return /(?:\bvar mi\b|\bstokta mi\b|\bmevcut mu\b|\bstok durumu\b)/.test(
+    normalized,
+  );
+}
+
+export function stockSearchQuery(message: string) {
+  return normalizeForGuard(message)
+    .replace(/\b(?:stokta mi|mevcut mu|var mi|stok durumu)\b/g, " ")
+    .replace(/\b(?:acaba|su anda|peki|olan|secenegi|modeli|urunu)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function previousCustomerQuery(
+  customerMessage: string,
+  history: LiveChatMessage[],
+) {
+  const currentIndex = history.findLastIndex(
+    (item) => item.sender === "customer" && item.body === customerMessage,
+  );
+  const candidates = history.slice(
+    0,
+    currentIndex < 0 ? undefined : currentIndex,
+  );
+  const previous = candidates
+    .reverse()
+    .find(
+      (item) =>
+        item.sender === "customer" &&
+        !guardAiRequest(item.body) &&
+        stockSearchQuery(item.body).length >= 3,
+    );
+  return previous ? stockSearchQuery(previous.body) : "";
+}
+
+function requestedStorage(message: string) {
+  const normalized = normalizeForGuard(message);
+  const withUnit = normalized.match(/\b(\d+)\s*(gb|tb)\b/);
+  if (withUnit)
+    return { value: Number(withUnit[1]), unit: withUnit[2].toUpperCase() };
+  const bare = normalized.match(/\b(\d{3,4})\b/);
+  return bare ? { value: Number(bare[1]), unit: "GB" } : null;
+}
+
+function distinct(values: Array<string | null>) {
+  return new Set(values.filter((value): value is string => Boolean(value)));
+}
+
+export function answerCurrentStockFromCatalog(
+  customerMessage: string,
+  products: AiProduct[],
+) {
+  if (!products.length) return STOCK_NOT_FOUND_MESSAGE;
+  if (products.length > 1) return "Hangi ürün veya modeli arıyorsunuz?";
+
+  const product = products[0];
+  const normalized = normalizeForGuard(customerMessage);
+  const storage = requestedStorage(customerMessage);
+  const requestedColor = distinct(product.variants.map((item) => item.color));
+  const color = [...requestedColor].find((item) =>
+    normalized.includes(normalizeForGuard(item)),
+  );
+  let matchingVariants = product.variants;
+  if (storage) {
+    matchingVariants = matchingVariants.filter(
+      (item) =>
+        item.storage_value === storage.value &&
+        item.storage_unit === storage.unit,
+    );
+  }
+  if (color) {
+    matchingVariants = matchingVariants.filter((item) => item.color === color);
+  }
+  if ((storage || color) && !matchingVariants.length)
+    return STOCK_NOT_FOUND_MESSAGE;
+
+  if (
+    storage &&
+    !color &&
+    distinct(matchingVariants.map((item) => item.color)).size > 1
+  )
+    return "Hangi renk seçeneğini arıyorsunuz?";
+  if (
+    color &&
+    !storage &&
+    distinct(
+      matchingVariants.map((item) =>
+        item.storage_value && item.storage_unit
+          ? `${item.storage_value} ${item.storage_unit}`
+          : null,
+      ),
+    ).size > 1
+  )
+    return "Hangi depolama seçeneğini arıyorsunuz?";
+
+  const hasVariantFilter = Boolean(storage || color);
+  const available = product.variants.length
+    ? (hasVariantFilter ? matchingVariants : product.variants).some(
+        (item) => item.stock_quantity > 0,
+      )
+    : product.stock_quantity > 0;
+  const label =
+    matchingVariants.length === 1 && hasVariantFilter
+      ? matchingVariants[0].name
+      : [
+          product.name,
+          storage ? `${storage.value} ${storage.unit}` : null,
+          color,
+        ]
+          .filter(Boolean)
+          .join(" ");
+  return available
+    ? `Evet, ${label} şu anda stokta görünüyor.`
+    : `${label} şu anda tükenmiş görünüyor.`;
+}
+
+async function resolveCurrentStockAnswer(
+  customerMessage: string,
+  history: LiveChatMessage[],
+) {
+  if (!isCurrentStockQuestion(customerMessage)) return null;
+  const query = stockSearchQuery(customerMessage);
+  if (!query) return STOCK_NOT_FOUND_MESSAGE;
+  let result = await loadAiProductContextResult(query);
+  const prior = previousCustomerQuery(customerMessage, history);
+  let answerMessage = customerMessage;
+  if (result.status === "ok" && prior && !query.includes(prior)) {
+    const contextualQuery = `${prior} ${query}`;
+    const contextualResult = await loadAiProductContextResult(contextualQuery);
+    if (
+      contextualResult.status === "error" ||
+      contextualResult.products.length === 1 ||
+      result.products.length !== 1
+    ) {
+      result = contextualResult;
+      answerMessage = contextualQuery;
+    }
+  }
+  if (result.status === "error") {
+    logSafetyEvent("stock_catalog_error", customerMessage);
+    return AI_HANDOFF_MESSAGE;
+  }
+  return answerCurrentStockFromCatalog(answerMessage, result.products);
+}
+
 export async function createAiAnswer(
   customerMessage: string,
   history: LiveChatMessage[],
@@ -359,6 +524,9 @@ export async function createAiAnswer(
     logSafetyEvent(guardReason, customerMessage);
     return AI_HANDOFF_MESSAGE;
   }
+
+  const stockAnswer = await resolveCurrentStockAnswer(customerMessage, history);
+  if (stockAnswer) return stockAnswer;
 
   const products = await loadAiProductContext(
     catalogQuery(customerMessage, history),
