@@ -9,6 +9,17 @@ import {
   useTransform,
 } from "motion/react";
 
+const HERO_BACKGROUNDS = {
+  original: {
+    desktop: "/images/home/hero-premium-selection-desktop.webp",
+    mobile: "/images/home/hero-premium-selection-mobile.webp?v=4",
+  },
+  workspace: {
+    desktop: "/images/home/hero-workspace-desktop.webp",
+    mobile: "/images/home/hero-workspace-mobile.webp?v=4",
+  },
+} as const;
+
 export function HeroParallax({
   copy,
   visual,
@@ -29,26 +40,33 @@ export function HeroParallax({
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, 14]);
   const copyY = useTransform(scrollYProgress, [0, 1], [0, -10]);
   const visualY = useTransform(scrollYProgress, [0, 1], [0, 10]);
-  const visualScale = useTransform(scrollYProgress, [0, 1], [1, 1.012]);
+  const background = HERO_BACKGROUNDS[variant];
 
   return (
     <m.div
       ref={sceneRef}
       className={`launch-hero ${variant === "workspace" ? "launch-hero-workspace" : ""}`}
-      initial={reducedMotion ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      initial={false}
     >
       <AnimatePresence initial={false}>
         <m.div
           key={variant}
-          className={`launch-hero-background launch-hero-background-${variant}`}
-          initial={reducedMotion ? false : { opacity: 0, scale: 1.015 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.008 }}
-          transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+          className="launch-hero-background"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           aria-hidden="true"
-        />
+        >
+          <div
+            className="launch-hero-background-image launch-hero-background-desktop"
+            style={{ backgroundImage: `url("${background.desktop}")` }}
+          />
+          <div
+            className="launch-hero-background-image launch-hero-background-mobile"
+            style={{ backgroundImage: `url("${background.mobile}")` }}
+          />
+        </m.div>
       </AnimatePresence>
       <m.div
         className="launch-hero-atmosphere"
@@ -66,7 +84,6 @@ export function HeroParallax({
           className="h-full will-change-transform"
           style={{
             y: reducedMotion ? 0 : visualY,
-            scale: reducedMotion ? 1 : visualScale,
           }}
         >
           {visual}

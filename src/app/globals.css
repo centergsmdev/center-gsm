@@ -343,21 +343,22 @@
 
   .launch-hero-background {
     position: absolute;
-    inset: -1%;
+    inset: 0;
     z-index: 0;
     pointer-events: none;
+    will-change: opacity;
+  }
+
+  .launch-hero-background-image {
+    position: absolute;
+    inset: 0;
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
-    will-change: opacity, transform;
   }
 
-  .launch-hero-background-original {
-    background-image: url("/images/home/hero-premium-selection-desktop.webp");
-  }
-
-  .launch-hero-background-workspace {
-    background-image: url("/images/home/hero-workspace-desktop.webp");
+  .launch-hero-background-mobile {
+    display: none;
   }
 
   .launch-hero-workspace .launch-hero-kicker svg {
@@ -593,15 +594,12 @@
   }
 
   @media (max-width: 1023px) {
-    .launch-hero-background-original {
-      background-image: url("/images/home/hero-premium-selection-mobile.webp?v=4");
-      background-position: center;
-      background-size: cover;
+    .launch-hero-background-desktop {
+      display: none;
     }
 
-    .launch-hero-background-workspace {
-      background-image: url("/images/home/hero-workspace-mobile.webp?v=4");
-      background-position: center;
+    .launch-hero-background-mobile {
+      display: block;
     }
 
     .launch-hero-atmosphere {

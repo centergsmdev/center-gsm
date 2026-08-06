@@ -83,10 +83,10 @@ export function Hero() {
             <AnimatePresence mode="sync" initial={false}>
               <m.div
                 key={`copy-${activeSlide}`}
-                initial={{ opacity: 0, x: -18 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="launch-hero-kicker">
                   <SlideIcon className="size-3.5" aria-hidden="true" />
@@ -115,10 +115,10 @@ export function Hero() {
               <m.div
                 key={`visual-${activeSlide}`}
                 className="h-full"
-                initial={{ opacity: 0, scale: 1.012 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.006 }}
-                transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               >
                 <HeroVisual variant={slide.visual} />
               </m.div>
