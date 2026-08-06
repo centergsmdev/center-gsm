@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { ChoiceCard } from "@/components/checkout/choice-card";
+import { createClient } from "@/lib/supabase/client";
 import { getDefaultPaymentAccount } from "@/payment/repository/payment-repository";
 import type { PaymentAccount } from "@/payment/types";
 import type { PaymentMethod } from "@/types/checkout";
@@ -33,17 +34,58 @@ export function PaymentMethods({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showTransferNotice, setShowTransferNotice] = useState(false);
+  const [accountUpdated, setAccountUpdated] = useState(false);
 
   useEffect(() => {
     let active = true;
-    void getDefaultPaymentAccount().then((result) => {
+    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+    let updatedNoticeTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const loadAccount = async (notify = false) => {
+      const result = await getDefaultPaymentAccount();
       if (!active) return;
       setAccount(result.data);
       setError(result.error);
       setLoading(false);
-    });
+      if (notify && !result.error) {
+        setAccountUpdated(true);
+        if (updatedNoticeTimeout) clearTimeout(updatedNoticeTimeout);
+        updatedNoticeTimeout = setTimeout(() => {
+          if (active) setAccountUpdated(false);
+        }, 5000);
+      }
+    };
+
+    void loadAccount();
+
+    const client = createClient();
+    const channel = client
+      ?.channel("checkout-payment-accounts")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "payment_accounts",
+        },
+        () => {
+          if (refreshTimeout) clearTimeout(refreshTimeout);
+          refreshTimeout = setTimeout(() => void loadAccount(true), 200);
+        },
+      )
+      .subscribe();
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadAccount();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
     return () => {
       active = false;
+      if (refreshTimeout) clearTimeout(refreshTimeout);
+      if (updatedNoticeTimeout) clearTimeout(updatedNoticeTimeout);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      if (client && channel) void client.removeChannel(channel);
     };
   }, []);
 
@@ -106,6 +148,15 @@ export function PaymentMethods({
             </p>
           ) : account ? (
             <>
+              {accountUpdated ? (
+                <p
+                  className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800"
+                  role="status"
+                >
+                  Banka bilgileri güncellendi. Lütfen ödemede aşağıdaki güncel
+                  hesabı kullanın.
+                </p>
+              ) : null}
               <p className="text-xs font-bold uppercase tracking-wider text-primary">
                 Varsayılan banka hesabı
               </p>
