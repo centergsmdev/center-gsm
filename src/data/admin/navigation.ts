@@ -20,6 +20,7 @@ import {
   Award,
   Gift,
   FileCheck2,
+  FileText,
   MessageSquareText,
   MessagesSquare,
   Users,
@@ -84,6 +85,11 @@ export const adminNavigation = [
     icon: Webhook,
   },
   { label: "Ayarlar", href: "/admin/ayarlar", icon: Settings },
+  {
+    label: "Sayfa İçerikleri",
+    href: "/admin/sayfa-icerikleri",
+    icon: FileText,
+  },
   { label: "Kargolar", href: "/admin/kargolar", icon: Truck },
   { label: "Kargo Ayarları", href: "/admin/kargo-ayarlari", icon: Truck },
   {
@@ -229,6 +235,11 @@ export const adminPageTitles: Record<
   "/admin/ayarlar": {
     title: "Ayarlar",
     description: "Mağaza ve operasyon tercihlerini yapılandırın.",
+  },
+  "/admin/sayfa-icerikleri": {
+    title: "Sayfa İçerikleri",
+    description:
+      "Footer bağlantılarındaki kurumsal ve yasal sayfaları yönetin.",
   },
   "/admin/denetim-kayitlari": {
     title: "Denetim Kayıtları",

@@ -1,4 +1,4 @@
-import { ContentPage } from "@/components/content/content-page";
+import { ManagedContentPage } from "@/components/content/managed-content-page";
 import { footerPages } from "@/lib/footer/content";
 import { generateSeoMetadata } from "@/lib/seo/seo";
 const content = footerPages["teknik-servis"];
@@ -8,5 +8,5 @@ export const metadata = generateSeoMetadata({
   canonical: "/teknik-servis",
 });
 export default function Page() {
-  return <ContentPage {...content} />;
+  return <ManagedContentPage slug="teknik-servis" />;
 }

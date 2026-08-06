@@ -150,6 +150,16 @@ export type SiteSettings = {
   updated_at: string;
   updated_by: string | null;
 };
+export type ContentPageRecord = {
+  slug: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  body_html: string;
+  is_published: boolean;
+  updated_at: string;
+  updated_by: string | null;
+};
 type Profile = Timestamps & {
   id: string;
   first_name: string | null;
@@ -1061,6 +1071,7 @@ export type Database = {
       >;
       live_chat_settings: Table<LiveChatSettings>;
       site_settings: Table<SiteSettings>;
+      content_pages: Table<ContentPageRecord>;
       product_images: Table<
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">
