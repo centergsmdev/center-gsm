@@ -218,7 +218,16 @@ function StudioWorkspace({
     if (!canvas || exporting || cutoutProcessing) return;
     setExporting(true);
     setExportError("");
+    const originalInlineStyle = canvas.getAttribute("style");
     try {
+      canvas.style.width = "1080px";
+      canvas.style.minWidth = "1080px";
+      canvas.style.maxWidth = "1080px";
+      canvas.style.height = "1080px";
+      canvas.style.flex = "none";
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
       await document.fonts.ready;
       await Promise.all(
         Array.from(canvas.querySelectorAll("img")).map(
@@ -263,6 +272,8 @@ function StudioWorkspace({
         "PNG oluşturulamadı. Görsellerin yüklendiğini kontrol edip tekrar deneyin.",
       );
     } finally {
+      if (originalInlineStyle === null) canvas.removeAttribute("style");
+      else canvas.setAttribute("style", originalInlineStyle);
       setExporting(false);
     }
   }
@@ -509,10 +520,10 @@ function InstagramCanvas({
   const hasInstallments = product.show_installments && installmentCount > 1;
   const productNameSize =
     productName.length > 52
-      ? "text-[2.2cqw]"
+      ? "text-[2.45cqw]"
       : productName.length > 34
-        ? "text-[2.7cqw]"
-        : "text-[3.1cqw]";
+        ? "text-[2.9cqw]"
+        : "text-[3.35cqw]";
 
   return (
     <article
@@ -543,7 +554,7 @@ function InstagramCanvas({
               />
             </span>
             <div>
-              <p className="text-[1.65cqw] font-black leading-none tracking-[-0.04em] text-white">
+              <p className="text-[1.85cqw] font-black leading-none tracking-[-0.04em] text-white">
                 CENTER <span className="text-red-500">GSM</span>
               </p>
               <p className="mt-[0.45cqw] text-[0.72cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
@@ -551,7 +562,7 @@ function InstagramCanvas({
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-[0.8cqw] rounded-[1cqw] border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-500/20 to-orange-400/10 px-[1.35cqw] py-[0.75cqw] text-[1.15cqw] font-black text-white shadow-[0_0_24px_rgba(217,70,239,0.2)]">
+          <span className="inline-flex items-center gap-[0.8cqw] rounded-[1cqw] border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-500/20 to-orange-400/10 px-[1.35cqw] py-[0.75cqw] text-[1.3cqw] font-black text-white shadow-[0_0_24px_rgba(217,70,239,0.2)]">
             <Instagram
               className="size-[1.7cqw] text-fuchsia-300"
               aria-hidden="true"
@@ -566,7 +577,7 @@ function InstagramCanvas({
             aria-label="Ürün bilgileri"
           >
             <div className="shrink-0 pb-[0.8cqw]">
-              <p className="text-[1.4cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
+              <p className="text-[1.6cqw] font-black uppercase tracking-[0.22em] text-fuchsia-300 drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]">
                 {product.brand.name}
               </p>
               <h2
@@ -600,7 +611,7 @@ function InstagramCanvas({
 
             <div className="flex min-h-[5.6cqw] items-end justify-between gap-[1.4cqw] pb-[0.7cqw] pt-[0.7cqw]">
               <div>
-                <p className="mb-[0.55cqw] text-[0.78cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
+                <p className="mb-[0.55cqw] text-[0.9cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
                   Depolama seçenekleri
                 </p>
                 {storageOptions.length ? (
@@ -609,7 +620,7 @@ function InstagramCanvas({
                       <span
                         key={key}
                         className={cn(
-                          "grid min-w-[4.6cqw] place-items-center rounded-[0.65cqw] border px-[0.9cqw] py-[0.65cqw] text-[1.15cqw] font-black",
+                          "grid min-w-[4.6cqw] place-items-center rounded-[0.65cqw] border px-[0.9cqw] py-[0.65cqw] text-[1.3cqw] font-black",
                           key === selectedStorageKey
                             ? "border-fuchsia-300 bg-fuchsia-500/25 text-white shadow-[0_0_16px_rgba(217,70,239,0.65),inset_0_0_12px_rgba(217,70,239,0.22)]"
                             : "border-blue-400/40 bg-black/35 text-zinc-400",
@@ -623,7 +634,7 @@ function InstagramCanvas({
                 ) : null}
               </div>
               <div className="text-right">
-                <p className="mb-[0.65cqw] text-[0.78cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
+                <p className="mb-[0.65cqw] text-[0.9cqw] font-black uppercase tracking-[0.16em] text-zinc-400">
                   Renkler
                 </p>
                 {activeColors.length ? (
@@ -650,7 +661,7 @@ function InstagramCanvas({
             aria-label="Ödeme seçenekleri"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[1.8cqw] font-black uppercase tracking-[-0.02em] text-white">
+              <p className="text-[2cqw] font-black uppercase tracking-[-0.02em] text-white">
                 3 farklı{" "}
                 <span className="text-fuchsia-300">ödeme seçeneği</span>
               </p>
@@ -670,7 +681,7 @@ function InstagramCanvas({
                 <div className="flex min-w-0 items-end justify-between gap-[1cqw]">
                   <div className="min-w-0">
                     {oldPrice ? (
-                      <p className="text-[1.4cqw] font-semibold text-zinc-400 line-through">
+                      <p className="text-[1.55cqw] font-semibold text-zinc-400 line-through">
                         {formatCurrency(oldPrice)}
                       </p>
                     ) : null}
@@ -679,7 +690,7 @@ function InstagramCanvas({
                     </p>
                   </div>
                   {discountRate ? (
-                    <span className="shrink-0 rounded-[0.7cqw] border border-amber-200/50 bg-amber-400 px-[0.9cqw] py-[0.5cqw] text-[1.15cqw] font-black text-zinc-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]">
+                    <span className="shrink-0 rounded-[0.7cqw] border border-amber-200/50 bg-amber-400 px-[0.9cqw] py-[0.5cqw] text-[1.3cqw] font-black text-zinc-950 shadow-[0_0_18px_rgba(251,191,36,0.45)]">
                       %{discountRate} indirim
                     </span>
                   ) : null}
@@ -691,13 +702,13 @@ function InstagramCanvas({
                 eyebrow="Kredi kartına vade farksız taksit"
                 accent="blue"
               >
-                <p className="text-[2.5cqw] font-black leading-[1.08] text-white">
+                <p className="text-[2.8cqw] font-black leading-[1.06] text-white">
                   {hasInstallments
                     ? `${installmentCount} aya varan taksit imkânı`
                     : "Bu ürün için taksit seçeneği bulunmuyor"}
                 </p>
                 {hasInstallments ? (
-                  <p className="mt-[0.85cqw] text-[1.9cqw] font-bold text-blue-200">
+                  <p className="mt-[0.75cqw] text-[2.2cqw] font-bold text-blue-200">
                     Aylık{" "}
                     {formatCurrency(
                       calculateMonthlyInstallment(price, installmentCount),
@@ -711,7 +722,7 @@ function InstagramCanvas({
                 eyebrow="Elden taksit imkânı"
                 accent="green"
               >
-                <p className="max-w-[96%] text-[1.85cqw] font-bold leading-[1.22] text-white">
+                <p className="max-w-[96%] text-[2.05cqw] font-bold leading-[1.18] text-white">
                   Uygun ödeme seçenekleri için mağazamızla iletişime geçin.
                 </p>
               </PaymentCard>
@@ -762,7 +773,7 @@ function InstagramCanvas({
             <span className="rounded-[0.8cqw] border border-fuchsia-300 bg-white p-[0.5cqw] shadow-[0_0_20px_rgba(232,121,249,0.45)]">
               <QRCodeSVG value={productUrl} size={74} level="M" />
             </span>
-            <div className="text-[0.9cqw] font-semibold leading-[1.35] text-zinc-400">
+            <div className="text-[1cqw] font-semibold leading-[1.35] text-zinc-400">
               <p className="font-black uppercase tracking-[0.08em] text-white">
                 Ürünü keşfet
               </p>
@@ -778,16 +789,19 @@ function InstagramCanvas({
             <p className="text-[2.5cqw] font-black leading-none tracking-[-0.04em] text-white">
               CENTER <span className="text-red-500">GSM</span>
             </p>
-            <p className="mt-[0.5cqw] text-[0.9cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
+            <p className="mt-[0.5cqw] text-[1cqw] font-bold uppercase tracking-[0.28em] text-zinc-400">
               Teknolojinin Merkezi
+            </p>
+            <p className="mt-[0.4cqw] text-[1.05cqw] font-black uppercase tracking-[0.32em] text-fuchsia-300">
+              OFFGAMERS
             </p>
           </div>
           <div className="flex min-w-0 items-center gap-[1.2cqw] justify-self-end rounded-[1.2cqw] border border-fuchsia-400/55 bg-fuchsia-500/10 px-[2cqw] py-[1cqw] text-right shadow-[0_0_24px_rgba(217,70,239,0.22),inset_0_0_18px_rgba(217,70,239,0.08)]">
             <div>
-              <p className="text-[1.45cqw] font-black uppercase text-fuchsia-300">
+              <p className="text-[1.6cqw] font-black uppercase text-fuchsia-300">
                 Hemen İncele
               </p>
-              <p className="max-w-[26cqw] truncate text-[1.3cqw] font-semibold text-white">
+              <p className="max-w-[26cqw] truncate text-[1.45cqw] font-semibold text-white">
                 {domain}
               </p>
             </div>
@@ -833,7 +847,7 @@ function PaymentCard({
             aria-hidden="true"
           />
         </span>
-        <p className="text-[1.42cqw] font-black uppercase tracking-[0.045em]">
+        <p className="text-[1.65cqw] font-black uppercase tracking-[0.025em]">
           {eyebrow}
         </p>
       </div>
@@ -876,8 +890,8 @@ function TrustItem({
         aria-hidden="true"
       />
       <div className="min-w-0">
-        <p className="truncate text-[1.75cqw] font-black text-white">{title}</p>
-        <p className="truncate text-[1.3cqw] font-medium text-zinc-300">
+        <p className="truncate text-[1.9cqw] font-black text-white">{title}</p>
+        <p className="truncate text-[1.42cqw] font-medium text-zinc-300">
           {description}
         </p>
       </div>
