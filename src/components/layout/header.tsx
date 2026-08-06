@@ -11,6 +11,7 @@ import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
 import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { getCategories } from "@/lib/catalog/data";
+import { getSiteSettings } from "@/lib/settings/site-settings";
 
 function BrandLogo() {
   return (
@@ -35,14 +36,22 @@ function BrandLogo() {
 }
 
 export async function Header() {
-  const categoryResult = await getCategories();
+  const [categoryResult, settings] = await Promise.all([
+    getCategories(),
+    getSiteSettings(),
+  ]);
   const navigationCategories = categoryResult.data;
 
   return (
     <header className="sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
       <div className="bg-zinc-950 text-white">
         <Container className="flex h-6 items-center justify-center text-[10px] font-semibold sm:justify-between sm:text-[11px]">
-          <p>2.500 TL üzeri alışverişlerde ücretsiz kargo</p>
+          <p>
+            {new Intl.NumberFormat("tr-TR", {
+              maximumFractionDigits: 0,
+            }).format(settings.free_shipping_limit)}{" "}
+            TL üzeri alışverişlerde ücretsiz kargo
+          </p>
           <p className="hidden text-zinc-400 sm:block">
             Orijinal ürün • Güvenli alışveriş • Teknik destek
           </p>

@@ -132,6 +132,24 @@ export type LiveChatSettings = {
   ai_enabled: boolean;
   updated_at: string;
 };
+export type SiteSettings = {
+  id: boolean;
+  company_name: string;
+  tax_number: string | null;
+  logo_url: string | null;
+  contact_email: string | null;
+  phone: string | null;
+  address: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
+  twitter_url: string | null;
+  free_shipping_limit: number;
+  same_day_shipping_enabled: boolean;
+  phone_approval_enabled: boolean;
+  bank_transfer_enabled: boolean;
+  updated_at: string;
+  updated_by: string | null;
+};
 type Profile = Timestamps & {
   id: string;
   first_name: string | null;
@@ -1042,6 +1060,7 @@ export type Database = {
         Partial<LiveChatMessage>
       >;
       live_chat_settings: Table<LiveChatSettings>;
+      site_settings: Table<SiteSettings>;
       product_images: Table<
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">

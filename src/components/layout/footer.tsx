@@ -9,6 +9,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
 import { footerLinkGroups, socialLinks } from "@/lib/footer/navigation";
+import { getSiteSettings } from "@/lib/settings/site-settings";
 
 const socialLogos = {
   instagram: InstagramLogo,
@@ -16,7 +17,17 @@ const socialLogos = {
   youtube: YoutubeLogo,
 } as const;
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getSiteSettings();
+  const configuredSocialLinks = socialLinks.map((social) => ({
+    ...social,
+    href:
+      social.id === "instagram"
+        ? settings.instagram_url
+        : social.id === "youtube"
+          ? settings.youtube_url
+          : null,
+  }));
   return (
     <footer className="bg-zinc-950 text-white">
       <Container className="py-10 sm:py-16">
@@ -43,7 +54,9 @@ export function Footer() {
                 <MapPin className="size-4 text-red-500" aria-hidden="true" />
                 Türkiye genelinde hizmet
               </p>
-              <p>İletişim bilgileri güncelleniyor.</p>
+              {settings.address ? <p>{settings.address}</p> : null}
+              {settings.phone ? <p>{settings.phone}</p> : null}
+              {settings.contact_email ? <p>{settings.contact_email}</p> : null}
             </address>
           </div>
 
@@ -85,7 +98,7 @@ export function Footer() {
             className="flex items-center gap-2"
             aria-label="Sosyal medya bağlantıları"
           >
-            {socialLinks.map((social) => {
+            {configuredSocialLinks.map((social) => {
               const Logo = socialLogos[social.id];
               const className =
                 "grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition duration-300 motion-reduce:transition-none";
