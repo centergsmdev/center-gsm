@@ -83,9 +83,9 @@ export async function Categories() {
                 <Card className="home-premium-surface group h-full overflow-hidden border-zinc-200/80 bg-white">
                   <Link
                     href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
-                    className="flex h-full min-h-64 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
+                    className="flex h-full min-h-44 flex-col p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
                   >
-                    <span className="relative block min-h-40 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
+                    <span className="relative block min-h-24 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
                       <Image
                         src={card.image}
                         alt={`${card.name} kategorisi`}
@@ -94,7 +94,7 @@ export async function Categories() {
                         className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
                       />
                     </span>
-                    <span className="px-1 pb-1 pt-4">
+                    <span className="px-1 pb-0.5 pt-2.5 sm:pb-1 sm:pt-4">
                       <span className="block text-sm font-black tracking-[-0.025em] text-zinc-950 sm:text-base">
                         {card.name}
                       </span>
