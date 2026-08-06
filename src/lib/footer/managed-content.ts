@@ -1,14 +1,14 @@
 import { unstable_noStore as noStore } from "next/cache";
 
 import { footerPages } from "@/lib/footer/content";
-import { createPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 
 export type FooterPageSlug = keyof typeof footerPages;
 
 export async function getManagedFooterPage(slug: FooterPageSlug) {
   noStore();
   const fallback = footerPages[slug];
-  const client = createPublicClient();
+  const client = await createClient();
   if (!client) return fallback;
   const { data } = await client
     .from("content_pages")
