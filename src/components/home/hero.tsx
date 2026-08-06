@@ -80,7 +80,7 @@ export function Hero() {
         <HeroParallax
           variant={slide.visual}
           copy={
-            <AnimatePresence mode="sync" initial={false}>
+            <AnimatePresence mode="popLayout" initial={false}>
               <m.div
                 key={`copy-${activeSlide}`}
                 initial={
@@ -115,7 +115,7 @@ export function Hero() {
             </AnimatePresence>
           }
           visual={
-            <AnimatePresence mode="sync" initial={false}>
+            <AnimatePresence mode="popLayout" initial={false}>
               <m.div
                 key={`visual-${activeSlide}`}
                 className="h-full"
