@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { m, useReducedMotion, useScroll, useTransform } from "motion/react";
+import {
+  AnimatePresence,
+  m,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 
 export function HeroParallax({
   copy,
@@ -33,6 +39,17 @@ export function HeroParallax({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
+      <AnimatePresence initial={false}>
+        <m.div
+          key={variant}
+          className={`launch-hero-background launch-hero-background-${variant}`}
+          initial={reducedMotion ? false : { opacity: 0, scale: 1.015 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.008 }}
+          transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+          aria-hidden="true"
+        />
+      </AnimatePresence>
       <m.div
         className="launch-hero-atmosphere"
         style={{ y: reducedMotion ? 0 : backgroundY }}

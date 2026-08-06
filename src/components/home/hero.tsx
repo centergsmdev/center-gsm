@@ -80,13 +80,13 @@ export function Hero() {
         <HeroParallax
           variant={slide.visual}
           copy={
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="sync" initial={false}>
               <m.div
                 key={`copy-${activeSlide}`}
                 initial={{ opacity: 0, x: -18 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="launch-hero-kicker">
                   <SlideIcon className="size-3.5" aria-hidden="true" />
@@ -111,14 +111,14 @@ export function Hero() {
             </AnimatePresence>
           }
           visual={
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="sync" initial={false}>
               <m.div
                 key={`visual-${activeSlide}`}
                 className="h-full"
-                initial={{ opacity: 0, scale: 1.025 }}
+                initial={{ opacity: 0, scale: 1.012 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.985 }}
-                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, scale: 1.006 }}
+                transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
               >
                 <HeroVisual variant={slide.visual} />
               </m.div>

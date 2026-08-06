@@ -301,7 +301,7 @@
   .launch-hero {
     position: relative;
     isolation: isolate;
-    min-height: 510px;
+    height: 510px;
     overflow: hidden;
     border: 1px solid rgb(255 255 255 / 0.1);
     border-radius: clamp(24px, 3vw, 34px);
@@ -318,10 +318,7 @@
     z-index: 0;
     content: "";
     pointer-events: none;
-    background-image: url("/images/home/hero-premium-selection-desktop.webp");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
+    background: transparent;
   }
 
   .launch-hero::before {
@@ -341,6 +338,25 @@
   }
 
   .launch-hero-workspace::after {
+    background: transparent;
+  }
+
+  .launch-hero-background {
+    position: absolute;
+    inset: -1%;
+    z-index: 0;
+    pointer-events: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    will-change: opacity, transform;
+  }
+
+  .launch-hero-background-original {
+    background-image: url("/images/home/hero-premium-selection-desktop.webp");
+  }
+
+  .launch-hero-background-workspace {
     background-image: url("/images/home/hero-workspace-desktop.webp");
   }
 
@@ -515,7 +531,7 @@
 
   @media (min-width: 640px) {
     .launch-hero {
-      min-height: 540px;
+      height: 540px;
     }
 
     .launch-hero-copy {
@@ -534,7 +550,7 @@
 
   @media (min-width: 1024px) {
     .launch-hero {
-      min-height: 390px;
+      height: clamp(390px, 34vw, 524px);
     }
 
     .launch-hero-layout {
@@ -577,13 +593,13 @@
   }
 
   @media (max-width: 1023px) {
-    .launch-hero::after {
+    .launch-hero-background-original {
       background-image: url("/images/home/hero-premium-selection-mobile.webp?v=4");
       background-position: center;
       background-size: cover;
     }
 
-    .launch-hero-workspace::after {
+    .launch-hero-background-workspace {
       background-image: url("/images/home/hero-workspace-mobile.webp?v=4");
       background-position: center;
     }
