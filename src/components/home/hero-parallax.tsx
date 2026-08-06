@@ -38,7 +38,6 @@ export function HeroParallax({
     offset: ["start start", "end start"],
   });
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, 14]);
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, -10]);
   const visualY = useTransform(scrollYProgress, [0, 1], [0, 10]);
   const background = HERO_BACKGROUNDS[variant];
 
@@ -74,12 +73,7 @@ export function HeroParallax({
         aria-hidden="true"
       />
       <div className="launch-hero-layout">
-        <m.div
-          className="launch-hero-copy"
-          style={{ y: reducedMotion ? 0 : copyY }}
-        >
-          {copy}
-        </m.div>
+        <div className="launch-hero-copy">{copy}</div>
         <m.div
           className="h-full will-change-transform"
           style={{
