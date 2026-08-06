@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 
-import { createPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 import type { SiteSettings } from "@/types/database";
 
 export const defaultSiteSettings: SiteSettings = {
@@ -24,7 +24,7 @@ export const defaultSiteSettings: SiteSettings = {
 
 export async function getSiteSettings() {
   noStore();
-  const client = createPublicClient();
+  const client = await createClient();
   if (!client) return defaultSiteSettings;
   const { data } = await client
     .from("site_settings")
