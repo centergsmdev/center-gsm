@@ -147,6 +147,19 @@ export function LiveChatWidget() {
       .channel(`live-chat:${token}`)
       .on("broadcast", { event: "message" }, () => void loadChat())
       .on("broadcast", { event: "read" }, () => void loadChat())
+      .on("broadcast", { event: "conversation_deleted" }, ({ payload }) => {
+        if (
+          conversation?.id &&
+          payload?.conversationId &&
+          payload.conversationId !== conversation.id
+        )
+          return;
+        setConversation(null);
+        setMessages([]);
+        setMessage("");
+        setError("");
+        stickToBottom.current = true;
+      })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload?.role !== "admin" && payload?.role !== "ai") return;
         setAdminTyping(Boolean(payload.typing));
@@ -157,7 +170,7 @@ export function LiveChatWidget() {
       chatChannelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [isAdminPage, loadChat, open, token]);
+  }, [conversation?.id, isAdminPage, loadChat, open, token]);
 
   useEffect(() => {
     if (isAdminPage || !open) return;

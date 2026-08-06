@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, Send, Smile } from "lucide-react";
+import { MessageCircle, Send, Smile, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import {
   useCallback,
@@ -35,6 +35,8 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [customerTyping, setCustomerTyping] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement>(null);
@@ -119,8 +121,10 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
         );
       }),
     );
-    setSelectedId(
-      (current) => current ?? conversationResult.data[0]?.id ?? null,
+    setSelectedId((current) =>
+      current && conversationResult.data.some((item) => item.id === current)
+        ? current
+        : (conversationResult.data[0]?.id ?? null),
     );
   }, []);
 
@@ -295,6 +299,35 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     await client.removeChannel(channel);
   }
 
+  async function deleteConversation() {
+    if (!selected || deletePending) return;
+    setDeletePending(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/admin/live-chat/${selected.id}`, {
+        method: "DELETE",
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Sohbet silinemedi.");
+      setConversations((current) =>
+        current.filter((item) => item.id !== selected.id),
+      );
+      setUnread((current) => {
+        const next = { ...current };
+        delete next[selected.id];
+        return next;
+      });
+      setMessages([]);
+      setSelectedId(null);
+      setDeleteConfirmOpen(false);
+      await loadConversations();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Sohbet silinemedi.");
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
   return (
     <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr]">
       <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
@@ -374,13 +407,24 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                     : "Yalnızca müşteri temsilcisi"}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => void setConversationAi(!selected.ai_active)}
-                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-black ${selected.ai_active ? "bg-zinc-950 text-white" : "bg-violet-600 text-white"}`}
-              >
-                {selected.ai_active ? "Sohbeti Devral" : "AI'ya Devret"}
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  className="grid size-9 place-items-center rounded-xl border border-red-200 text-red-600 transition hover:bg-red-50"
+                  aria-label="Sohbeti sil"
+                  title="Sohbeti sil"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void setConversationAi(!selected.ai_active)}
+                  className={`rounded-xl px-3 py-2 text-xs font-black ${selected.ai_active ? "bg-zinc-950 text-white" : "bg-violet-600 text-white"}`}
+                >
+                  {selected.ai_active ? "Sohbeti Devral" : "AI'ya Devret"}
+                </button>
+              </div>
             </header>
             <div
               ref={messageScrollRef}
@@ -503,6 +547,56 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
           </div>
         )}
       </section>
+      {deleteConfirmOpen && selected ? (
+        <div
+          className="fixed inset-0 z-modal grid place-items-center bg-zinc-950/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-chat-title"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="delete-chat-title" className="text-lg font-black">
+                  Sohbet kalıcı olarak silinsin mi?
+                </h2>
+                <p className="mt-2 text-sm text-zinc-600">
+                  {selected.customer_name} ile yapılan görüşme, tüm mesajlar ve
+                  gönderilen görseller hem admin hem müşteri ekranından
+                  silinecek. Bu işlem geri alınamaz.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(false)}
+                disabled={deletePending}
+                className="grid size-9 shrink-0 place-items-center rounded-full bg-zinc-100"
+                aria-label="Silme penceresini kapat"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(false)}
+                disabled={deletePending}
+                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => void deleteConversation()}
+                disabled={deletePending}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {deletePending ? "Siliniyor…" : "Sohbeti sil"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
