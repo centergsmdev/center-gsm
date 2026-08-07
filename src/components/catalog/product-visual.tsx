@@ -1,4 +1,13 @@
-import { Headphones, Laptop, Smartphone, Tablet, Watch } from "lucide-react";
+import {
+  Headphones,
+  Laptop,
+  Monitor,
+  Package,
+  Smartphone,
+  Tablet,
+  Watch,
+  type LucideIcon,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
@@ -16,13 +25,14 @@ const accents = {
   black: "text-zinc-950",
 };
 
-const icons = {
+const icons: Record<string, LucideIcon> = {
   Telefon: Smartphone,
   Bilgisayar: Laptop,
   Tablet,
   "Akıllı Saat": Watch,
   Kulaklık: Headphones,
   Aksesuar: Headphones,
+  Televizyon: Monitor,
 };
 
 export function ProductVisual({
@@ -34,7 +44,7 @@ export function ProductVisual({
   imageUrl?: string;
   performancePreset?: ImagePerformancePreset;
 }) {
-  const Icon = icons[product.category];
+  const Icon = icons[product.category] ?? Package;
   const resolvedImage = imageUrl ?? product.mainImageUrl;
   const imageProps = imagePerformanceProps(performancePreset);
   return (
