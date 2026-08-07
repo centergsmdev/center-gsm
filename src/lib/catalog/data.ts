@@ -437,6 +437,7 @@ export async function getCategories(): Promise<
       data: names.map((name, index) => ({
         id: `fallback-category-${index}`,
         name,
+        show_in_header: index < 7,
         slug: name
           .toLocaleLowerCase("tr-TR")
           .replaceAll("ı", "i")

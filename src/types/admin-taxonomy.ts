@@ -14,5 +14,6 @@ export type TaxonomyFormValues = {
   slug: string;
   description: string | null;
   is_active: boolean;
+  show_in_header?: boolean;
   imageUrl: string | null;
 };

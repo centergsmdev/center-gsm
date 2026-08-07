@@ -20,6 +20,7 @@ type Category = Timestamps & {
   description: string | null;
   image_url: string | null;
   is_active: boolean;
+  show_in_header: boolean;
   sort_order: number;
   search_name: string;
 };

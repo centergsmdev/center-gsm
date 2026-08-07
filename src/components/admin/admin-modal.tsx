@@ -24,14 +24,20 @@ export function AdminModal({
   wide?: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) =>
-      event.key === "Escape" && onClose();
+      event.key === "Escape" && onCloseRef.current();
     document.addEventListener("keydown", onKeyDown);
     closeRef.current?.focus();
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+  }, [open]);
   if (!open) return null;
   return (
     <div

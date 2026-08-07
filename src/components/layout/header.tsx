@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { Menu } from "lucide-react";
 
 import { CartHeaderAction } from "@/components/cart/cart-header-action";
 import { FavoritesHeaderAction } from "@/components/favorites/favorites-header-action";
 import { ComparisonHeaderAction } from "@/components/comparison/comparison-header-action";
 import { Container } from "@/components/ui/container";
-import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
 import { Divider } from "@/components/ui/divider";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AccountHeaderAction } from "@/components/account/account-header-action";
 import { MobileNavigation } from "@/components/layout/mobile-navigation";
+import { DesktopCategoryNavigation } from "@/components/layout/desktop-category-navigation";
 import { getCategories } from "@/lib/catalog/data";
 import { getSiteSettings } from "@/lib/settings/site-settings";
 
@@ -86,32 +85,8 @@ export async function Header() {
         aria-label="Ürün kategorileri"
         className="hidden lg:block"
       >
-        <Container className="flex h-10 items-center gap-8">
-          <Link
-            href="/urunler"
-            className="inline-flex items-center gap-2 rounded-sm text-sm font-bold text-primary transition-colors duration-200 hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <Menu className="size-4" aria-hidden="true" />
-            Tüm Kategoriler
-          </Link>
-          <Divider orientation="vertical" className="h-5" />
-          <div className="flex min-w-0 flex-1 items-center gap-6 overflow-x-auto">
-            {navigationCategories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
-                className="shrink-0 rounded-sm text-sm font-medium text-zinc-600 transition-colors duration-200 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                {category.name}
-              </Link>
-            ))}
-            <Link
-              href="/#deals"
-              className="ml-auto shrink-0 rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-primary transition-colors duration-200 hover:bg-red-100"
-            >
-              Kampanyalar
-            </Link>
-          </div>
+        <Container className="flex h-10 items-center">
+          <DesktopCategoryNavigation categories={navigationCategories} />
         </Container>
       </nav>
     </header>

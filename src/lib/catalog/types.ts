@@ -37,7 +37,7 @@ export type CatalogCollectionResult<T> = {
 };
 export type CatalogTaxonomy = Pick<
   Tables<"categories">,
-  "id" | "name" | "slug"
+  "id" | "name" | "slug" | "show_in_header"
 > &
   Partial<Pick<Tables<"categories">, "image_url">>;
 export type BrandTaxonomy = Pick<Tables<"brands">, "id" | "name" | "slug"> &
