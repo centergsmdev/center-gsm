@@ -101,7 +101,7 @@ export function DesktopCategoryNavigation({
         ) : null}
 
         <Link
-          href="/#deals"
+          href="/kampanyalar"
           className="shrink-0 rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-red-100"
         >
           Kampanyalar

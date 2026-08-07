@@ -1,5 +1,6 @@
 import { catalogProducts } from "@/data/catalog-products";
 import { mapSupabaseProduct } from "@/lib/catalog/mapper";
+import { applyDefaultVariantPresentation } from "@/lib/catalog/variants";
 import type {
   BrandTaxonomy,
   CatalogCollectionResult,
@@ -358,6 +359,101 @@ export async function getProducts(
 
 export async function getFeaturedProducts(limit = 4) {
   return getProducts({ featured: true, sort: "popular", pageSize: limit });
+}
+
+export async function getCampaignProducts({
+  page = 1,
+  pageSize = 20,
+  minimumDiscountRate = 18,
+}: {
+  page?: number;
+  pageSize?: number;
+  minimumDiscountRate?: number;
+} = {}): Promise<CatalogListResult> {
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.min(48, Math.max(1, pageSize));
+  const client = createClient();
+
+  if (!client) {
+    const eligibleProducts = catalogProducts
+      .map((product) => applyDefaultVariantPresentation(product))
+      .filter(
+        (product) =>
+          product.discountRate !== undefined &&
+          product.discountRate >= minimumDiscountRate,
+      )
+      .sort((a, b) => (b.discountRate ?? 0) - (a.discountRate ?? 0));
+
+    return {
+      data: eligibleProducts.slice(
+        (safePage - 1) * safePageSize,
+        safePage * safePageSize,
+      ),
+      total: eligibleProducts.length,
+      page: safePage,
+      pageSize: safePageSize,
+      error: false,
+      source: "fallback",
+    };
+  }
+
+  try {
+    const products: Tables<"products">[] = [];
+    const batchSize = 500;
+
+    for (let offset = 0; ; offset += batchSize) {
+      const { data, error } = await client
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + batchSize - 1);
+
+      if (error) throw error;
+      products.push(...data);
+      if (data.length < batchSize) break;
+    }
+
+    const hydratedRows: SupabaseCatalogRow[] = [];
+    for (let offset = 0; offset < products.length; offset += 100) {
+      const rows = await hydrateProducts(
+        client,
+        products.slice(offset, offset + 100),
+      );
+      if (!rows) throw new Error("Campaign products could not be hydrated.");
+      hydratedRows.push(...rows);
+    }
+
+    const eligibleProducts = hydratedRows
+      .map(mapSupabaseProduct)
+      .filter(
+        (product) =>
+          product.discountRate !== undefined &&
+          product.discountRate >= minimumDiscountRate,
+      )
+      .sort((a, b) => (b.discountRate ?? 0) - (a.discountRate ?? 0));
+
+    return {
+      data: eligibleProducts.slice(
+        (safePage - 1) * safePageSize,
+        safePage * safePageSize,
+      ),
+      total: eligibleProducts.length,
+      page: safePage,
+      pageSize: safePageSize,
+      error: false,
+      source: "supabase",
+    };
+  } catch {
+    return {
+      data: [],
+      total: 0,
+      page: safePage,
+      pageSize: safePageSize,
+      error: true,
+      source: "supabase",
+    };
+  }
 }
 export async function searchProducts(
   query: string,

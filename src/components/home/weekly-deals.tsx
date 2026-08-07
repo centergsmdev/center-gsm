@@ -14,7 +14,8 @@ export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
       (product) =>
         product.previousPrice !== undefined &&
         product.previousPrice > product.price &&
-        product.discountRate !== undefined,
+        product.discountRate !== undefined &&
+        product.discountRate >= 18,
     )
     .slice(0, 8);
 
@@ -30,11 +31,11 @@ export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
           description="Sınırlı süreli avantajlı fiyatlar"
           action={{
             label: "Tüm Kampanyalar",
-            href: "/urunler?indirim=var",
+            href: "/kampanyalar",
           }}
         />
         <Link
-          href="/urunler?indirim=var"
+          href="/kampanyalar"
           className="mb-5 ml-auto flex w-fit items-center gap-2 text-sm font-semibold text-zinc-600 transition-colors hover:text-primary sm:hidden"
         >
           Tüm Kampanyalar

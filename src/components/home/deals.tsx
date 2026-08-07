@@ -15,7 +15,8 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
       (product) =>
         product.previousPrice !== undefined &&
         product.previousPrice > product.price &&
-        product.discountRate !== undefined,
+        product.discountRate !== undefined &&
+        product.discountRate >= 18,
     )
     .slice(0, 4);
 
@@ -36,7 +37,7 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
             eyebrow="Seçili fırsatlar"
             title="Kaçırılmayacak teknoloji fırsatları"
             description="Sınırlı süreli fiyatlarla öne çıkan premium teknoloji ürünlerini keşfedin."
-            action={{ label: "Tüm fırsatlar", href: "/urunler?sirala=popular" }}
+            action={{ label: "Tüm fırsatlar", href: "/kampanyalar" }}
           />
         </div>
         {discountedProducts.length ? (

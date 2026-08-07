@@ -5,6 +5,7 @@ export function getPageSitemap(): MetadataRoute.Sitemap {
   return [
     sitemapEntry("/", updated, "daily", 1),
     sitemapEntry("/urunler", updated, "daily", 0.8),
+    sitemapEntry("/kampanyalar", updated, "daily", 0.8),
     ...[
       "/hakkimizda",
       "/magazalarimiz",

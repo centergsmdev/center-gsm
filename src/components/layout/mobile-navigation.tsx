@@ -208,7 +208,7 @@ export function MobileNavigation({
 
                     <div className="border-t border-zinc-100 bg-zinc-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                       <Link
-                        href="/#deals"
+                        href="/kampanyalar"
                         onClick={close}
                         className="group flex items-center gap-3 rounded-2xl border border-red-100 bg-white px-4 py-3.5 text-sm font-black text-zinc-950 shadow-sm transition-all hover:border-red-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
