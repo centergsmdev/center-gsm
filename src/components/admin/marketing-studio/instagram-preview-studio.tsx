@@ -460,7 +460,58 @@ function useStudioCutout(source?: string) {
         }
         context.putImageData(frame, 0, 0);
         if (active) {
-          setCutoutImage(canvas.toDataURL("image/png"));
+          let minX = width;
+          let minY = height;
+          let maxX = -1;
+          let maxY = -1;
+
+          for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              if (pixels[(y * width + x) * 4 + 3] <= 12) continue;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x);
+              maxY = Math.max(maxY, y);
+            }
+          }
+
+          if (maxX >= minX && maxY >= minY) {
+            const contentWidth = maxX - minX + 1;
+            const contentHeight = maxY - minY + 1;
+            const padding = Math.max(
+              2,
+              Math.round(Math.max(contentWidth, contentHeight) * 0.025),
+            );
+            const cropX = Math.max(0, minX - padding);
+            const cropY = Math.max(0, minY - padding);
+            const cropWidth = Math.min(
+              width - cropX,
+              contentWidth + padding * 2,
+            );
+            const cropHeight = Math.min(
+              height - cropY,
+              contentHeight + padding * 2,
+            );
+            const trimmedCanvas = document.createElement("canvas");
+            trimmedCanvas.width = cropWidth;
+            trimmedCanvas.height = cropHeight;
+            const trimmedContext = trimmedCanvas.getContext("2d");
+
+            trimmedContext?.drawImage(
+              canvas,
+              cropX,
+              cropY,
+              cropWidth,
+              cropHeight,
+              0,
+              0,
+              cropWidth,
+              cropHeight,
+            );
+            setCutoutImage(trimmedCanvas.toDataURL("image/png"));
+          } else {
+            setCutoutImage(canvas.toDataURL("image/png"));
+          }
           setCutoutProcessing(false);
         }
       } catch {
