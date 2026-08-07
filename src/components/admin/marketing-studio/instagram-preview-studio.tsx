@@ -898,7 +898,13 @@ function PaymentCard({
             aria-hidden="true"
           />
         </span>
-        <p className="text-[1.65cqw] font-black uppercase tracking-[0.025em]">
+        <p
+          className={cn(
+            "text-[1.65cqw] font-black uppercase tracking-[0.025em]",
+            accent === "green" &&
+              "whitespace-nowrap text-[1.45cqw] leading-none tracking-[-0.01em]",
+          )}
+        >
           {eyebrow}
         </p>
       </div>
