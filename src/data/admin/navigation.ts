@@ -44,6 +44,11 @@ export const adminNavigation = [
     exact: true,
   },
   {
+    label: "Reklam Merkezi",
+    href: "/admin/reklam-merkezi",
+    icon: BarChart3,
+  },
+  {
     label: "Instagram Gönderileri",
     href: "/admin/marketing-studio/instagram",
     icon: Instagram,
@@ -146,6 +151,10 @@ export const adminPageTitles: Record<
   "/admin/marketing-studio/instagram": {
     title: "Instagram Gönderileri",
     description: "Ürün verileriyle canlı Instagram gönderisi önizlemesi.",
+  },
+  "/admin/reklam-merkezi": {
+    title: "Reklam Merkezi",
+    description: "Ürün reklam uygunluğunu ve yayın hazırlıklarını yönetin.",
   },
   "/admin/kategoriler": {
     title: "Kategoriler",

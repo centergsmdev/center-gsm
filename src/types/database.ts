@@ -161,6 +161,22 @@ export type ContentPageRecord = {
   updated_at: string;
   updated_by: string | null;
 };
+export type AdvertisementCenterSettings = {
+  id: boolean;
+  daily_budget: number;
+  target_country: string;
+  excluded_regions: string[];
+  updated_at: string;
+  updated_by: string | null;
+};
+export type AdvertisementProductSettings = {
+  product_id: string;
+  is_included: boolean;
+  priority: "very_high" | "high" | "normal" | "low";
+  ad_types: string[];
+  updated_at: string;
+  updated_by: string | null;
+};
 type Profile = Timestamps & {
   id: string;
   first_name: string | null;
@@ -1073,6 +1089,12 @@ export type Database = {
       live_chat_settings: Table<LiveChatSettings>;
       site_settings: Table<SiteSettings>;
       content_pages: Table<ContentPageRecord>;
+      advertisement_center_settings: Table<AdvertisementCenterSettings>;
+      advertisement_product_settings: Table<
+        AdvertisementProductSettings,
+        Partial<AdvertisementProductSettings> &
+          Pick<AdvertisementProductSettings, "product_id">
+      >;
       product_images: Table<
         ProductImage,
         Partial<ProductImage> & Pick<ProductImage, "product_id" | "url">
