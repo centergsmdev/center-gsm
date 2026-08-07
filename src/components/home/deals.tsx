@@ -10,15 +10,7 @@ import {
 } from "@/components/motion/motion-system";
 
 export function Deals({ products }: { products: CatalogProduct[] }) {
-  const discountedProducts = products
-    .filter(
-      (product) =>
-        product.previousPrice !== undefined &&
-        product.previousPrice > product.price &&
-        product.discountRate !== undefined &&
-        product.discountRate >= 18,
-    )
-    .slice(0, 4);
+  const campaignProducts = products.slice(0, 4);
 
   return (
     <RevealSection
@@ -40,12 +32,12 @@ export function Deals({ products }: { products: CatalogProduct[] }) {
             action={{ label: "Tüm fırsatlar", href: "/kampanyalar" }}
           />
         </div>
-        {discountedProducts.length ? (
+        {campaignProducts.length ? (
           <StaggerContainer
             className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto scroll-smooth pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
             aria-label="Kampanyalı ürünler"
           >
-            {discountedProducts.map((product) => (
+            {campaignProducts.map((product) => (
               <AnimatedCard
                 key={product.id}
                 className="w-[clamp(12.5rem,58vw,15rem)] shrink-0 snap-start md:w-[31%] lg:w-auto"

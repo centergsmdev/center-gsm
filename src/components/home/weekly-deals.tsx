@@ -9,15 +9,7 @@ import type { CatalogProduct } from "@/types/product";
 import { HomepageProductCarousel } from "./mobile-showcase-carousel";
 
 export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
-  const discountedProducts = products
-    .filter(
-      (product) =>
-        product.previousPrice !== undefined &&
-        product.previousPrice > product.price &&
-        product.discountRate !== undefined &&
-        product.discountRate >= 18,
-    )
-    .slice(0, 8);
+  const weeklyDealProducts = products.slice(0, 8);
 
   return (
     <RevealSection
@@ -41,9 +33,9 @@ export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
           Tüm Kampanyalar
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
-        {discountedProducts.length ? (
+        {weeklyDealProducts.length ? (
           <HomepageProductCarousel>
-            {discountedProducts.map((product) => (
+            {weeklyDealProducts.map((product) => (
               <AnimatedCard
                 key={product.id}
                 className="h-full !transform-none !opacity-100"

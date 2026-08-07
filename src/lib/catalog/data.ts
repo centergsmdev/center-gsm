@@ -425,13 +425,22 @@ export async function getCampaignProducts({
     }
 
     const eligibleProducts = hydratedRows
-      .map(mapSupabaseProduct)
+      .map((row) => ({
+        product: mapSupabaseProduct(row),
+        isManuallySelected: row.is_featured || row.is_weekly_deal,
+      }))
       .filter(
-        (product) =>
-          product.discountRate !== undefined &&
-          product.discountRate >= minimumDiscountRate,
+        ({ product, isManuallySelected }) =>
+          isManuallySelected ||
+          (product.discountRate !== undefined &&
+            product.discountRate >= minimumDiscountRate),
       )
-      .sort((a, b) => (b.discountRate ?? 0) - (a.discountRate ?? 0));
+      .sort(
+        (a, b) =>
+          Number(b.isManuallySelected) - Number(a.isManuallySelected) ||
+          (b.product.discountRate ?? 0) - (a.product.discountRate ?? 0),
+      )
+      .map(({ product }) => product);
 
     return {
       data: eligibleProducts.slice(

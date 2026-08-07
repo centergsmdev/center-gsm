@@ -62,8 +62,9 @@ export default async function CampaignsPage({
                 Kampanyalı Ürünler
               </h1>
               <p className="mt-3 text-sm leading-6 text-zinc-300 sm:text-base">
-                Güncel satış fiyatında %18 ve üzeri indirim bulunan aktif
-                ürünleri tek sayfada keşfedin.
+                Editör seçimi fırsatları, haftanın kampanyaları ve güncel satış
+                fiyatında %18 ve üzeri indirim bulunan aktif ürünleri tek
+                sayfada keşfedin.
               </p>
             </div>
           </div>
