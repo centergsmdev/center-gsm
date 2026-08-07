@@ -1,8 +1,6 @@
 export const SEO_CONFIG = {
   siteName: "CENTER GSM",
-  siteUrl: (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://center-gsm-v2.vercel.app"
-  ).replace(/\/+$/, ""),
+  siteUrl: "https://centergsm.com.tr",
   defaultTitle: "CENTER GSM | Teknolojinin Merkezi",
   titleTemplate: "%s | CENTER GSM",
   defaultDescription:
