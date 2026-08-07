@@ -17,8 +17,8 @@ const HERO_SLIDES = [
     accent: "yeni standardı.",
     description:
       "Günlük hayatınıza değer katan seçkin teknolojiler. Güvenilir, yalın ve ayrıcalıklı bir alışveriş deneyimi.",
-    cta: "Fırsatları keşfet",
-    href: "/#deals",
+    cta: "Ürünleri İncele",
+    href: "/urunler",
     visual: "original" as const,
   },
   {
