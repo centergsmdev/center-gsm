@@ -18,6 +18,9 @@ import {
 import { calculateCheckoutPricing } from "@/lib/promotions/client";
 import type { CartItem, CartLine, CartTotals, CartVariant } from "@/types/cart";
 import type { CatalogProduct } from "@/types/product";
+import { trackMetaEvent } from "@/lib/meta/browser";
+import { metaItemId } from "@/lib/meta/item-id";
+import { productDisplayName } from "@/lib/catalog/variants";
 
 const STORAGE_KEY = "center-gsm-cart-v1";
 const initialItems: CartItem[] = [];
@@ -250,6 +253,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           ];
     });
     persistMessage("Ürün sepete eklendi.");
+    if (product) {
+      const id = metaItemId(productId, variant?.id);
+      const price = variant?.price ?? product.price;
+      trackMetaEvent(
+        "AddToCart",
+        {
+          currency: "TRY",
+          value: price * quantity,
+          content_type: "product",
+          content_ids: [id],
+          content_name: productDisplayName(product),
+          contents: [{ id, quantity, item_price: price }],
+        },
+        { server: true },
+      );
+    }
   };
   const updateQuantity = (lineId: string, quantity: number) =>
     setItems((current) =>

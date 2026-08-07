@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/format";
 import { supabaseSearchDataSource } from "@/lib/search/supabase-search-data-source";
 import { cn } from "@/lib/utils";
+import { trackMetaEvent } from "@/lib/meta/browser";
 import type { SearchSuggestion, SearchSuggestionGroups } from "@/types/search";
 
 const RECENT_SEARCHES_KEY = "center-gsm-recent-searches";
@@ -174,6 +175,7 @@ export function GlobalSearch({
 
   function navigate(suggestion?: SearchSuggestion) {
     const term = trimmedQuery || suggestion?.label || "";
+    if (term) trackMetaEvent("Search", { search_string: term });
     rememberSearch(term);
     closeSearch();
     router.push(

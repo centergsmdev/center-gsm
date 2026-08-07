@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
@@ -9,11 +9,14 @@ import { ProductInfo } from "@/components/product-detail/product-info";
 import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import {
   resolveInitialVariantSelection,
+  productDisplayName,
   resolveSelectedVariant,
   resolveVariantTitle,
   variantStorageKey,
 } from "@/lib/catalog/variants";
 import type { CatalogProduct } from "@/types/product";
+import { trackMetaEvent } from "@/lib/meta/browser";
+import { metaItemId } from "@/lib/meta/item-id";
 
 export function ProductDetailExperience({
   product,
@@ -23,6 +26,7 @@ export function ProductDetailExperience({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const trackedContent = useRef("");
   const variants = useMemo(
     () =>
       [...(product.variants ?? [])]
@@ -144,6 +148,7 @@ export function ProductDetailExperience({
   const galleryImages = selectedColor?.imageUrls.length
     ? selectedColor.imageUrls
     : product.imageUrls;
+  const displayName = productDisplayName(displayProduct);
   const cartVariant = selectedVariant
     ? {
         id: selectedVariant.id,
@@ -158,6 +163,34 @@ export function ProductDetailExperience({
         stockQuantity: selectedVariant.stockQuantity,
       }
     : undefined;
+
+  useEffect(() => {
+    if ((requiresColor || requiresStorage) && !selectionComplete) return;
+    const id = metaItemId(product.id, selectedVariant?.id);
+    if (trackedContent.current === id) return;
+    trackedContent.current = id;
+    trackMetaEvent(
+      "ViewContent",
+      {
+        currency: "TRY",
+        value: displayProduct.price,
+        content_type: "product",
+        content_ids: [id],
+        content_name: displayName,
+        contents: [{ id, quantity: 1, item_price: displayProduct.price }],
+      },
+      { server: true },
+    );
+  }, [
+    displayProduct.price,
+    displayProduct.variantTitle,
+    displayName,
+    product.id,
+    requiresColor,
+    requiresStorage,
+    selectedVariant?.id,
+    selectionComplete,
+  ]);
 
   return (
     <>

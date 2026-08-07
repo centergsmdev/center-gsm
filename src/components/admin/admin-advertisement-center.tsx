@@ -35,7 +35,11 @@ import {
 } from "@/types/advertisement-center";
 import type { AdvertisementCenterSettings } from "@/types/database";
 
-export function AdminAdvertisementCenter() {
+export function AdminAdvertisementCenter({
+  metaReadiness,
+}: {
+  metaReadiness: { pixel: boolean; capi: boolean };
+}) {
   const [products, setProducts] = useState<AdvertisementProduct[]>([]);
   const [settings, setSettings] = useState<AdvertisementCenterSettings | null>(
     null,
@@ -85,6 +89,13 @@ export function AdminAdvertisementCenter() {
       .toLocaleLowerCase("tr-TR")
       .includes(query.toLocaleLowerCase("tr-TR")),
   );
+  const catalogReady = products.filter(
+    (product) =>
+      product.isIncluded &&
+      product.stock >= 0 &&
+      product.price > 0 &&
+      Boolean(product.imageUrl),
+  ).length;
 
   const updateProduct = async (
     product: AdvertisementProduct,
@@ -163,6 +174,32 @@ export function AdminAdvertisementCenter() {
           detail={`${products.reduce((sum, item) => sum + item.variantCount, 0)} varyant`}
         />
       </div>
+
+      <AdminCard>
+        <AdminCardHeader
+          title="Meta ölçüm ve katalog hazırlığı"
+          description="Bağlantı durumu gösterilir; bu ekrandan reklam yayınlanmaz."
+        />
+        <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-5">
+          <Readiness label="Pixel" ready={metaReadiness.pixel} />
+          <Readiness label="Conversions API" ready={metaReadiness.capi} />
+          <Readiness
+            label="Katalog feed"
+            ready
+            href="/api/feeds/meta-products"
+          />
+          <Readiness
+            label="Katalog ürünleri"
+            ready={catalogReady > 0}
+            detail={`${catalogReady}/${products.length}`}
+          />
+          <Readiness
+            label="Event tracking"
+            ready={metaReadiness.pixel}
+            detail={metaReadiness.capi ? "Browser + Server" : "Browser hazır"}
+          />
+        </div>
+      </AdminCard>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_.7fr]">
         <AdminCard>
@@ -431,6 +468,37 @@ export function AdminAdvertisementCenter() {
         ) : null}
       </AdminModal>
     </div>
+  );
+}
+
+function Readiness({
+  label,
+  ready,
+  detail,
+  href,
+}: {
+  label: string;
+  ready: boolean;
+  detail?: string;
+  href?: string;
+}) {
+  const content = (
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+      <p className="text-sm font-bold text-zinc-950">{label}</p>
+      <p
+        className={`mt-2 text-xs font-semibold ${ready ? "text-emerald-700" : "text-amber-700"}`}
+      >
+        {ready ? "Hazır" : "Meta bağlantısı bekleniyor"}
+      </p>
+      {detail ? <p className="mt-1 text-xs text-zinc-500">{detail}</p> : null}
+    </div>
+  );
+  return href ? (
+    <Link href={href} target="_blank" rel="noreferrer">
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 

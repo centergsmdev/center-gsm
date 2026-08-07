@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, LockKeyhole } from "lucide-react";
 
@@ -39,6 +39,8 @@ import {
 import { fallbackSkus } from "@/lib/catalog/fallback-skus";
 import { productDisplayName } from "@/lib/catalog/variants";
 import { formatCurrency } from "@/lib/format";
+import { trackMetaEvent, trackMetaPurchase } from "@/lib/meta/browser";
+import { metaItemId } from "@/lib/meta/item-id";
 import { getActiveShippingCarriers } from "@/shipping/repository/shipping-repository";
 import type {
   DeliveryMethod,
@@ -68,6 +70,7 @@ export function CheckoutForm() {
     clearCart,
     totals,
   } = useCart();
+  const checkoutTracked = useRef(false);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
   const [credits, setCredits] = useState<CreditSelection>({
@@ -77,6 +80,27 @@ export function CheckoutForm() {
   });
   const [invoiceType, setInvoiceType] = useState<InvoiceType>("individual");
   const [sameAddress, setSameAddress] = useState(true);
+
+  useEffect(() => {
+    if (!cartReady || !lines.length || checkoutTracked.current) return;
+    checkoutTracked.current = true;
+    const contents = lines.map((line) => ({
+      id: metaItemId(line.product.id, line.variant?.id),
+      quantity: line.quantity,
+      item_price: line.variant?.price ?? line.product.price,
+    }));
+    trackMetaEvent(
+      "InitiateCheckout",
+      {
+        currency: "TRY",
+        value: totals.total,
+        content_type: "product",
+        content_ids: contents.map((item) => item.id),
+        contents,
+      },
+      { server: true },
+    );
+  }, [cartReady, lines, totals.total]);
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("standard");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
@@ -370,6 +394,15 @@ export function CheckoutForm() {
       vat: Math.round(created.data.grandTotal - created.data.grandTotal / 1.2),
       total: created.data.grandTotal,
     };
+    trackMetaPurchase({
+      orderId: created.data.id,
+      value: created.data.grandTotal,
+      contents: lines.map((line) => ({
+        id: metaItemId(line.product.id, line.variant?.id),
+        quantity: line.quantity,
+        item_price: line.variant?.price ?? line.product.price,
+      })),
+    });
     window.sessionStorage.setItem(
       "center-gsm-last-order",
       JSON.stringify(order),
