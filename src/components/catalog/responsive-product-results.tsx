@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 
 import { Pagination } from "@/components/catalog/pagination";
 import { ProductCard } from "@/components/catalog/product-card";
+import { LegacyAndroidCatalogBoundary } from "@/components/catalog/legacy-android-catalog-boundary";
 import {
   CatalogEmptyState,
   CatalogErrorState,
@@ -57,7 +58,7 @@ export function ResponsiveProductResults({
   const totalPages = Math.ceil(result.total / result.pageSize);
 
   return (
-    <>
+    <LegacyAndroidCatalogBoundary>
       {hasError ? (
         <CatalogErrorState />
       ) : result.data.length === 0 ? (
@@ -82,6 +83,6 @@ export function ResponsiveProductResults({
           params={params}
         />
       ) : null}
-    </>
+    </LegacyAndroidCatalogBoundary>
   );
 }

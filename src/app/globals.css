@@ -246,6 +246,48 @@
       border-color 200ms var(--ease-premium);
   }
 
+  /*
+   * Next.js supports Chrome 111+. Older Android Chromium releases can report
+   * modern CSS support while still corrupting composited raster tiles. The
+   * client boundary enables this narrowly scoped paint path only below that
+   * documented browser baseline; modern browsers keep the full design.
+   */
+  .catalog-legacy-rendering .catalog-product-card,
+  .catalog-legacy-rendering .catalog-product-card:hover,
+  .catalog-legacy-rendering .catalog-product-card:active {
+    isolation: auto;
+    contain: none;
+    overflow: visible;
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.12) !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
+
+  .catalog-legacy-rendering .catalog-product-media,
+  .catalog-legacy-rendering .catalog-product-content,
+  .catalog-legacy-rendering .catalog-card-action,
+  .catalog-legacy-rendering .catalog-product-visual {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
+
+  .catalog-legacy-rendering .catalog-product-media,
+  .catalog-legacy-rendering .catalog-product-content {
+    isolation: auto;
+    contain: none;
+    background-color: #fff;
+  }
+
+  .catalog-legacy-rendering .catalog-product-media {
+    overflow: visible;
+  }
+
   a.home-premium-surface:hover,
   .home-premium-surface:has(> a:hover),
   .home-premium-interactive:hover {
