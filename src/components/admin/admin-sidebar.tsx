@@ -8,6 +8,35 @@ import { cn } from "@/lib/utils";
 import { adminNavigation } from "@/data/admin/navigation";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import {
+  ADMIN_ACTIVITY_EVENT,
+  ADMIN_ACTIVITY_STORAGE_KEY,
+  adminActivityRoutes,
+  emptyAdminActivityState,
+  type AdminActivityKind,
+  type AdminActivityState,
+} from "@/lib/admin/activity-indicator";
+
+const activityKindByRoute = Object.fromEntries(
+  Object.entries(adminActivityRoutes).map(([kind, route]) => [route, kind]),
+) as Record<string, AdminActivityKind>;
+
+function readActivityState(): AdminActivityState {
+  try {
+    const stored = window.localStorage.getItem(ADMIN_ACTIVITY_STORAGE_KEY);
+    if (!stored) return { ...emptyAdminActivityState };
+    return { ...emptyAdminActivityState, ...JSON.parse(stored) };
+  } catch {
+    return { ...emptyAdminActivityState };
+  }
+}
+
+function writeActivityState(state: AdminActivityState) {
+  window.localStorage.setItem(
+    ADMIN_ACTIVITY_STORAGE_KEY,
+    JSON.stringify(state),
+  );
+}
 
 export function AdminSidebar({
   mobile = false,
@@ -21,6 +50,52 @@ export function AdminSidebar({
   const pathname = usePathname();
   const { logout } = useAdminAuth();
   const [unreadChats, setUnreadChats] = useState(0);
+  const [activity, setActivity] = useState<AdminActivityState>(
+    emptyAdminActivityState,
+  );
+
+  useEffect(() => {
+    setActivity(readActivityState());
+
+    function handleActivity(event: Event) {
+      const kind = (event as CustomEvent<{ kind?: AdminActivityKind }>).detail
+        ?.kind;
+      if (!kind || pathname.startsWith(adminActivityRoutes[kind])) return;
+
+      setActivity((current) => {
+        const next = { ...current, [kind]: true };
+        writeActivityState(next);
+        return next;
+      });
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === ADMIN_ACTIVITY_STORAGE_KEY) {
+        setActivity(readActivityState());
+      }
+    }
+
+    window.addEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const currentKind = Object.entries(adminActivityRoutes).find(([, route]) =>
+      pathname.startsWith(route),
+    )?.[0] as AdminActivityKind | undefined;
+    if (!currentKind) return;
+
+    setActivity((current) => {
+      if (!current[currentKind]) return current;
+      const next = { ...current, [currentKind]: false };
+      writeActivityState(next);
+      return next;
+    });
+  }, [pathname]);
 
   useEffect(() => {
     const client = createClient();
@@ -93,6 +168,10 @@ export function AdminSidebar({
               ? pathname === item.href
               : pathname.startsWith(item.href);
           const Icon = item.icon;
+          const activityKind = activityKindByRoute[item.href];
+          const hasNewActivity = activityKind
+            ? activity[activityKind] && !active
+            : false;
           return (
             <Link
               key={item.href}
@@ -106,7 +185,9 @@ export function AdminSidebar({
                 "child" in item && item.child && "ml-3 h-10 text-xs",
                 active
                   ? "bg-red-600 text-white shadow-lg shadow-red-950/20"
-                  : "text-zinc-400 hover:bg-white/[.07] hover:text-white",
+                  : hasNewActivity
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-950/25 hover:bg-emerald-500 hover:text-white"
+                    : "text-zinc-400 hover:bg-white/[.07] hover:text-white",
               )}
             >
               <Icon className="size-5 shrink-0" />

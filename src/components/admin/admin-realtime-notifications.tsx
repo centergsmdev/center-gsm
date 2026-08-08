@@ -12,6 +12,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  ADMIN_ACTIVITY_EVENT,
+  type AdminActivityKind,
+} from "@/lib/admin/activity-indicator";
 
 type NotificationKind = "order" | "receipt" | "message";
 
@@ -66,6 +70,11 @@ export function AdminRealtimeNotifications() {
     if (!client) return;
 
     function announce(item: AdminNotification) {
+      window.dispatchEvent(
+        new CustomEvent<{ kind: AdminActivityKind }>(ADMIN_ACTIVITY_EVENT, {
+          detail: { kind: item.kind },
+        }),
+      );
       setItems((current) => [item, ...current].slice(0, 30));
       setToasts((current) => [item, ...current].slice(0, 3));
       setUnread((current) => current + 1);
