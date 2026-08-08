@@ -1,12 +1,7 @@
 import { CatalogBreadcrumb } from "@/components/catalog/breadcrumb";
 import { CatalogToolbar } from "@/components/catalog/catalog-toolbar";
 import dynamic from "next/dynamic";
-import { Pagination } from "@/components/catalog/pagination";
-import { ProductCard } from "@/components/catalog/product-card";
-import {
-  CatalogEmptyState,
-  CatalogErrorState,
-} from "@/components/catalog/catalog-states";
+import { ResponsiveProductResults } from "@/components/catalog/responsive-product-results";
 import { Container } from "@/components/ui/container";
 import { getBrands, getCategories, getProducts } from "@/lib/catalog/data";
 import {
@@ -44,17 +39,6 @@ export default async function ProductsPage({
       getCategories(),
       getBrands(),
     ]);
-  const hasError = result.error || categories.error || brands.error;
-  const tabletHasError = tabletResult.error || categories.error || brands.error;
-  const desktopHasError =
-    desktopResult.error || categories.error || brands.error;
-  const totalPages = Math.ceil(result.total / result.pageSize);
-  const tabletTotalPages = Math.ceil(
-    tabletResult.total / tabletResult.pageSize,
-  );
-  const desktopTotalPages = Math.ceil(
-    desktopResult.total / desktopResult.pageSize,
-  );
   return (
     <main className="tech-atmosphere min-h-screen pb-12 pt-3 sm:pb-16 sm:pt-7">
       <Container>
@@ -81,84 +65,14 @@ export default async function ProductsPage({
             compactMobile
           />
           <div className="min-w-0 flex-1">
-            <div className="sm:hidden">
-              {hasError ? (
-                <CatalogErrorState />
-              ) : result.data.length === 0 ? (
-                <CatalogEmptyState />
-              ) : (
-                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)]">
-                  {result.data.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      compactMobile
-                      denseMobile
-                    />
-                  ))}
-                </div>
-              )}{" "}
-              {!hasError ? (
-                <Pagination
-                  page={result.page}
-                  totalPages={totalPages}
-                  basePath="/urunler"
-                  params={params}
-                />
-              ) : null}
-            </div>
-            <div className="hidden sm:block lg:hidden">
-              {tabletHasError ? (
-                <CatalogErrorState />
-              ) : tabletResult.data.length === 0 ? (
-                <CatalogEmptyState />
-              ) : (
-                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3">
-                  {tabletResult.data.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      compactMobile
-                      denseMobile
-                    />
-                  ))}
-                </div>
-              )}{" "}
-              {!tabletHasError ? (
-                <Pagination
-                  page={tabletResult.page}
-                  totalPages={tabletTotalPages}
-                  basePath="/urunler"
-                  params={params}
-                />
-              ) : null}
-            </div>
-            <div className="hidden lg:block">
-              {desktopHasError ? (
-                <CatalogErrorState />
-              ) : desktopResult.data.length === 0 ? (
-                <CatalogEmptyState />
-              ) : (
-                <div className="grid grid-cols-2 gap-[clamp(0.5rem,2vw,0.75rem)] md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                  {desktopResult.data.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      compactMobile
-                      denseMobile
-                    />
-                  ))}
-                </div>
-              )}{" "}
-              {!desktopHasError ? (
-                <Pagination
-                  page={desktopResult.page}
-                  totalPages={desktopTotalPages}
-                  basePath="/urunler"
-                  params={params}
-                />
-              ) : null}
-            </div>
+            <ResponsiveProductResults
+              mobile={result}
+              tablet={tabletResult}
+              desktop={desktopResult}
+              taxonomyError={categories.error || brands.error}
+              params={params}
+              basePath="/urunler"
+            />
           </div>
         </div>
       </Container>

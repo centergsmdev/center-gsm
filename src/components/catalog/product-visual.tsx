@@ -46,29 +46,6 @@ export function ProductVisual({
 }) {
   const Icon = icons[product.category] ?? Package;
   const resolvedImage = imageUrl ?? product.mainImageUrl;
-  const configuredStorageHost = (() => {
-    try {
-      return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
-    } catch {
-      return "";
-    }
-  })();
-  const isProjectStorageImage = (() => {
-    if (!resolvedImage || !configuredStorageHost) return false;
-
-    try {
-      return new URL(resolvedImage).hostname === configuredStorageHost;
-    } catch {
-      return false;
-    }
-  })();
-  const renderedImage =
-    resolvedImage &&
-    (performancePreset === "product-card" ||
-      performancePreset === "thumbnail") &&
-    isProjectStorageImage
-      ? `/api/catalog-image?url=${encodeURIComponent(resolvedImage)}`
-      : resolvedImage;
   const imageProps = imagePerformanceProps(performancePreset);
   return (
     <div
@@ -78,22 +55,22 @@ export function ProductVisual({
       )}
       aria-label={`${product.brand} ${product.model} ürün görseli alanı`}
     >
-      {renderedImage ? (
-        // Catalog thumbnails use a server-normalized image while detail images keep their original source.
+      {resolvedImage ? (
+        // Supabase Storage URLs are rendered directly so unknown projects do not require build-time host configuration.
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={renderedImage}
+          src={resolvedImage}
           alt={`${product.brand} ${product.model}`}
           width={imageProps.width}
           height={imageProps.height}
           sizes={imageProps.sizes}
           loading={imageProps.loading}
-          decoding="sync"
+          decoding={imageProps.decoding}
           fetchPriority={imageProps.priority ? "high" : "auto"}
           className="catalog-product-visual absolute inset-0 size-full object-contain object-center p-4 transition-transform duration-200 ease-premium group-hover:scale-[1.035] motion-reduce:transition-none"
         />
       ) : null}
-      {!renderedImage ? (
+      {!resolvedImage ? (
         <>
           <div
             aria-hidden="true"
