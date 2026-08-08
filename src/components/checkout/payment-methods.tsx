@@ -242,17 +242,20 @@ export function PaymentMethods({
           aria-modal="true"
           aria-labelledby="transfer-notice-title"
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 id="transfer-notice-title" className="text-lg font-black">
+          <div className="w-full max-w-sm rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6 shadow-2xl shadow-emerald-950/20">
+            <h2
+              id="transfer-notice-title"
+              className="text-lg font-black text-emerald-950"
+            >
               Havale / EFT bilgilendirmesi
             </h2>
-            <p className="mt-3 text-sm leading-6 text-muted">
+            <p className="mt-3 text-sm font-semibold leading-6 text-emerald-800">
               Lütfen ödeme işlemini sağlayıp dekontu yükleyiniz.
             </p>
             <button
               type="button"
               onClick={() => setShowTransferNotice(false)}
-              className="mt-5 min-h-11 w-full rounded-lg bg-primary px-4 text-sm font-black text-white"
+              className="mt-5 min-h-11 w-full rounded-lg bg-emerald-600 px-4 text-sm font-black text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
             >
               Tamam
             </button>
