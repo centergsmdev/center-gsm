@@ -42,7 +42,7 @@ export async function Header() {
   const navigationCategories = categoryResult.data;
 
   return (
-    <header className="sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
+    <header className="storefront-header sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
       <div className="bg-zinc-950 text-white">
         <Container className="flex h-6 items-center justify-center text-[10px] font-semibold sm:justify-between sm:text-[11px]">
           <p>

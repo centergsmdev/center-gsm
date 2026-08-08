@@ -216,35 +216,63 @@
   }
 
   /*
-   * Some Android Chromium/GPU combinations corrupt tiled layers when the
-   * catalog's multi-layer background, backdrop blur and touch-only transform
-   * layers are composited together. Touch devices do not use these hover
-   * effects, so keep them on the stable paint path without changing desktop.
+   * Some Android Chromium/WebView builds corrupt raster tiles when clipped,
+   * transformed and backdrop-filtered layers scroll together. Pointer media
+   * features are reported inconsistently on those devices, so every narrow
+   * viewport uses this stable paint path while desktop remains unchanged.
    */
-  @media (max-width: 767px) and (hover: none) and (pointer: coarse) {
+  @media (max-width: 767px) {
     .tech-atmosphere {
       background-color: #f3f6fb;
       background-image: linear-gradient(180deg, #f8fafc 0%, #edf2f8 100%);
       background-size: auto;
     }
 
+    .storefront-header {
+      position: relative;
+      top: auto;
+      background-color: #fff;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
     .catalog-product-card,
     .catalog-product-card:hover,
     .catalog-product-card:active {
-      transform: none;
+      overflow: visible;
+      box-shadow: none !important;
+      transform: none !important;
+      transition: none !important;
       will-change: auto;
     }
 
+    .catalog-product-card * {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    .catalog-product-media,
+    .catalog-product-content {
+      overflow: visible;
+      transform: none !important;
+      will-change: auto;
+    }
+
+    .catalog-product-media {
+      border-radius: var(--home-premium-radius) var(--home-premium-radius) 0 0;
+    }
+
     .catalog-card-action {
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      transform: none;
+      box-shadow: none !important;
+      transform: none !important;
+      transition: none !important;
       will-change: auto;
     }
 
     .catalog-product-visual,
     .group:hover .catalog-product-visual {
-      transform: none;
+      filter: none;
+      transform: none !important;
       transition: none;
       will-change: auto;
     }

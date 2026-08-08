@@ -59,7 +59,7 @@ export function ProductCard({
     <Card className="catalog-product-card home-premium-interactive home-premium-surface group relative flex h-full min-w-0 max-w-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
       <div
         className={cn(
-          "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
+          "catalog-product-media relative aspect-square overflow-hidden bg-white [&_span]:hidden",
           compactMobile && "max-sm:aspect-[1.25/1]",
           denseMobile && "max-sm:aspect-[1.4/1]",
         )}
@@ -91,7 +91,7 @@ export function ProductCard({
 
       <div
         className={cn(
-          "flex min-w-0 max-w-full flex-1 flex-col overflow-hidden p-2.5 sm:p-3.5",
+          "catalog-product-content flex min-w-0 max-w-full flex-1 flex-col overflow-hidden p-2.5 sm:p-3.5",
           compactMobile && "max-sm:p-2",
           denseMobile && "max-sm:p-1.5",
         )}
