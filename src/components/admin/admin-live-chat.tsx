@@ -42,10 +42,16 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const messageScrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
   const previousSelectedId = useRef<string | null>(null);
+  const conversationsRef = useRef<LiveChatConversation[]>([]);
+  const messageLoadSequence = useRef(0);
   const selected = useMemo(
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
   );
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const loadAiSettings = useCallback(async () => {
     const client = createClient();
@@ -128,48 +134,47 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     );
   }, []);
 
-  const loadMessages = useCallback(
-    async (conversationId: string) => {
-      const client = createClient();
-      if (!client) return;
-      const result = await client
-        .from("live_chat_messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-      if (result.error) return setError("Mesajlar yüklenemedi.");
-      const withUrls = await Promise.all(
-        result.data.map(async (message) => {
-          if (!message.attachment_path) return message;
-          const signed = await client.storage
-            .from("live-chat-images")
-            .createSignedUrl(message.attachment_path, 3600);
-          return { ...message, attachment_url: signed.data?.signedUrl ?? null };
-        }),
+  const loadMessages = useCallback(async (conversationId: string) => {
+    const loadSequence = ++messageLoadSequence.current;
+    const client = createClient();
+    if (!client) return;
+    const result = await client
+      .from("live_chat_messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    if (result.error) return setError("Mesajlar yüklenemedi.");
+    const withUrls = await Promise.all(
+      result.data.map(async (message) => {
+        if (!message.attachment_path) return message;
+        const signed = await client.storage
+          .from("live-chat-images")
+          .createSignedUrl(message.attachment_path, 3600);
+        return { ...message, attachment_url: signed.data?.signedUrl ?? null };
+      }),
+    );
+    if (loadSequence !== messageLoadSequence.current) return;
+    setMessages(withUrls);
+    const read = await client
+      .from("live_chat_messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId)
+      .eq("sender", "customer")
+      .is("read_at", null);
+    if (!read.error) {
+      setUnread((current) => ({ ...current, [conversationId]: 0 }));
+      const conversation = conversationsRef.current.find(
+        (item) => item.id === conversationId,
       );
-      setMessages(withUrls);
-      const read = await client
-        .from("live_chat_messages")
-        .update({ read_at: new Date().toISOString() })
-        .eq("conversation_id", conversationId)
-        .eq("sender", "customer")
-        .is("read_at", null);
-      if (!read.error) {
-        setUnread((current) => ({ ...current, [conversationId]: 0 }));
-        const conversation = conversations.find(
-          (item) => item.id === conversationId,
+      if (conversation) {
+        const channel = client.channel(
+          `live-chat:${conversation.visitor_token}`,
         );
-        if (conversation) {
-          const channel = client.channel(
-            `live-chat:${conversation.visitor_token}`,
-          );
-          await channel.httpSend("read", { role: "admin" });
-          await client.removeChannel(channel);
-        }
+        await channel.httpSend("read", { role: "admin" });
+        await client.removeChannel(channel);
       }
-    },
-    [conversations],
-  );
+    }
+  }, []);
 
   useEffect(() => {
     void loadConversations();
@@ -218,29 +223,31 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     return () => void client.removeChannel(presence);
   }, []);
 
+  const selectedVisitorToken = selected?.visitor_token ?? null;
+
   useEffect(() => {
-    if (!selected) {
+    if (!selectedId || !selectedVisitorToken) {
       setMessages([]);
       previousSelectedId.current = null;
       return;
     }
-    if (previousSelectedId.current !== selected.id) {
+    if (previousSelectedId.current !== selectedId) {
       stickToBottom.current = true;
-      previousSelectedId.current = selected.id;
+      previousSelectedId.current = selectedId;
     }
-    void loadMessages(selected.id);
+    void loadMessages(selectedId);
     const client = createClient();
     if (!client) return;
     const channel = client
-      .channel(`live-chat:${selected.visitor_token}`)
+      .channel(`live-chat:${selectedVisitorToken}`)
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload?.role === "customer")
           setCustomerTyping(Boolean(payload.typing));
       })
-      .on("broadcast", { event: "read" }, () => void loadMessages(selected.id))
+      .on("broadcast", { event: "read" }, () => void loadMessages(selectedId))
       .subscribe();
     return () => void client.removeChannel(channel);
-  }, [loadMessages, selected]);
+  }, [loadMessages, selectedId, selectedVisitorToken]);
 
   useEffect(() => {
     const scroll = messageScrollRef.current;
