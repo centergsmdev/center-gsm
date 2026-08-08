@@ -1,5 +1,6 @@
 import { CatalogBreadcrumb } from "@/components/catalog/breadcrumb";
 import { CatalogToolbar } from "@/components/catalog/catalog-toolbar";
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { ResponsiveProductResults } from "@/components/catalog/responsive-product-results";
 import { Container } from "@/components/ui/container";
@@ -9,6 +10,29 @@ import {
   type CatalogSearchParams,
 } from "@/lib/catalog/params";
 export const revalidate = 300;
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<CatalogSearchParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const safeModeOverride = firstParam(params.catalogSafeMode);
+
+  if (safeModeOverride !== "0" && safeModeOverride !== "1") return {};
+
+  return {
+    robots: {
+      index: false,
+      follow: true,
+    },
+  };
+}
+
 const FilterPanel = dynamic(
   () =>
     import("@/components/catalog/filter-panel").then(

@@ -247,14 +247,13 @@
   }
 
   /*
-   * Next.js supports Chrome 111+. Older Android Chromium releases can report
-   * modern CSS support while still corrupting composited raster tiles. The
-   * client boundary enables this narrowly scoped paint path only below that
-   * documented browser baseline; modern browsers keep the full design.
+   * A narrow compatibility path for physically verified Android Chrome
+   * builds with corrupted catalog raster output. Activation is decided by
+   * the catalog boundary; unaffected browsers keep the premium paint path.
    */
-  .catalog-legacy-rendering .catalog-product-card,
-  .catalog-legacy-rendering .catalog-product-card:hover,
-  .catalog-legacy-rendering .catalog-product-card:active {
+  .catalog-safe-rendering .catalog-product-card,
+  .catalog-safe-rendering .catalog-product-card:hover,
+  .catalog-safe-rendering .catalog-product-card:active {
     isolation: auto;
     contain: none;
     overflow: visible;
@@ -265,10 +264,10 @@
     will-change: auto;
   }
 
-  .catalog-legacy-rendering .catalog-product-media,
-  .catalog-legacy-rendering .catalog-product-content,
-  .catalog-legacy-rendering .catalog-card-action,
-  .catalog-legacy-rendering .catalog-product-visual {
+  .catalog-safe-rendering .catalog-product-media,
+  .catalog-safe-rendering .catalog-product-content,
+  .catalog-safe-rendering .catalog-card-action,
+  .catalog-safe-rendering .catalog-product-visual {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     filter: none !important;
@@ -277,14 +276,14 @@
     will-change: auto;
   }
 
-  .catalog-legacy-rendering .catalog-product-media,
-  .catalog-legacy-rendering .catalog-product-content {
+  .catalog-safe-rendering .catalog-product-media,
+  .catalog-safe-rendering .catalog-product-content {
     isolation: auto;
     contain: none;
     background-color: #fff;
   }
 
-  .catalog-legacy-rendering .catalog-product-media {
+  .catalog-safe-rendering .catalog-product-media {
     overflow: visible;
   }
 
