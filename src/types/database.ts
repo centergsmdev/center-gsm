@@ -1087,6 +1087,16 @@ export type Database = {
         Partial<LiveChatMessage>
       >;
       live_chat_settings: Table<LiveChatSettings>;
+      live_chat_push_subscriptions: Table<{
+        id: string;
+        conversation_id: string;
+        visitor_token: string;
+        endpoint: string;
+        p256dh: string;
+        auth: string;
+        created_at: string;
+        updated_at: string;
+      }>;
       site_settings: Table<SiteSettings>;
       content_pages: Table<ContentPageRecord>;
       advertisement_center_settings: Table<AdvertisementCenterSettings>;

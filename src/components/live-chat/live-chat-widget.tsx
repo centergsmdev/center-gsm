@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, MessageCircle, Send, Smile, X } from "lucide-react";
+import { Bell, ImagePlus, MessageCircle, Send, Smile, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
@@ -25,6 +25,15 @@ const NAME_KEY = "center-gsm-live-chat-name";
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
 
 type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
+
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const decoded = window.atob(base64);
+
+  return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+}
+
 type ChatResponse = {
   conversation: LiveChatConversation | null;
   messages?: ChatMessage[];
@@ -48,6 +57,10 @@ export function LiveChatWidget() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [adminTyping, setAdminTyping] = useState(false);
   const [adminOnline, setAdminOnline] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
+  const [notificationPending, setNotificationPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -59,6 +72,62 @@ export function LiveChatWidget() {
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   const stickToBottom = useRef(true);
+
+  const subscribeToNotifications = useCallback(async () => {
+    const conversationId = conversation?.id;
+    if (
+      !conversationId ||
+      !token ||
+      !("Notification" in window) ||
+      !("serviceWorker" in navigator)
+    )
+      return;
+    setNotificationPending(true);
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission !== "granted") return;
+      const keyResponse = await fetch("/api/live-chat/push-subscription", {
+        cache: "no-store",
+      });
+      const keyData = (await keyResponse.json()) as {
+        publicKey?: string;
+        error?: string;
+      };
+      if (!keyResponse.ok || !keyData.publicKey)
+        throw new Error(keyData.error ?? "Bildirim servisi kullanılamıyor.");
+      const registration = await navigator.serviceWorker.register(
+        "/live-chat-push-sw.js",
+        { scope: "/" },
+      );
+      const existing = await registration.pushManager.getSubscription();
+      const subscription =
+        existing ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
+        }));
+      const json = subscription.toJSON();
+      const response = await fetch("/api/live-chat/push-subscription", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          token,
+          conversationId,
+          subscription: { endpoint: subscription.endpoint, keys: json.keys },
+        }),
+      });
+      if (!response.ok) throw new Error("Bildirim aboneliği kaydedilemedi.");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Bildirimler etkinleştirilemedi.",
+      );
+    } finally {
+      setNotificationPending(false);
+    }
+  }, [conversation?.id, token]);
 
   const loadChat = useCallback(async () => {
     if (!token) return;
@@ -95,6 +164,30 @@ export function LiveChatWidget() {
     setToken(storedToken);
     setName(window.localStorage.getItem(NAME_KEY) ?? "");
   }, [isAdminPage, open]);
+
+  useEffect(() => {
+    if (isAdminPage || typeof window === "undefined") return;
+    if ("Notification" in window)
+      setNotificationPermission(Notification.permission);
+    else setNotificationPermission("unsupported");
+    if (new URLSearchParams(window.location.search).get("liveChat") === "1")
+      setOpen(true);
+  }, [isAdminPage]);
+
+  useEffect(() => {
+    if (
+      isAdminPage ||
+      !conversation?.id ||
+      notificationPermission !== "granted"
+    )
+      return;
+    void subscribeToNotifications();
+  }, [
+    conversation?.id,
+    isAdminPage,
+    notificationPermission,
+    subscribeToNotifications,
+  ]);
 
   useEffect(() => {
     if (isAdminPage || !open || !token) return;
@@ -459,6 +552,19 @@ export function LiveChatWidget() {
             onSubmit={send}
             className="space-y-2 border-t border-zinc-200 p-3"
           >
+            {conversation && notificationPermission === "default" ? (
+              <button
+                type="button"
+                onClick={() => void subscribeToNotifications()}
+                disabled={notificationPending}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-100 px-3 py-2 text-xs font-bold text-zinc-800 disabled:opacity-50"
+              >
+                <Bell className="size-4" />
+                {notificationPending
+                  ? "Bildirimler açılıyor…"
+                  : "Yeni yanıt bildirimlerini aç"}
+              </button>
+            ) : null}
             {!conversation ? (
               <input
                 value={name}

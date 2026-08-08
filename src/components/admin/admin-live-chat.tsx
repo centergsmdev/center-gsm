@@ -304,6 +304,14 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     await channel.httpSend("message", result.data);
     await channel.httpSend("typing", { role: "admin", typing: false });
     await client.removeChannel(channel);
+    void fetch("/api/admin/live-chat/push", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        conversationId: selected.id,
+        messageId: result.data.id,
+      }),
+    });
   }
 
   async function deleteConversation() {
