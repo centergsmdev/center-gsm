@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, ChevronDown, Menu, Search } from "lucide-react";
+import { ChevronDown, Menu, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { adminPageTitles } from "@/data/admin/navigation";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
+import { AdminRealtimeNotifications } from "./admin-realtime-notifications";
 
 export function AdminHeader({ onMenu }: { onMenu: () => void }) {
   const pathname = usePathname();
@@ -54,14 +55,7 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
             className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
           />
         </label>
-        <button
-          type="button"
-          className="relative grid size-10 place-items-center rounded-xl border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-          aria-label="Bildirimler"
-        >
-          <Bell className="size-4" />
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-red-600 ring-2 ring-white" />
-        </button>
+        <AdminRealtimeNotifications />
         <button
           type="button"
           className="flex items-center gap-2 rounded-xl p-1.5 text-left hover:bg-zinc-50"
