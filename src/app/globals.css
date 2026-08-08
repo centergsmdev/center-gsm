@@ -215,6 +215,41 @@
       auto;
   }
 
+  /*
+   * Some Android Chromium/GPU combinations corrupt tiled layers when the
+   * catalog's multi-layer background, backdrop blur and touch-only transform
+   * layers are composited together. Touch devices do not use these hover
+   * effects, so keep them on the stable paint path without changing desktop.
+   */
+  @media (max-width: 767px) and (hover: none) and (pointer: coarse) {
+    .tech-atmosphere {
+      background-color: #f3f6fb;
+      background-image: linear-gradient(180deg, #f8fafc 0%, #edf2f8 100%);
+      background-size: auto;
+    }
+
+    .catalog-product-card,
+    .catalog-product-card:hover,
+    .catalog-product-card:active {
+      transform: none;
+      will-change: auto;
+    }
+
+    .catalog-card-action {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      transform: none;
+      will-change: auto;
+    }
+
+    .catalog-product-visual,
+    .group:hover .catalog-product-visual {
+      transform: none;
+      transition: none;
+      will-change: auto;
+    }
+  }
+
   .tech-panel-dark {
     background-color: #070b14;
     background-image:

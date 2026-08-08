@@ -56,7 +56,7 @@ export function ProductCard({
   }[product.stockStatus];
 
   return (
-    <Card className="home-premium-interactive home-premium-surface group relative flex h-full min-w-0 max-w-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
+    <Card className="catalog-product-card home-premium-interactive home-premium-surface group relative flex h-full min-w-0 max-w-full flex-col overflow-hidden border-zinc-200/80 bg-white active:scale-[0.99]">
       <div
         className={cn(
           "relative aspect-square overflow-hidden bg-white [&_span]:hidden",
@@ -78,13 +78,13 @@ export function ProductCard({
             product={product}
             productId={product.id}
             productName={productName}
-            className="size-9 border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"
+            className="catalog-card-action size-9 border-white/80 bg-white/95 shadow-sm sm:bg-white/90 sm:backdrop-blur-md sm:hover:scale-105"
           />
           <ComparisonButton
             product={product}
             productId={product.id}
             productName={productName}
-            className="size-9 border-white/80 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105"
+            className="catalog-card-action size-9 border-white/80 bg-white/95 shadow-sm sm:bg-white/90 sm:backdrop-blur-md sm:hover:scale-105"
           />
         </div>
       </div>
