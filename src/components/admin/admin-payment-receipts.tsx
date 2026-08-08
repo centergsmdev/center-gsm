@@ -18,12 +18,19 @@ import {
 } from "@/lib/admin/payment-receipts";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/format";
+import {
+  ADMIN_ACTIVITY_EVENT,
+  markAdminRecordSeen,
+  readAdminUnseenRecords,
+  type AdminActivityKind,
+} from "@/lib/admin/activity-indicator";
 
 export function AdminPaymentReceipts() {
   const [items, setItems] = useState<AdminPaymentReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
+  const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     const result = await getAdminPaymentReceipts();
@@ -49,7 +56,32 @@ export function AdminPaymentReceipts() {
     };
   }, [load]);
 
+  useEffect(() => {
+    setUnseenIds(new Set(readAdminUnseenRecords().receipt));
+
+    function handleActivity(event: Event) {
+      const detail = (
+        event as CustomEvent<{
+          kind: AdminActivityKind;
+          entityId?: string;
+        }>
+      ).detail;
+      if (detail.kind !== "receipt" || !detail.entityId) return;
+      setUnseenIds((current) => new Set([detail.entityId!, ...current]));
+    }
+
+    window.addEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+    return () =>
+      window.removeEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+  }, []);
+
   async function openReceipt(item: AdminPaymentReceipt) {
+    markAdminRecordSeen("receipt", item.id);
+    setUnseenIds((current) => {
+      const next = new Set(current);
+      next.delete(item.id);
+      return next;
+    });
     setOpening(item.id);
     const result = await getPaymentReceiptUrl(item.storage_path);
     setOpening(null);
@@ -84,7 +116,14 @@ export function AdminPaymentReceipts() {
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id}>
+              <tr
+                key={item.id}
+                className={
+                  unseenIds.has(item.id)
+                    ? "bg-emerald-50 hover:bg-emerald-100"
+                    : "hover:bg-zinc-50"
+                }
+              >
                 <AdminTd className="font-black">{item.orderNumber}</AdminTd>
                 <AdminTd>{item.customerName}</AdminTd>
                 <AdminTd>

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   ADMIN_ACTIVITY_EVENT,
+  markAdminRecordUnseen,
   type AdminActivityKind,
 } from "@/lib/admin/activity-indicator";
 
@@ -21,6 +22,7 @@ type NotificationKind = "order" | "receipt" | "message";
 
 type AdminNotification = {
   id: string;
+  entityId: string;
   kind: NotificationKind;
   title: string;
   body: string;
@@ -70,10 +72,16 @@ export function AdminRealtimeNotifications() {
     if (!client) return;
 
     function announce(item: AdminNotification) {
+      if (item.kind === "order" || item.kind === "receipt") {
+        markAdminRecordUnseen(item.kind, item.entityId);
+      }
       window.dispatchEvent(
-        new CustomEvent<{ kind: AdminActivityKind }>(ADMIN_ACTIVITY_EVENT, {
-          detail: { kind: item.kind },
-        }),
+        new CustomEvent<{ kind: AdminActivityKind; entityId: string }>(
+          ADMIN_ACTIVITY_EVENT,
+          {
+            detail: { kind: item.kind, entityId: item.entityId },
+          },
+        ),
       );
       setItems((current) => [item, ...current].slice(0, 30));
       setToasts((current) => [item, ...current].slice(0, 3));
@@ -110,6 +118,7 @@ export function AdminRealtimeNotifications() {
           );
           announce({
             id: `order:${String(order.id)}:${Date.now()}`,
+            entityId: String(order.id),
             kind: "order",
             title: "Yeni sipariş geldi",
             body: `${orderNumber} numaralı sipariş yönetim paneline düştü.`,
@@ -127,6 +136,7 @@ export function AdminRealtimeNotifications() {
             return;
           announce({
             id: `receipt:${String(receipt.id)}:${String(receipt.updated_at)}`,
+            entityId: String(receipt.id),
             kind: "receipt",
             title: "Yeni dekont yüklendi",
             body: "Havale / EFT dekontu incelemenizi bekliyor.",
@@ -143,6 +153,7 @@ export function AdminRealtimeNotifications() {
           if (message.sender !== "customer") return;
           announce({
             id: `message:${String(message.id)}`,
+            entityId: String(message.id),
             kind: "message",
             title: "Yeni canlı destek mesajı",
             body: notificationBody(

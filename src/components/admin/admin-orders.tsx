@@ -14,6 +14,12 @@ import {
 import { deleteAdminOrder, getAdminOrders } from "@/lib/admin/orders";
 import { formatCurrency } from "@/lib/format";
 import type { AdminOrder } from "@/types/order-management";
+import {
+  ADMIN_ACTIVITY_EVENT,
+  markAdminRecordSeen,
+  readAdminUnseenRecords,
+  type AdminActivityKind,
+} from "@/lib/admin/activity-indicator";
 
 const statusLabel: Record<string, string> = {
   received: "Sipariş alındı",
@@ -34,6 +40,7 @@ export function AdminOrders() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set());
   const load = useCallback(async () => {
     setLoading(true);
     const result = await getAdminOrders();
@@ -47,6 +54,34 @@ export function AdminOrders() {
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(() => {
+    setUnseenIds(new Set(readAdminUnseenRecords().order));
+
+    function handleActivity(event: Event) {
+      const detail = (
+        event as CustomEvent<{
+          kind: AdminActivityKind;
+          entityId?: string;
+        }>
+      ).detail;
+      if (detail.kind !== "order" || !detail.entityId) return;
+      setUnseenIds((current) => new Set([detail.entityId!, ...current]));
+      void load();
+    }
+
+    window.addEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+    return () =>
+      window.removeEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+  }, [load]);
+
+  function markOrderSeen(orderId: string) {
+    markAdminRecordSeen("order", orderId);
+    setUnseenIds((current) => {
+      const next = new Set(current);
+      next.delete(orderId);
+      return next;
+    });
+  }
   const visible = useMemo(
     () =>
       orders.filter((order) =>
@@ -144,7 +179,14 @@ export function AdminOrders() {
           </thead>
           <tbody>
             {visible.map((order) => (
-              <tr key={order.id} className="hover:bg-zinc-50">
+              <tr
+                key={order.id}
+                className={
+                  unseenIds.has(order.id)
+                    ? "bg-emerald-50 hover:bg-emerald-100"
+                    : "hover:bg-zinc-50"
+                }
+              >
                 <AdminTd className="font-bold text-zinc-950">
                   {order.order_number}
                 </AdminTd>
@@ -200,6 +242,7 @@ export function AdminOrders() {
                   <div className="ml-auto flex w-fit items-center gap-1">
                     <Link
                       href={`/admin/siparisler/${order.id}`}
+                      onClick={() => markOrderSeen(order.id)}
                       className="grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100"
                       aria-label={`${order.order_number} detayını aç`}
                     >
