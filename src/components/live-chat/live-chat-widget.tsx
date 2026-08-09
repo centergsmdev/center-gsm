@@ -459,7 +459,13 @@ export function LiveChatWidget() {
   if (isAdminPage) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-dropdown sm:bottom-6 sm:right-6">
+    <div
+      className={`fixed z-dropdown ${
+        open
+          ? "inset-x-3 bottom-3 top-3 flex sm:inset-x-auto sm:bottom-6 sm:right-6 sm:top-auto sm:block"
+          : "bottom-4 right-4 sm:bottom-6 sm:right-6"
+      }`}
+    >
       {open ? (
         <section
           id="live-chat-dialog"
@@ -467,7 +473,7 @@ export function LiveChatWidget() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="live-chat-title"
-          className="mb-3 flex h-[calc(100dvh-210px)] min-h-[320px] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:h-[min(580px,calc(100dvh-100px))]"
+          className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:mb-3 sm:h-[min(580px,calc(100dvh-100px))] sm:w-[min(380px,calc(100vw-24px))]"
         >
           <header className="flex items-center justify-between bg-zinc-950 px-4 py-3 text-white">
             <div>
@@ -671,7 +677,9 @@ export function LiveChatWidget() {
         ref={launcherRef}
         type="button"
         onClick={toggleChat}
-        className={`relative ml-auto flex h-12 items-center gap-2 rounded-full px-4 text-sm font-bold text-white shadow-xl transition ${
+        className={`relative ml-auto h-12 items-center gap-2 rounded-full px-4 text-sm font-bold text-white shadow-xl transition ${
+          open ? "hidden sm:flex" : "flex"
+        } ${
           hasUnreadAdminReply
             ? "bg-emerald-600 hover:bg-emerald-700"
             : "bg-zinc-950 hover:bg-red-600"
