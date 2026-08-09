@@ -7,6 +7,8 @@ import { generateSeoMetadata } from "@/lib/seo/seo";
 import { applyCoreResourceHints } from "@/lib/performance/resource-hints";
 import { DeferredLiveChat } from "@/components/live-chat/deferred-live-chat";
 import { MetaPixel } from "@/components/meta/meta-pixel";
+import { SalesCampaignProvider } from "@/providers/sales-campaign-provider";
+import { CampaignOverlays } from "@/components/sales-campaign/campaign-overlays";
 import "./globals.css";
 export const metadata = generateSeoMetadata({ canonical: "/" });
 export default function RootLayout({
@@ -20,11 +22,14 @@ export default function RootLayout({
           <FavoritesProvider>
             <ComparisonProvider>
               <CartProvider>
-                {children}
-                <DeferredLiveChat />
-                <Suspense fallback={null}>
-                  <MetaPixel />
-                </Suspense>
+                <SalesCampaignProvider>
+                  {children}
+                  <CampaignOverlays />
+                  <DeferredLiveChat />
+                  <Suspense fallback={null}>
+                    <MetaPixel />
+                  </Suspense>
+                </SalesCampaignProvider>
               </CartProvider>
             </ComparisonProvider>
           </FavoritesProvider>

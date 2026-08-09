@@ -17,6 +17,7 @@ import { productPath } from "@/lib/catalog/product-url";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
+import { ProductCampaignBadge } from "@/components/sales-campaign/product-campaign-badge";
 
 export function ProductCard({
   product,
@@ -73,6 +74,7 @@ export function ProductCard({
             %{product.discountRate} indirim
           </Badge>
         ) : null}
+        <ProductCampaignBadge product={product} />
         <div className="absolute right-2.5 top-2.5 z-raised flex flex-col gap-1.5 sm:right-3 sm:top-3">
           <FavoriteButton
             product={product}

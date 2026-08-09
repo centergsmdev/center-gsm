@@ -10,6 +10,7 @@ import { OrderSummary } from "@/components/cart/order-summary";
 import { Container } from "@/components/ui/container";
 import { useCart } from "@/providers/cart-provider";
 import type { CartLine } from "@/types/cart";
+import { CartCampaignReminder } from "@/components/sales-campaign/cart-campaign-reminder";
 
 export default function CartPage() {
   const { lines, itemCount, removeItem, addItem } = useCart();
@@ -70,6 +71,7 @@ export default function CartPage() {
               </section>
               <OrderSummary />
             </div>
+            <CartCampaignReminder lines={lines} />
           </>
         )}
       </Container>

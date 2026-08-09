@@ -1056,6 +1056,7 @@ type ProductStockHistoryRow = {
 export type Database = {
   public: {
     Tables: {
+      sales_campaigns: Table<import("@/types/sales-campaign").SalesCampaign>;
       categories: Table<
         Category,
         Partial<Category> & Pick<Category, "name" | "slug">

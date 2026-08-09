@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Sparkles,
   Tags,
+  Target,
   TicketPercent,
   Truck,
   RotateCcw,
@@ -47,6 +48,11 @@ export const adminNavigation = [
     label: "Reklam Merkezi",
     href: "/admin/reklam-merkezi",
     icon: BarChart3,
+  },
+  {
+    label: "Satış Teşvik Merkezi",
+    href: "/admin/satis-tesvik-merkezi",
+    icon: Target,
   },
   {
     label: "Instagram Gönderileri",
@@ -155,6 +161,11 @@ export const adminPageTitles: Record<
   "/admin/reklam-merkezi": {
     title: "Reklam Merkezi",
     description: "Ürün reklam uygunluğunu ve yayın hazırlıklarını yönetin.",
+  },
+  "/admin/satis-tesvik-merkezi": {
+    title: "Satış Teşvik Merkezi",
+    description:
+      "Süreli satış teşviklerini ve müşteri görünürlüklerini yönetin.",
   },
   "/admin/kategoriler": {
     title: "Kategoriler",

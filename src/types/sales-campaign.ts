@@ -1,0 +1,30 @@
+export type SalesCampaignScope = "all" | "categories" | "brands" | "products";
+export type SalesCampaignBadge = "limited" | "ends_today" | "opportunity";
+
+export type SalesCampaign = {
+  id: string;
+  campaign_name: string;
+  title: string;
+  description: string;
+  starts_at: string;
+  ends_at: string;
+  cta_text: string;
+  cta_href: string;
+  is_active: boolean;
+  show_popup: boolean;
+  show_header: boolean;
+  show_product_detail: boolean;
+  show_cart: boolean;
+  show_exit_intent: boolean;
+  show_badges: boolean;
+  popup_delay_seconds: number;
+  scope_type: SalesCampaignScope;
+  category_ids: string[];
+  category_names: string[];
+  brand_ids: string[];
+  brand_names: string[];
+  product_ids: string[];
+  badge_types: SalesCampaignBadge[];
+  created_at: string;
+  updated_at: string;
+};

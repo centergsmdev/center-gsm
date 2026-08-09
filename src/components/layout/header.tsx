@@ -11,6 +11,7 @@ import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { DesktopCategoryNavigation } from "@/components/layout/desktop-category-navigation";
 import { getCategories } from "@/lib/catalog/data";
 import { getSiteSettings } from "@/lib/settings/site-settings";
+import { CampaignHeaderBar } from "@/components/sales-campaign/campaign-header-bar";
 
 function BrandLogo() {
   return (
@@ -43,6 +44,7 @@ export async function Header() {
 
   return (
     <header className="storefront-header sticky top-0 z-sticky border-b border-border/80 bg-white/95 backdrop-blur-xl">
+      <CampaignHeaderBar />
       <div className="bg-zinc-950 text-white">
         <Container className="flex h-6 items-center justify-center text-[10px] font-semibold sm:justify-between sm:text-[11px]">
           <p>

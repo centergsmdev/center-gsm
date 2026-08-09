@@ -20,6 +20,7 @@ import type {
   CatalogProductVariant,
 } from "@/types/product";
 import type { CartVariant } from "@/types/cart";
+import { ProductCampaignPanel } from "@/components/sales-campaign/product-campaign-panel";
 
 type ProductInfoProps = {
   product: CatalogProduct;
@@ -243,6 +244,7 @@ export function ProductInfo({
         selectionComplete={selectionComplete}
         variant={cartVariant}
       />
+      <ProductCampaignPanel product={product} />
     </section>
   );
 }
