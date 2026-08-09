@@ -37,5 +37,12 @@ export function formatCountdown(milliseconds: number) {
   const hours = Math.floor((total % 86400) / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = total % 60;
-  return `${days ? `${days}g ` : ""}${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return [
+    days ? `${days} gün` : null,
+    `${String(hours).padStart(2, "0")} saat`,
+    `${String(minutes).padStart(2, "0")} dakika`,
+    `${String(seconds).padStart(2, "0")} saniye`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
