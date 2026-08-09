@@ -131,6 +131,7 @@ export type LiveChatMessage = {
 export type LiveChatSettings = {
   id: boolean;
   ai_enabled: boolean;
+  auto_reply_message: string;
   updated_at: string;
 };
 export type SiteSettings = {

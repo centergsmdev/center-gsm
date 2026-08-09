@@ -21,6 +21,8 @@ import {
 import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
 
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
+const DEFAULT_AUTO_REPLY_MESSAGE =
+  "Şu anda işlem yoğunluğu nedeniyle sizi kısa süre bekleteceğim. Birazdan yanıt alacaksınız.";
 type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
 
 export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
@@ -35,6 +37,11 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [customerTyping, setCustomerTyping] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [autoReplyMessage, setAutoReplyMessage] = useState(
+    DEFAULT_AUTO_REPLY_MESSAGE,
+  );
+  const [autoReplySaving, setAutoReplySaving] = useState(false);
+  const [autoReplySaved, setAutoReplySaved] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,7 +68,11 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
       .select("*")
       .eq("id", true)
       .maybeSingle();
-    if (result.data) setAiEnabled(result.data.ai_enabled);
+    if (result.data) {
+      setAiEnabled(result.data.ai_enabled);
+      const message = result.data.auto_reply_message?.trim();
+      setAutoReplyMessage(message || DEFAULT_AUTO_REPLY_MESSAGE);
+    }
   }, []);
 
   async function setGlobalAi(enabled: boolean) {
@@ -73,6 +84,43 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
       .eq("id", true);
     if (result.error) return setError("AI modu güncellenemedi.");
     setAiEnabled(enabled);
+  }
+
+  async function saveAutoReplyMessage() {
+    const message = autoReplyMessage.trim();
+    if (!message) {
+      setError("Otomatik yanıt mesajı boş bırakılamaz.");
+      return;
+    }
+
+    const client = createClient();
+    if (!client) {
+      setError("Supabase bağlantısı bulunamadı.");
+      return;
+    }
+
+    setAutoReplySaving(true);
+    setAutoReplySaved(false);
+    setError("");
+    try {
+      const result = await client
+        .from("live_chat_settings")
+        .update({
+          auto_reply_message: message,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", true);
+
+      if (result.error) {
+        setError("Otomatik yanıt mesajı kaydedilemedi.");
+        return;
+      }
+
+      setAutoReplyMessage(message);
+      setAutoReplySaved(true);
+    } finally {
+      setAutoReplySaving(false);
+    }
   }
 
   async function setConversationAi(enabled: boolean) {
@@ -382,6 +430,43 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
             ) : null}
           </div>
         </div>
+        <details className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
+          <summary className="cursor-pointer text-xs font-black text-zinc-700">
+            Otomatik yanıt mesajı
+          </summary>
+          <div className="mt-3">
+            <textarea
+              value={autoReplyMessage}
+              onChange={(event) => {
+                setAutoReplyMessage(event.target.value);
+                setAutoReplySaved(false);
+              }}
+              maxLength={500}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs outline-none focus:border-emerald-500"
+            />
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-zinc-500">
+                {autoReplyMessage.length}/500
+              </span>
+              <div className="flex items-center gap-2">
+                {autoReplySaved ? (
+                  <span className="text-[10px] font-bold text-emerald-600">
+                    Kaydedildi
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void saveAutoReplyMessage()}
+                  disabled={autoReplySaving || !autoReplyMessage.trim()}
+                  className="rounded-lg bg-zinc-950 px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50"
+                >
+                  {autoReplySaving ? "Kaydediliyor…" : "Kaydet"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </details>
         <div className="max-h-[220px] overflow-y-auto overscroll-contain p-2 lg:max-h-none lg:min-h-0 lg:flex-1">
           {conversations.map((item) => (
             <button
@@ -535,6 +620,16 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                 <textarea
                   value={reply}
                   onChange={(event) => publishTyping(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      !event.shiftKey &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
                   placeholder="Cevabınızı yazın…"
                   maxLength={2000}
                   rows={2}

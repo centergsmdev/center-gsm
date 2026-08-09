@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       .single(),
     client
       .from("live_chat_settings")
-      .select("ai_enabled")
+      .select("ai_enabled, auto_reply_message")
       .eq("id", true)
       .single(),
   ]);
@@ -72,12 +72,15 @@ export async function POST(request: Request) {
     await client.removeChannel(channel);
     return quiet();
   }
+
+  const autoReplyMessage =
+    latestSettings.data.auto_reply_message?.trim() || WAIT_MESSAGE;
   const inserted = await client
     .from("live_chat_messages")
     .insert({
       conversation_id: conversation.data.id,
       sender: "ai",
-      body: WAIT_MESSAGE,
+      body: autoReplyMessage,
       reply_to_message_id: messageId,
     })
     .select("*")
