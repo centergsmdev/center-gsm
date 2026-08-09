@@ -3,6 +3,7 @@
 import { Bell, ImagePlus, MessageCircle, Send, Smile, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import {
   useCallback,
   useEffect,
@@ -44,6 +45,7 @@ type ChatResponse = {
 export function LiveChatWidget() {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith("/admin");
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [hasUnreadAdminReply, setHasUnreadAdminReply] = useState(false);
   const [token, setToken] = useState("");
@@ -456,13 +458,17 @@ export function LiveChatWidget() {
     }
   }
 
-  if (isAdminPage) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
+  if (isAdminPage || !mounted) return null;
+
+  return createPortal(
     <div
-      className={`fixed z-dropdown ${
+      className={`fixed z-[1000] ${
         open
-          ? "inset-x-3 bottom-3 top-3 flex sm:inset-x-auto sm:bottom-6 sm:right-6 sm:top-auto sm:block"
+          ? "inset-0 flex sm:inset-auto sm:bottom-6 sm:right-6 sm:block"
           : "bottom-4 right-4 sm:bottom-6 sm:right-6"
       }`}
     >
@@ -473,7 +479,7 @@ export function LiveChatWidget() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="live-chat-title"
-          className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:mb-3 sm:h-[min(580px,calc(100dvh-100px))] sm:w-[min(380px,calc(100vw-24px))]"
+          className="flex h-[100dvh] h-screen min-h-0 w-full flex-col overflow-hidden border-0 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:mb-3 sm:h-[min(580px,calc(100dvh-48px))] sm:w-[min(380px,calc(100vw-24px))] sm:rounded-3xl sm:border sm:border-zinc-200"
         >
           <header className="flex items-center justify-between bg-zinc-950 px-4 py-3 text-white">
             <div>
@@ -695,6 +701,7 @@ export function LiveChatWidget() {
         ) : null}
         <MessageCircle className="size-5" /> Canlı Destek
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }
