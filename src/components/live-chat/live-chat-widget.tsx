@@ -9,6 +9,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ChangeEvent,
   type FormEvent,
 } from "react";
@@ -47,6 +48,10 @@ export function LiveChatWidget() {
   const isAdminPage = pathname.startsWith("/admin");
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [mobileViewport, setMobileViewport] = useState<{
+    height: number;
+    offsetTop: number;
+  } | null>(null);
   const [hasUnreadAdminReply, setHasUnreadAdminReply] = useState(false);
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
@@ -239,6 +244,48 @@ export function LiveChatWidget() {
       body.style.width = previous.bodyWidth;
       html.style.overflow = previous.htmlOverflow;
       window.scrollTo(0, scrollY);
+    };
+  }, [isAdminPage, open]);
+
+  useEffect(() => {
+    if (isAdminPage || !open) return;
+
+    const media = window.matchMedia("(max-width: 639px)");
+    let frame = 0;
+
+    const updateViewport = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        if (!media.matches) {
+          setMobileViewport(null);
+          return;
+        }
+
+        const viewport = window.visualViewport;
+        setMobileViewport({
+          height: Math.max(
+            320,
+            Math.round(viewport?.height ?? window.innerHeight),
+          ),
+          offsetTop: Math.max(0, Math.round(viewport?.offsetTop ?? 0)),
+        });
+      });
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+    media.addEventListener?.("change", updateViewport);
+    window.visualViewport?.addEventListener("resize", updateViewport);
+    window.visualViewport?.addEventListener("scroll", updateViewport);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+      media.removeEventListener?.("change", updateViewport);
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
     };
   }, [isAdminPage, open]);
 
@@ -462,13 +509,23 @@ export function LiveChatWidget() {
     setMounted(true);
   }, []);
 
+  const mobileDialogViewportStyle: CSSProperties | undefined =
+    open && mobileViewport
+      ? {
+          top: `${mobileViewport.offsetTop}px`,
+          bottom: "auto",
+          height: `${mobileViewport.height}px`,
+        }
+      : undefined;
+
   if (isAdminPage || !mounted) return null;
 
   return createPortal(
     <div
+      style={mobileDialogViewportStyle}
       className={`fixed z-[1000] ${
         open
-          ? "inset-0 flex sm:inset-auto sm:bottom-6 sm:right-6 sm:block"
+          ? "inset-x-0 top-0 flex h-[100dvh] sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:block sm:h-auto"
           : "bottom-4 right-4 sm:bottom-6 sm:right-6"
       }`}
     >
@@ -479,9 +536,9 @@ export function LiveChatWidget() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="live-chat-title"
-          className="flex h-[100dvh] h-screen min-h-0 w-full flex-col overflow-hidden border-0 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:mb-3 sm:h-[min(580px,calc(100dvh-48px))] sm:w-[min(380px,calc(100vw-24px))] sm:rounded-3xl sm:border sm:border-zinc-200"
+          className="flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden border-0 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:mb-3 sm:h-[min(580px,calc(100dvh-48px))] sm:w-[min(380px,calc(100vw-24px))] sm:rounded-3xl sm:border sm:border-zinc-200"
         >
-          <header className="flex items-center justify-between bg-zinc-950 px-4 py-3 text-white">
+          <header className="flex shrink-0 items-center justify-between bg-zinc-950 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white sm:py-3">
             <div>
               <h2 id="live-chat-title" className="font-black">
                 Canlı Destek
@@ -580,7 +637,7 @@ export function LiveChatWidget() {
           </div>
           <form
             onSubmit={send}
-            className="space-y-2 border-t border-zinc-200 p-3"
+            className="shrink-0 space-y-2 border-t border-zinc-200 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:p-3"
           >
             {conversation && notificationPermission === "default" ? (
               <button
