@@ -45,6 +45,7 @@ export function LiveChatWidget() {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith("/admin");
   const [open, setOpen] = useState(false);
+  const [hasUnreadAdminReply, setHasUnreadAdminReply] = useState(false);
   const [token, setToken] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -155,15 +156,22 @@ export function LiveChatWidget() {
   }, [open, token]);
 
   useEffect(() => {
-    if (isAdminPage || !open) return;
-    let storedToken = window.localStorage.getItem(TOKEN_KEY);
-    if (!storedToken) {
-      storedToken = crypto.randomUUID();
-      window.localStorage.setItem(TOKEN_KEY, storedToken);
-    }
-    setToken(storedToken);
+    if (isAdminPage) return;
+    const storedToken = window.localStorage.getItem(TOKEN_KEY);
+    if (storedToken) setToken(storedToken);
     setName(window.localStorage.getItem(NAME_KEY) ?? "");
-  }, [isAdminPage, open]);
+  }, [isAdminPage]);
+
+  useEffect(() => {
+    if (isAdminPage || !open || token) return;
+    const nextToken = crypto.randomUUID();
+    window.localStorage.setItem(TOKEN_KEY, nextToken);
+    setToken(nextToken);
+  }, [isAdminPage, open, token]);
+
+  useEffect(() => {
+    if (open) setHasUnreadAdminReply(false);
+  }, [open]);
 
   useEffect(() => {
     if (isAdminPage || typeof window === "undefined") return;
@@ -233,13 +241,21 @@ export function LiveChatWidget() {
   }, [isAdminPage, open]);
 
   useEffect(() => {
-    if (isAdminPage || !open) return;
+    if (isAdminPage) return;
     const client = createClient();
     if (!client || !token) return;
     const channel = client
       .channel(`live-chat:${token}`)
-      .on("broadcast", { event: "message" }, () => void loadChat())
-      .on("broadcast", { event: "read" }, () => void loadChat())
+      .on("broadcast", { event: "message" }, ({ payload }) => {
+        const incomingMessage = payload as Partial<ChatMessage> | undefined;
+        if (!open && incomingMessage?.sender === "admin") {
+          setHasUnreadAdminReply(true);
+        }
+        if (open) void loadChat();
+      })
+      .on("broadcast", { event: "read" }, () => {
+        if (open) void loadChat();
+      })
       .on("broadcast", { event: "conversation_deleted" }, ({ payload }) => {
         if (
           conversation?.id &&
@@ -251,9 +267,11 @@ export function LiveChatWidget() {
         setMessages([]);
         setMessage("");
         setError("");
+        setHasUnreadAdminReply(false);
         stickToBottom.current = true;
       })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (!open) return;
         if (payload?.role !== "admin" && payload?.role !== "ai") return;
         setAdminTyping(Boolean(payload.typing));
       })
@@ -653,11 +671,20 @@ export function LiveChatWidget() {
         ref={launcherRef}
         type="button"
         onClick={toggleChat}
-        className="ml-auto flex h-12 items-center gap-2 rounded-full bg-zinc-950 px-4 text-sm font-bold text-white shadow-xl transition hover:bg-red-600"
+        className={`relative ml-auto flex h-12 items-center gap-2 rounded-full px-4 text-sm font-bold text-white shadow-xl transition ${
+          hasUnreadAdminReply
+            ? "bg-emerald-600 hover:bg-emerald-700"
+            : "bg-zinc-950 hover:bg-red-600"
+        }`}
         aria-label={open ? "Canlı desteği kapat" : "Canlı desteği aç"}
         aria-expanded={open}
         aria-controls="live-chat-dialog"
       >
+        {hasUnreadAdminReply ? (
+          <span className="absolute -right-1 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-white px-1 text-xs font-black text-emerald-700 shadow-lg">
+            1
+          </span>
+        ) : null}
         <MessageCircle className="size-5" /> Canlı Destek
       </button>
     </div>
