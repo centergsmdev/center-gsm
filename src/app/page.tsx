@@ -7,6 +7,7 @@ import { FeaturedProducts } from "@/components/home/featured-products";
 import { WeeklyDeals } from "@/components/home/weekly-deals";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { HomepageWhatsAppButton } from "@/components/layout/homepage-whatsapp-button";
 import { Hero } from "@/components/home/hero";
 import { PromoVideoModal } from "@/components/home/promo-video-modal";
 import {
@@ -120,6 +121,7 @@ export default async function HomePage() {
           <Footer />
         </FadeIn>
       </MotionProvider>
+      <HomepageWhatsAppButton />
     </div>
   );
 }
