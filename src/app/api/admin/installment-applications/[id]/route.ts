@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getAdminContext, mapAdminApplication } from "@/lib/installment/server";
 import { isUuid } from "@/lib/installment/validation";
 import { sanitizeInstallmentContractContent } from "@/lib/installment/contract-server";
+import { createInstallmentWhatsAppHandoff } from "@/lib/installment/whatsapp";
+import type { InstallmentAdminPaymentPlan } from "@/lib/installment/types";
 
 export const runtime = "nodejs";
 
@@ -60,10 +62,47 @@ export async function GET(
   if (!application.data)
     return NextResponse.json({ error: "Başvuru bulunamadı." }, { status: 404 });
   const row = application.data;
+  const mappedApplication = mapAdminApplication(row);
+  const mappedPaymentPlan: InstallmentAdminPaymentPlan | null = paymentPlan.data
+    ? {
+        configId: paymentPlan.data.payment_config_id,
+        configRevision: paymentPlan.data.payment_config_revision,
+        productPriceMinor: Number(paymentPlan.data.product_price_minor),
+        thresholdMinor: Number(paymentPlan.data.threshold_minor),
+        downPaymentRateBps: paymentPlan.data.down_payment_rate_bps,
+        downPaymentAmountMinor: Number(
+          paymentPlan.data.down_payment_amount_minor,
+        ),
+        remainingPrincipalMinor: Number(
+          paymentPlan.data.remaining_principal_minor,
+        ),
+        financeChargeRateBps: paymentPlan.data.finance_charge_rate_bps,
+        financeChargeAmountMinor: Number(
+          paymentPlan.data.finance_charge_amount_minor,
+        ),
+        financedTotalMinor: Number(paymentPlan.data.financed_total_minor),
+        installmentCount: paymentPlan.data.installment_count,
+        installmentSchedule: paymentPlan.data.installment_schedule.map(
+          (entry) => ({
+            installment: entry.installment,
+            amountMinor: Number(entry.amount_minor),
+          }),
+        ),
+        totalPayableMinor: Number(paymentPlan.data.total_payable_minor),
+      }
+    : null;
+  const whatsappHandoff = createInstallmentWhatsAppHandoff({
+    status: mappedApplication.status,
+    applicantName: mappedApplication.applicantName,
+    phone: mappedApplication.phone,
+    productName: mappedApplication.productName,
+    variantTitle: mappedApplication.variantTitle,
+    paymentPlan: mappedPaymentPlan,
+  });
   return NextResponse.json(
     {
       item: {
-        ...mapAdminApplication(row),
+        ...mappedApplication,
         decisionAt: row.decision_at,
         rejectionReasonPublic: row.rejection_reason_public,
         internalNote: row.internal_note,
@@ -91,34 +130,8 @@ export async function GET(
                 signatureDocumentId: contract.data.signature_document_id,
               }
             : null,
-        paymentPlan: paymentPlan.data
-          ? {
-              configId: paymentPlan.data.payment_config_id,
-              configRevision: paymentPlan.data.payment_config_revision,
-              productPriceMinor: Number(paymentPlan.data.product_price_minor),
-              thresholdMinor: Number(paymentPlan.data.threshold_minor),
-              downPaymentRateBps: paymentPlan.data.down_payment_rate_bps,
-              downPaymentAmountMinor: Number(
-                paymentPlan.data.down_payment_amount_minor,
-              ),
-              remainingPrincipalMinor: Number(
-                paymentPlan.data.remaining_principal_minor,
-              ),
-              financeChargeRateBps: paymentPlan.data.finance_charge_rate_bps,
-              financeChargeAmountMinor: Number(
-                paymentPlan.data.finance_charge_amount_minor,
-              ),
-              financedTotalMinor: Number(paymentPlan.data.financed_total_minor),
-              installmentCount: paymentPlan.data.installment_count,
-              installmentSchedule: paymentPlan.data.installment_schedule.map(
-                (entry) => ({
-                  installment: entry.installment,
-                  amountMinor: Number(entry.amount_minor),
-                }),
-              ),
-              totalPayableMinor: Number(paymentPlan.data.total_payable_minor),
-            }
-          : null,
+        paymentPlan: mappedPaymentPlan,
+        whatsappHandoff,
       },
     },
     { headers: { "Cache-Control": "no-store" } },

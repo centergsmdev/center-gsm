@@ -80,7 +80,14 @@ export type InstallmentAdminDetail = InstallmentAdminListItem & {
   documents: InstallmentAdminDocument[];
   contract: InstallmentAdminContractSnapshot | null;
   paymentPlan: InstallmentAdminPaymentPlan | null;
+  whatsappHandoff: InstallmentWhatsAppHandoff;
 };
+
+export type InstallmentWhatsAppHandoff =
+  | { state: "not_approved" }
+  | { state: "missing_payment_plan" }
+  | { state: "invalid_phone" }
+  | { state: "ready"; phone: string; message: string; url: string };
 
 export type InstallmentAdminPaymentPlan = {
   configId: string;

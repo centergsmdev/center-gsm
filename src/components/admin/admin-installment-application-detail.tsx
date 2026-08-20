@@ -9,6 +9,7 @@ import {
   Eye,
   FileText,
   LoaderCircle,
+  MessageCircle,
   ScrollText,
   XCircle,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import {
   formatMinorCurrency,
   type PaymentPlan,
 } from "@/lib/payment-plan/engine";
+import { shouldShowWhatsAppApprovalAction } from "@/lib/installment/whatsapp";
 
 function DetailBlock({
   title,
@@ -74,6 +76,7 @@ export function AdminInstallmentApplicationDetail({
   const [publicReason, setPublicReason] = useState("");
   const [internalNote, setInternalNote] = useState("");
   const [contractOpen, setContractOpen] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -142,6 +145,8 @@ export function AdminInstallmentApplicationDetail({
 
   if (failed) return <AdminErrorState retry={() => void load()} />;
   if (!item) return <AdminLoadingState />;
+  const whatsappUrl =
+    item.whatsappHandoff.state === "ready" ? item.whatsappHandoff.url : null;
   const signature = item.documents.find(
     (document) => document.type === "signature",
   );
@@ -334,6 +339,41 @@ export function AdminInstallmentApplicationDetail({
         )}
       </DetailBlock>
 
+      {shouldShowWhatsAppApprovalAction(item.status) ? (
+        <DetailBlock title="WhatsApp Onay Mesajı">
+          {item.whatsappHandoff.state === "ready" ? (
+            <div className="space-y-3">
+              <p className="text-sm leading-6 text-zinc-600">
+                Müşterinin kabul ettiği değişmez ödeme planından hazırlanan
+                mesajı kontrol ederek WhatsApp&apos;ta açabilirsiniz.
+              </p>
+              <Button
+                className="w-full bg-emerald-600 text-white hover:bg-emerald-700 sm:w-auto"
+                onClick={() => setWhatsappOpen(true)}
+              >
+                <MessageCircle className="size-4" /> WhatsApp&apos;tan Onay
+                Mesajı Gönder
+              </Button>
+            </div>
+          ) : item.whatsappHandoff.state === "missing_payment_plan" ? (
+            <p className="rounded-xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
+              Bu başvuruda kayıtlı ödeme planı bulunmadığı için otomatik
+              WhatsApp mesajı oluşturulamıyor.
+            </p>
+          ) : item.whatsappHandoff.state === "invalid_phone" ? (
+            <div className="space-y-3">
+              <Button disabled className="w-full sm:w-auto">
+                <MessageCircle className="size-4" /> WhatsApp&apos;tan Onay
+                Mesajı Gönder
+              </Button>
+              <p className="text-sm font-semibold text-red-700" role="alert">
+                Geçerli WhatsApp telefon numarası bulunamadı.
+              </p>
+            </div>
+          ) : null}
+        </DetailBlock>
+      ) : null}
+
       <DetailBlock title="Başvuru ve Karar">
         <dl className="mb-5">
           <DataRow label="Başvuru No" value={item.applicationNumber} />
@@ -445,6 +485,37 @@ export function AdminInstallmentApplicationDetail({
               __html: item.contract.renderedContent,
             }}
           />
+        </AdminModal>
+      ) : null}
+      {item.whatsappHandoff.state === "ready" && whatsappUrl ? (
+        <AdminModal
+          open={whatsappOpen}
+          onClose={() => setWhatsappOpen(false)}
+          title="WhatsApp Mesajı"
+          description="Mesaj immutable başvuru snapshot'ından hazırlanmıştır ve bu önizlemede değiştirilemez."
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setWhatsappOpen(false)}>
+                İptal
+              </Button>
+              <Button
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                onClick={() => {
+                  window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                  setWhatsappOpen(false);
+                }}
+              >
+                <MessageCircle className="size-4" /> WhatsApp&apos;ta Aç
+              </Button>
+            </>
+          }
+        >
+          <pre
+            aria-label="Hazırlanan WhatsApp onay mesajı"
+            className="max-h-[60dvh] w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-xl bg-zinc-50 p-4 font-sans text-xs leading-6 text-zinc-800 sm:text-sm"
+          >
+            {item.whatsappHandoff.message}
+          </pre>
         </AdminModal>
       ) : null}
     </div>
