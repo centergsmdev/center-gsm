@@ -25,6 +25,7 @@ import {
   normalizeOptionalEmail,
   normalizeTurkishPhone,
 } from "@/lib/installment/validation";
+import { resolvePaymentPlanSnapshot } from "@/lib/payment-plan/server";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
   const variantId = variantValue || null;
   const idempotencyKey = String(body.idempotencyKey ?? "");
   const contractOfferToken = String(body.contractOfferToken ?? "");
+  const paymentPlanOfferToken = String(body.paymentPlanOfferToken ?? "");
+  const installmentCount = Number(body.installmentCount);
   const applicantName = normalizeApplicantName(
     String(body.applicantName ?? ""),
   );
@@ -62,6 +65,17 @@ export async function POST(request: Request) {
       "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
       409,
     );
+  if (!paymentPlanOfferToken)
+    return error(
+      "Ödeme planı şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+      409,
+    );
+  if (
+    !Number.isSafeInteger(installmentCount) ||
+    installmentCount < 1 ||
+    installmentCount > 36
+  )
+    return error("Taksit seçimi geçersiz.");
   if (!applicantName) return error("Ad soyad alanını kontrol edin.");
   if (!phone) return error("Geçerli bir Türkiye cep telefonu girin.");
   if (email === undefined) return error("E-posta adresini kontrol edin.");
@@ -136,6 +150,36 @@ export async function POST(request: Request) {
   if (inserted.error || !inserted.data)
     return error("Başvuru taslağı oluşturulamadı.", 500);
 
+  const paymentSnapshot = await resolvePaymentPlanSnapshot(
+    service,
+    {
+      applicationId: inserted.data.id,
+      offerToken: paymentPlanOfferToken,
+      installmentCount,
+      product: summary,
+    },
+    secret,
+  );
+  if (!paymentSnapshot.data || !paymentSnapshot.plan) {
+    await service
+      .from("installment_applications")
+      .delete()
+      .eq("id", inserted.data.id)
+      .eq("status", "draft");
+    return error(paymentSnapshot.error, 409);
+  }
+  const paymentInsert = await service
+    .from("installment_application_payment_plans")
+    .insert(paymentSnapshot.data);
+  if (paymentInsert.error) {
+    await service
+      .from("installment_applications")
+      .delete()
+      .eq("id", inserted.data.id)
+      .eq("status", "draft");
+    return error("Ödeme planı kaydedilemedi.", 500);
+  }
+
   const contractSnapshot = await resolveInstallmentContractSnapshot(
     service,
     {
@@ -143,6 +187,7 @@ export async function POST(request: Request) {
       offerToken: contractOfferToken,
       product: summary,
       applicantName,
+      paymentPlan: paymentSnapshot.plan,
     },
     secret,
   );
@@ -170,7 +215,10 @@ export async function POST(request: Request) {
     application_id: inserted.data.id,
     event_type: "application.created",
     actor_type: "customer",
-    metadata: {},
+    metadata: {
+      payment_config_revision: paymentSnapshot.plan.configRevision,
+      installment_count: paymentSnapshot.plan.installmentCount,
+    },
   });
   if (event.error) {
     await service

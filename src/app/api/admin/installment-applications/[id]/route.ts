@@ -22,7 +22,7 @@ export async function GET(
       { error: "Admin yetkisi gerekiyor." },
       { status: 403 },
     );
-  const [application, documents, contract] = await Promise.all([
+  const [application, documents, contract, paymentPlan] = await Promise.all([
     context.service
       .from("installment_applications")
       .select("*")
@@ -41,8 +41,18 @@ export async function GET(
       .select("*")
       .eq("application_id", id)
       .maybeSingle(),
+    context.service
+      .from("installment_application_payment_plans")
+      .select("*")
+      .eq("application_id", id)
+      .maybeSingle(),
   ]);
-  if (application.error || documents.error || contract.error)
+  if (
+    application.error ||
+    documents.error ||
+    contract.error ||
+    paymentPlan.error
+  )
     return NextResponse.json(
       { error: "Başvuru yüklenemedi." },
       { status: 500 },
@@ -81,6 +91,34 @@ export async function GET(
                 signatureDocumentId: contract.data.signature_document_id,
               }
             : null,
+        paymentPlan: paymentPlan.data
+          ? {
+              configId: paymentPlan.data.payment_config_id,
+              configRevision: paymentPlan.data.payment_config_revision,
+              productPriceMinor: Number(paymentPlan.data.product_price_minor),
+              thresholdMinor: Number(paymentPlan.data.threshold_minor),
+              downPaymentRateBps: paymentPlan.data.down_payment_rate_bps,
+              downPaymentAmountMinor: Number(
+                paymentPlan.data.down_payment_amount_minor,
+              ),
+              remainingPrincipalMinor: Number(
+                paymentPlan.data.remaining_principal_minor,
+              ),
+              financeChargeRateBps: paymentPlan.data.finance_charge_rate_bps,
+              financeChargeAmountMinor: Number(
+                paymentPlan.data.finance_charge_amount_minor,
+              ),
+              financedTotalMinor: Number(paymentPlan.data.financed_total_minor),
+              installmentCount: paymentPlan.data.installment_count,
+              installmentSchedule: paymentPlan.data.installment_schedule.map(
+                (entry) => ({
+                  installment: entry.installment,
+                  amountMinor: Number(entry.amount_minor),
+                }),
+              ),
+              totalPayableMinor: Number(paymentPlan.data.total_payable_minor),
+            }
+          : null,
       },
     },
     { headers: { "Cache-Control": "no-store" } },

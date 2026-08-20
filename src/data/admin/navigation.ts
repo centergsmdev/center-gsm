@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bell,
   Boxes,
+  CreditCard,
   Landmark,
   LayoutDashboard,
   Instagram,
@@ -91,6 +92,11 @@ export const adminNavigation = [
     icon: TicketPercent,
   },
   { label: "Ödeme Ayarları", href: "/admin/odeme-ayarlari", icon: Landmark },
+  {
+    label: "Ödeme Planı Ayarları",
+    href: "/admin/odeme-plani-ayarlari",
+    icon: CreditCard,
+  },
   {
     label: "Ödeme Sağlayıcıları",
     href: "/admin/odeme-saglayicilari",
@@ -259,6 +265,11 @@ export const adminPageTitles: Record<
   "/admin/odeme-ayarlari": {
     title: "Ödeme Ayarları",
     description: "Banka hesaplarını ve ödeme seçeneklerini yönetin.",
+  },
+  "/admin/odeme-plani-ayarlari": {
+    title: "Ödeme Planı Ayarları",
+    description:
+      "Elden taksit ve kredi kartı hesaplama revision'larını yönetin.",
   },
   "/admin/odeme-saglayicilari": {
     title: "Ödeme Sağlayıcıları",

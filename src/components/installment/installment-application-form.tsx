@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { SignaturePad } from "@/components/installment/signature-pad";
+import { PaymentPlanSummary } from "@/components/installment/payment-plan-summary";
 import { InstallmentContractModal } from "@/components/installment/installment-contract-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +34,13 @@ import {
   normalizeTurkishPhone,
   productSummaryStorageLabel,
 } from "@/lib/installment/validation";
+import {
+  calculatePaymentPlan,
+  describePaymentSchedule,
+  formatBasisPoints,
+  formatMinorCurrency,
+} from "@/lib/payment-plan/engine";
+import type { PaymentPlanOffer } from "@/lib/payment-plan/types";
 
 type SignatureValue = { file: File; previewUrl: string };
 type FileKey = Exclude<InstallmentDocumentType, "signature">;
@@ -138,9 +146,11 @@ function FileField({
 export function InstallmentApplicationForm({
   product,
   contract,
+  paymentPlan,
 }: {
   product: InstallmentProductSummary;
   contract: InstallmentContractOffer | null;
+  paymentPlan: PaymentPlanOffer | null;
 }) {
   const idempotencyKey = useRef(newIdempotencyKey());
   const [applicantName, setApplicantName] = useState("");
@@ -153,6 +163,9 @@ export function InstallmentApplicationForm({
   });
   const [signature, setSignature] = useState<SignatureValue | null>(null);
   const [contractAcknowledged, setContractAcknowledged] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState(
+    paymentPlan?.plan.installmentCount ?? 12,
+  );
   const [contractOpen, setContractOpen] = useState(false);
   const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [termsAcknowledged, setTermsAcknowledged] = useState(false);
@@ -161,8 +174,20 @@ export function InstallmentApplicationForm({
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [successNumber, setSuccessNumber] = useState("");
+  const selectedPaymentPlan = useMemo(
+    () =>
+      paymentPlan
+        ? calculatePaymentPlan({
+            paymentType: "installment_application",
+            productPriceMinor: paymentPlan.plan.productPriceMinor,
+            installmentCount,
+            config: paymentPlan.config,
+          })
+        : null,
+    [installmentCount, paymentPlan],
+  );
   const renderedContract = useMemo(() => {
-    if (!contract) return "";
+    if (!contract || !selectedPaymentPlan) return "";
     return renderInstallmentContract(contract.contentHtml, {
       customer_name:
         normalizeApplicantName(applicantName) ?? "Ad Soyad bilgisi girilmedi",
@@ -173,8 +198,24 @@ export function InstallmentApplicationForm({
         dateStyle: "long",
         timeZone: "Europe/Istanbul",
       }).format(new Date(contract.presentedAt)),
+      down_payment_rate: `%${formatBasisPoints(selectedPaymentPlan.downPaymentRateBps)}`,
+      down_payment_amount: formatMinorCurrency(
+        selectedPaymentPlan.downPaymentAmountMinor,
+      ),
+      remaining_principal: formatMinorCurrency(
+        selectedPaymentPlan.remainingPrincipalMinor,
+      ),
+      finance_charge_rate: `%${formatBasisPoints(selectedPaymentPlan.financeChargeRateBps)}`,
+      finance_charge_amount: formatMinorCurrency(
+        selectedPaymentPlan.financeChargeAmountMinor,
+      ),
+      installment_count: `${selectedPaymentPlan.installmentCount} Ay`,
+      installment_schedule: describePaymentSchedule(
+        selectedPaymentPlan.installmentSchedule,
+      ),
+      total_payable: formatMinorCurrency(selectedPaymentPlan.totalPayableMinor),
     });
-  }, [applicantName, contract, product]);
+  }, [applicantName, contract, product, selectedPaymentPlan]);
 
   function validate() {
     const next: Record<string, string> = {};
@@ -201,6 +242,9 @@ export function InstallmentApplicationForm({
         "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.";
     else if (!contractAcknowledged)
       next.contract = "Elden Taksitli Satış Sözleşmesini kabul edin.";
+    if (!paymentPlan || !selectedPaymentPlan)
+      next.paymentPlan =
+        "Ödeme planı şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -253,6 +297,8 @@ export function InstallmentApplicationForm({
             phone,
             email,
             contractOfferToken: contract?.offerToken,
+            paymentPlanOfferToken: paymentPlan?.offerToken,
+            installmentCount,
           }),
         }),
       );
@@ -447,6 +493,61 @@ export function InstallmentApplicationForm({
           </CardContent>
         </Card>
 
+        <Card
+          className={paymentPlan ? undefined : "border-red-200 bg-red-50/30"}
+        >
+          <CardContent className="space-y-5">
+            {paymentPlan && selectedPaymentPlan ? (
+              <>
+                <PaymentPlanSummary plan={selectedPaymentPlan} />
+                <fieldset>
+                  <legend className="text-sm font-bold text-zinc-800">
+                    Taksit sayısını değiştir
+                  </legend>
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {paymentPlan.config.installmentCounts.map((count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        aria-pressed={installmentCount === count}
+                        onClick={() => {
+                          setInstallmentCount(count);
+                          setContractAcknowledged(false);
+                          setErrors((current) => ({
+                            ...current,
+                            contract: "",
+                            paymentPlan: "",
+                          }));
+                        }}
+                        className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 ${installmentCount === count ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 bg-white text-zinc-800"}`}
+                      >
+                        {count} Ay
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-zinc-500">
+                    Plan değiştiğinde sözleşmeyi yeniden okuyup kabul etmeniz
+                    gerekir.
+                  </p>
+                </fieldset>
+              </>
+            ) : (
+              <p
+                className="rounded-xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700"
+                role="alert"
+              >
+                Ödeme planı şu anda kullanılamıyor. Lütfen daha sonra tekrar
+                deneyin.
+              </p>
+            )}
+            {errors.paymentPlan ? (
+              <p className="text-sm font-semibold text-red-700" role="alert">
+                {errors.paymentPlan}
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+
         <Card className={contract ? undefined : "border-red-200 bg-red-50/30"}>
           <CardContent className="space-y-5">
             <div className="flex items-start gap-3">
@@ -603,7 +704,7 @@ export function InstallmentApplicationForm({
           <Button
             size="lg"
             className="w-full"
-            disabled={!contract}
+            disabled={!contract || !paymentPlan}
             onClick={openReview}
           >
             <FileCheck2 className="size-5" aria-hidden="true" />
@@ -722,6 +823,7 @@ export function InstallmentApplicationForm({
                   disabled={
                     busy ||
                     !contractAcknowledged ||
+                    !selectedPaymentPlan ||
                     !termsAcknowledged ||
                     !privacyAcknowledged
                   }

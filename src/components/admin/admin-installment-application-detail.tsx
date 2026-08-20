@@ -27,6 +27,11 @@ import {
   INSTALLMENT_STATUS_LABELS,
   type InstallmentAdminDetail,
 } from "@/lib/installment/types";
+import { PaymentPlanSummary } from "@/components/installment/payment-plan-summary";
+import {
+  formatMinorCurrency,
+  type PaymentPlan,
+} from "@/lib/payment-plan/engine";
 
 function DetailBlock({
   title,
@@ -96,7 +101,9 @@ export function AdminInstallmentApplicationDetail({
     if (
       action === "approve" &&
       !window.confirm(
-        "Bu elden taksit başvurusunu onaylamak istediğinize emin misiniz?",
+        item.paymentPlan
+          ? `Bu başvuruyu ${item.paymentPlan.installmentCount} ay ve ${formatMinorCurrency(item.paymentPlan.totalPayableMinor)} toplam ödeme planıyla onaylamak istediğinize emin misiniz? Ödeme planı değiştirilmeyecektir.`
+          : "Bu legacy başvuruda ödeme planı snapshot'ı yok. Başvuruyu yine de onaylamak istediğinize emin misiniz?",
       )
     )
       return;
@@ -302,6 +309,27 @@ export function AdminInstallmentApplicationDetail({
           <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
             Bu başvuru sözleşme snapshot özelliğinden önce oluşturulmuş legacy
             kayıttır; sözleşme kabulü üretilmemiştir.
+          </p>
+        )}
+      </DetailBlock>
+
+      <DetailBlock title="Ödeme Planı">
+        {item.paymentPlan ? (
+          <PaymentPlanSummary
+            title="Müşterinin Kabul Ettiği Ödeme Planı"
+            plan={
+              {
+                paymentType: "installment_application",
+                ...item.paymentPlan,
+                monthlyInstallmentMinor:
+                  item.paymentPlan.installmentSchedule[0]?.amountMinor ?? 0,
+              } satisfies PaymentPlan
+            }
+          />
+        ) : (
+          <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
+            Bu başvuru ödeme planı snapshot özelliğinden önce oluşturulmuş
+            legacy kayıttır; geriye dönük plan üretilmemiştir.
           </p>
         )}
       </DetailBlock>

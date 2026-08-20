@@ -18,6 +18,12 @@ import type {
   Database,
 } from "../../types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  describePaymentSchedule,
+  formatBasisPoints,
+  formatMinorCurrency,
+  type PaymentPlan,
+} from "../payment-plan/engine";
 
 export type ContractSnapshot = {
   application_id: string;
@@ -99,6 +105,7 @@ export async function resolveInstallmentContractSnapshot(
     offerToken: string;
     product: InstallmentProductSummary;
     applicantName: string;
+    paymentPlan: PaymentPlan;
   },
   secret: string,
 ): Promise<
@@ -161,6 +168,24 @@ export async function resolveInstallmentContractSnapshot(
           variant_name: input.product.variantTitle ?? "Varyantsız ürün",
           product_price: formatCurrency(input.product.price),
           application_date: formatContractDate(offer.presentedAt),
+          down_payment_rate: `%${formatBasisPoints(input.paymentPlan.downPaymentRateBps)}`,
+          down_payment_amount: formatMinorCurrency(
+            input.paymentPlan.downPaymentAmountMinor,
+          ),
+          remaining_principal: formatMinorCurrency(
+            input.paymentPlan.remainingPrincipalMinor,
+          ),
+          finance_charge_rate: `%${formatBasisPoints(input.paymentPlan.financeChargeRateBps)}`,
+          finance_charge_amount: formatMinorCurrency(
+            input.paymentPlan.financeChargeAmountMinor,
+          ),
+          installment_count: `${input.paymentPlan.installmentCount} Ay`,
+          installment_schedule: describePaymentSchedule(
+            input.paymentPlan.installmentSchedule,
+          ),
+          total_payable: formatMinorCurrency(
+            input.paymentPlan.totalPayableMinor,
+          ),
         },
       ),
       presented_at: offer.presentedAt,

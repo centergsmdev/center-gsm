@@ -202,7 +202,15 @@ export function AdminInstallmentContracts() {
             Kullanılabilir alanlar: <code>{"{{customer_name}}"}</code>,{" "}
             <code>{"{{product_name}}"}</code>, <code>{"{{variant_name}}"}</code>
             , <code>{"{{product_price}}"}</code> ve{" "}
-            <code>{"{{application_date}}"}</code>.
+            <code>{"{{application_date}}"}</code>,{" "}
+            <code>{"{{down_payment_rate}}"}</code>,{" "}
+            <code>{"{{down_payment_amount}}"}</code>,{" "}
+            <code>{"{{remaining_principal}}"}</code>,{" "}
+            <code>{"{{finance_charge_rate}}"}</code>,{" "}
+            <code>{"{{finance_charge_amount}}"}</code>,{" "}
+            <code>{"{{installment_count}}"}</code>,{" "}
+            <code>{"{{installment_schedule}}"}</code> ve{" "}
+            <code>{"{{total_payable}}"}</code>.
           </div>
           {active ? (
             <Button

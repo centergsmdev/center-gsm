@@ -11,6 +11,14 @@ const ALLOWED_PLACEHOLDERS = new Set([
   "variant_name",
   "product_price",
   "application_date",
+  "down_payment_rate",
+  "down_payment_amount",
+  "remaining_principal",
+  "finance_charge_rate",
+  "finance_charge_amount",
+  "installment_count",
+  "installment_schedule",
+  "total_payable",
 ]);
 
 const CONTRACT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {

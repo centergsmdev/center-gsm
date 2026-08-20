@@ -17,6 +17,8 @@ export function PurchaseControls({
   selectionRequired = false,
   selectionComplete = true,
   variant,
+  installmentCount,
+  paymentPlanAvailable,
 }: {
   product: import("@/types/product").CatalogProduct;
   productId: string;
@@ -24,6 +26,8 @@ export function PurchaseControls({
   selectionRequired?: boolean;
   selectionComplete?: boolean;
   variant?: import("@/types/cart").CartVariant;
+  installmentCount: number;
+  paymentPlanAvailable: boolean;
 }) {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
@@ -128,9 +132,12 @@ export function PurchaseControls({
           size="lg"
           variant="outline"
           className="mt-2 w-full border-amber-300 bg-amber-50 text-amber-950 hover:border-amber-500"
-          disabled={purchaseDisabled}
+          disabled={purchaseDisabled || !paymentPlanAvailable}
           onClick={() => {
-            const params = new URLSearchParams({ productId });
+            const params = new URLSearchParams({
+              productId,
+              installmentCount: String(installmentCount),
+            });
             if (variant?.id) params.set("variantId", variant.id);
             router.push(`/elden-taksit/basvuru?${params.toString()}`);
           }}
@@ -138,6 +145,14 @@ export function PurchaseControls({
           <FileSignature className="size-4" aria-hidden="true" />
           Elden Taksit Başvurusu
         </Button>
+        {!paymentPlanAvailable ? (
+          <p
+            className="mt-2 text-center text-xs font-semibold text-amber-700"
+            role="status"
+          >
+            Elden taksit ödeme planı şu anda kullanılamıyor.
+          </p>
+        ) : null}
       </div>
     </div>
   );

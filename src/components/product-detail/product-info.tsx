@@ -21,6 +21,8 @@ import type {
 } from "@/types/product";
 import type { CartVariant } from "@/types/cart";
 import { ProductCampaignPanel } from "@/components/sales-campaign/product-campaign-panel";
+import { PaymentOptionsCalculator } from "@/components/product-detail/payment-options-calculator";
+import type { PaymentPlanConfig } from "@/lib/payment-plan/engine";
 
 type ProductInfoProps = {
   product: CatalogProduct;
@@ -34,6 +36,9 @@ type ProductInfoProps = {
   onColorChange: (colorId: string) => void;
   onStorageChange: (storageKey: string) => void;
   cartVariant?: CartVariant;
+  paymentConfig: PaymentPlanConfig | null;
+  selectedInstallmentCount: number;
+  onInstallmentCountChange: (count: number) => void;
 };
 
 export function ProductInfo({
@@ -48,6 +53,9 @@ export function ProductInfo({
   onColorChange,
   onStorageChange,
   cartVariant,
+  paymentConfig,
+  selectedInstallmentCount,
+  onInstallmentCountChange,
 }: ProductInfoProps) {
   const productName = productDisplayName(product);
   const inStock = product.stockStatus !== "out-of-stock";
@@ -198,16 +206,14 @@ export function ProductInfo({
         <p className="text-4xl font-black tracking-[-0.045em] text-foreground">
           {formatCurrency(product.price)}
         </p>
-        {product.showInstallments ? (
-          <p className="mt-2 text-sm text-muted">
-            <strong className="text-foreground">
-              {product.installmentCount} ×{" "}
-              {formatCurrency(product.monthlyInstallment)}
-            </strong>
-            {product.installmentNote ? ` · ${product.installmentNote}` : ""}
-          </p>
-        ) : null}
       </div>
+
+      <PaymentOptionsCalculator
+        price={product.price}
+        config={paymentConfig}
+        selectedInstallmentCount={selectedInstallmentCount}
+        onInstallmentCountChange={onInstallmentCountChange}
+      />
 
       <Card className="mt-3 grid gap-1.5 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">
         {product.sameDayShipping ? (
@@ -243,6 +249,8 @@ export function ProductInfo({
         selectionRequired={selectionRequired}
         selectionComplete={selectionComplete}
         variant={cartVariant}
+        installmentCount={selectedInstallmentCount}
+        paymentPlanAvailable={Boolean(paymentConfig)}
       />
       <ProductCampaignPanel product={product} />
     </section>

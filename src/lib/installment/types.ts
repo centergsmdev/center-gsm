@@ -79,6 +79,23 @@ export type InstallmentAdminDetail = InstallmentAdminListItem & {
   retentionReviewAt: string;
   documents: InstallmentAdminDocument[];
   contract: InstallmentAdminContractSnapshot | null;
+  paymentPlan: InstallmentAdminPaymentPlan | null;
+};
+
+export type InstallmentAdminPaymentPlan = {
+  configId: string;
+  configRevision: number;
+  productPriceMinor: number;
+  thresholdMinor: number;
+  downPaymentRateBps: number;
+  downPaymentAmountMinor: number;
+  remainingPrincipalMinor: number;
+  financeChargeRateBps: number;
+  financeChargeAmountMinor: number;
+  financedTotalMinor: number;
+  installmentCount: number;
+  installmentSchedule: Array<{ installment: number; amountMinor: number }>;
+  totalPayableMinor: number;
 };
 
 export type InstallmentAdminContractSnapshot = {

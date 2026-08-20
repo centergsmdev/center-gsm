@@ -62,7 +62,7 @@ export async function POST(
   );
   if (!resolved.data) return error(resolved.error, 409);
 
-  const result = await service.rpc("submit_installment_application_v2", {
+  const result = await service.rpc("submit_installment_application_v3", {
     p_application_id: id,
     p_draft_token_hash: hashText(token),
     p_privacy_notice_version: PRIVACY_NOTICE_VERSION,
@@ -81,6 +81,16 @@ export async function POST(
     if (message.includes("contract_") || message.includes("signature_missing"))
       return error(
         "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+        409,
+      );
+    if (message.includes("payment_price_changed"))
+      return error(
+        "Ürün fiyatı değişti. Lütfen başvuruyu güncel fiyatla yeniden başlatın.",
+        409,
+      );
+    if (message.includes("payment_"))
+      return error(
+        "Ödeme planı doğrulanamadı. Lütfen başvuruyu yeniden başlatın.",
         409,
       );
     return error("Başvuru gönderilemedi.", 500);

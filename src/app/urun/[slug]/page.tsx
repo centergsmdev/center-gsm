@@ -20,6 +20,8 @@ import {
   createProductSchema,
   schemaSlug,
 } from "@/lib/seo/schema";
+import { createServiceClient } from "@/lib/supabase/admin";
+import { getActivePaymentPlanConfig } from "@/lib/payment-plan/server";
 
 type ProductPageProps = { params: Promise<{ slug: string }> };
 export const revalidate = 600;
@@ -114,9 +116,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ...result.data,
     description: sanitizeRichText(result.data.description),
   };
-  const [related, reviews] = await Promise.all([
+  const service = createServiceClient();
+  const [related, reviews, paymentConfig] = await Promise.all([
     getRelatedProducts(product, 4),
     getApprovedProductReviews(product.id),
+    service ? getActivePaymentPlanConfig(service) : Promise.resolve(null),
   ]);
   const hasManagedContent = Boolean(product.description);
   return (
@@ -138,7 +142,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
         ])}
       />
       <Container>
-        <ProductDetailExperience product={product} />
+        <ProductDetailExperience
+          product={product}
+          paymentConfig={paymentConfig}
+        />
         {hasManagedContent ? (
           <div className="mt-12 sm:mt-16">
             <ProductTabs product={product} />

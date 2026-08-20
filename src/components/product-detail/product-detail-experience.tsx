@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProductDetailBreadcrumb } from "@/components/product-detail/product-detail-breadcrumb";
 import { ProductGallery } from "@/components/product-detail/product-gallery";
 import { ProductInfo } from "@/components/product-detail/product-info";
-import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import {
   resolveInitialVariantSelection,
   productDisplayName,
@@ -15,13 +14,16 @@ import {
   variantStorageKey,
 } from "@/lib/catalog/variants";
 import type { CatalogProduct } from "@/types/product";
+import type { PaymentPlanConfig } from "@/lib/payment-plan/engine";
 import { trackMetaEvent } from "@/lib/meta/browser";
 import { metaItemId } from "@/lib/meta/item-id";
 
 export function ProductDetailExperience({
   product,
+  paymentConfig,
 }: {
   product: CatalogProduct;
+  paymentConfig: PaymentPlanConfig | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -46,6 +48,9 @@ export function ProductDetailExperience({
   );
   const [selectedStorageKey, setSelectedStorageKey] = useState(
     initialSelection.storageKey,
+  );
+  const [selectedInstallmentCount, setSelectedInstallmentCount] = useState(
+    paymentConfig?.installmentCounts.at(-1) ?? 12,
   );
 
   useEffect(() => {
@@ -126,10 +131,7 @@ export function ProductDetailExperience({
                   100,
               )
             : undefined,
-        monthlyInstallment: calculateMonthlyInstallment(
-          selectedVariant.price,
-          product.installmentCount,
-        ),
+        monthlyInstallment: product.monthlyInstallment,
         availableStock: selectedVariant.stockQuantity,
         stockStatus:
           selectedVariant.stockQuantity === 0
@@ -213,6 +215,9 @@ export function ProductDetailExperience({
           onColorChange={selectColor}
           onStorageChange={selectStorage}
           cartVariant={cartVariant}
+          paymentConfig={paymentConfig}
+          selectedInstallmentCount={selectedInstallmentCount}
+          onInstallmentCountChange={setSelectedInstallmentCount}
         />
       </div>
     </>

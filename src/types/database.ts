@@ -1156,9 +1156,83 @@ export type InstallmentApplicationContractRow = {
   created_at: string;
 };
 
+export type PaymentPlanConfigurationRow = {
+  id: string;
+  revision: number;
+  threshold_minor: number;
+  above_threshold_down_payment_bps: number;
+  below_threshold_down_payment_bps: number;
+  installment_finance_charge_bps: number;
+  installment_counts: number[];
+  credit_card_finance_charge_bps: number;
+  credit_card_installment_counts: number[];
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type InstallmentApplicationPaymentPlanRow = {
+  application_id: string;
+  payment_type: "installment_application";
+  payment_config_id: string;
+  payment_config_revision: number;
+  product_price_minor: number;
+  threshold_minor: number;
+  down_payment_rate_bps: number;
+  down_payment_amount_minor: number;
+  remaining_principal_minor: number;
+  finance_charge_rate_bps: number;
+  finance_charge_amount_minor: number;
+  financed_total_minor: number;
+  installment_count: number;
+  installment_schedule: Array<{
+    installment: number;
+    amount_minor: number;
+  }>;
+  total_payable_minor: number;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      payment_plan_configurations: Table<
+        PaymentPlanConfigurationRow,
+        Partial<PaymentPlanConfigurationRow> &
+          Pick<
+            PaymentPlanConfigurationRow,
+            | "revision"
+            | "threshold_minor"
+            | "above_threshold_down_payment_bps"
+            | "below_threshold_down_payment_bps"
+            | "installment_finance_charge_bps"
+            | "installment_counts"
+            | "credit_card_finance_charge_bps"
+            | "credit_card_installment_counts"
+          >
+      >;
+      installment_application_payment_plans: Table<
+        InstallmentApplicationPaymentPlanRow,
+        Partial<InstallmentApplicationPaymentPlanRow> &
+          Pick<
+            InstallmentApplicationPaymentPlanRow,
+            | "application_id"
+            | "payment_type"
+            | "payment_config_id"
+            | "payment_config_revision"
+            | "product_price_minor"
+            | "threshold_minor"
+            | "down_payment_rate_bps"
+            | "down_payment_amount_minor"
+            | "remaining_principal_minor"
+            | "finance_charge_rate_bps"
+            | "finance_charge_amount_minor"
+            | "financed_total_minor"
+            | "installment_count"
+            | "installment_schedule"
+            | "total_payable_minor"
+          >
+      >;
       installment_contract_templates: Table<
         InstallmentContractTemplateRow,
         Partial<InstallmentContractTemplateRow> &
@@ -1510,6 +1584,18 @@ export type Database = {
       };
     };
     Functions: {
+      admin_create_payment_plan_configuration: {
+        Args: {
+          p_threshold_minor: number;
+          p_above_threshold_down_payment_bps: number;
+          p_below_threshold_down_payment_bps: number;
+          p_installment_finance_charge_bps: number;
+          p_installment_counts: number[];
+          p_credit_card_finance_charge_bps: number;
+          p_credit_card_installment_counts: number[];
+        };
+        Returns: Json;
+      };
       activate_installment_contract_template: {
         Args: { p_template_id: string; p_actor_user_id: string };
         Returns: Json;
@@ -1543,6 +1629,16 @@ export type Database = {
         Returns: Json;
       };
       submit_installment_application_v2: {
+        Args: {
+          p_application_id: string;
+          p_draft_token_hash: string;
+          p_privacy_notice_version: string;
+          p_terms_version: string;
+          p_contract_accepted: boolean;
+        };
+        Returns: Json;
+      };
+      submit_installment_application_v3: {
         Args: {
           p_application_id: string;
           p_draft_token_hash: string;
