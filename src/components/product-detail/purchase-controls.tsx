@@ -131,7 +131,7 @@ export function PurchaseControls({
         <Button
           size="lg"
           variant="outline"
-          className="mt-2 w-full border-amber-300 bg-amber-50 text-amber-950 hover:border-amber-500"
+          className="mt-2 w-full border-emerald-600 bg-emerald-600 text-white hover:border-emerald-700 hover:bg-emerald-700 focus-visible:ring-emerald-600"
           disabled={purchaseDisabled || !paymentPlanAvailable}
           onClick={() => {
             const params = new URLSearchParams({
