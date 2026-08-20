@@ -186,23 +186,33 @@ export function PaymentOptionsCalculator({
                         else onInstallmentCountChange(count);
                       }}
                       className={cn(
-                        "min-w-0 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600",
+                        "min-w-0 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600",
                         selected
-                          ? "border-red-600 bg-white shadow-sm"
+                          ? "border-emerald-600 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
                           : "border-zinc-200 bg-white/70 hover:border-zinc-400",
                       )}
                     >
-                      <span className="block text-xs font-black">
+                      <span className="block text-sm font-black sm:text-base">
                         {count} Ay
                       </span>
-                      <span className="mt-1 block break-words text-xs font-semibold text-zinc-700">
+                      <span
+                        className={cn(
+                          "mt-1 block break-words text-xs font-semibold",
+                          selected ? "text-white" : "text-zinc-700",
+                        )}
+                      >
                         {formatMinorCurrency(
                           optionPlan.monthlyInstallmentMinor,
                         )}{" "}
                         / ay
                       </span>
                       {hasAdjustment ? (
-                        <span className="mt-1 block text-[10px] leading-4 text-zinc-500">
+                        <span
+                          className={cn(
+                            "mt-1 block text-[10px] leading-4",
+                            selected ? "text-emerald-100" : "text-zinc-500",
+                          )}
+                        >
                           Son: {formatMinorCurrency(last.amountMinor)}
                         </span>
                       ) : null}
