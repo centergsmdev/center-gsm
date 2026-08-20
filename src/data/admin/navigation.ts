@@ -22,6 +22,7 @@ import {
   Gift,
   FileCheck2,
   FileText,
+  FileSignature,
   MessageSquareText,
   MessagesSquare,
   Users,
@@ -65,6 +66,11 @@ export const adminNavigation = [
   { label: "Stok", href: "/admin/stok", icon: Boxes },
   { label: "Depolar", href: "/admin/depolar", icon: Warehouse },
   { label: "Siparişler", href: "/admin/siparisler", icon: ShoppingBag },
+  {
+    label: "Elden Taksit Başvuruları",
+    href: "/admin/elden-taksit-basvurulari",
+    icon: FileSignature,
+  },
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
   { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
   { label: "Ürün Yorumları", href: "/admin/yorumlar", icon: MessageSquareText },
@@ -191,6 +197,11 @@ export const adminPageTitles: Record<
   "/admin/siparisler": {
     title: "Siparişler",
     description: "Sipariş akışını ve teslimat durumlarını izleyin.",
+  },
+  "/admin/elden-taksit-basvurulari": {
+    title: "Elden Taksit Başvuruları",
+    description:
+      "Müşteri başvurularını ve private belgeleri güvenle inceleyin.",
   },
   "/admin/dekontlar": {
     title: "Dekontlar",

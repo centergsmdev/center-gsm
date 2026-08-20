@@ -21,6 +21,11 @@ export const AUDIT_ACTIONS = [
   "user_updated",
   "admin_login",
   "admin_logout",
+  "application.review_started",
+  "application.approved",
+  "application.rejected",
+  "document.viewed",
+  "document.downloaded",
 ] as const;
 
 export type KnownAuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -49,6 +54,11 @@ export const AUDIT_ACTION_LABELS: Record<KnownAuditAction, string> = {
   user_updated: "Kullanıcı güncellendi",
   admin_login: "Admin giriş yaptı",
   admin_logout: "Admin çıkış yaptı",
+  "application.review_started": "Elden taksit başvurusu incelemeye alındı",
+  "application.approved": "Elden taksit başvurusu onaylandı",
+  "application.rejected": "Elden taksit başvurusu reddedildi",
+  "document.viewed": "Hassas başvuru belgesi görüntülendi",
+  "document.downloaded": "Hassas başvuru belgesi indirildi",
 };
 
 export function getAuditActionLabel(action: string): string {

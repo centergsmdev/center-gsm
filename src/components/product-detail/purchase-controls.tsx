@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
+import { FileSignature, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -124,6 +124,20 @@ export function PurchaseControls({
             className="w-full justify-center rounded-full"
           />
         </div>
+        <Button
+          size="lg"
+          variant="outline"
+          className="mt-2 w-full border-amber-300 bg-amber-50 text-amber-950 hover:border-amber-500"
+          disabled={purchaseDisabled}
+          onClick={() => {
+            const params = new URLSearchParams({ productId });
+            if (variant?.id) params.set("variantId", variant.id);
+            router.push(`/elden-taksit/basvuru?${params.toString()}`);
+          }}
+        >
+          <FileSignature className="size-4" aria-hidden="true" />
+          Elden Taksit Başvurusu
+        </Button>
       </div>
     </div>
   );

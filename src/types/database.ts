@@ -1054,9 +1054,139 @@ type ProductStockHistoryRow = {
   changed_at: string;
 };
 
+export type InstallmentApplicationRow = Timestamps & {
+  id: string;
+  application_number: string;
+  idempotency_key_hash: string;
+  draft_token_hash: string | null;
+  user_id: string | null;
+  applicant_name: string;
+  phone_e164: string;
+  email: string | null;
+  product_id: string;
+  variant_id: string | null;
+  product_name_snapshot: string;
+  variant_title_snapshot: string | null;
+  sku_snapshot: string;
+  price_snapshot: number;
+  image_url_snapshot: string | null;
+  color_snapshot: string | null;
+  storage_value_snapshot: number | null;
+  storage_unit_snapshot: "GB" | "TB" | null;
+  status:
+    | "draft"
+    | "submitted"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "cancelled";
+  revision: number;
+  submitted_at: string | null;
+  decision_at: string | null;
+  decision_by: string | null;
+  rejection_reason_public: string | null;
+  internal_note: string | null;
+  request_ip_hash: string | null;
+  user_agent_summary: string | null;
+  retention_review_at: string;
+};
+
+export type InstallmentApplicationDocumentRow = {
+  id: string;
+  application_id: string;
+  document_type: "identity_front" | "identity_back" | "residence" | "signature";
+  storage_path: string;
+  original_name: string;
+  original_mime_type: string;
+  stored_mime_type: "image/webp" | "application/pdf";
+  size_bytes: number;
+  sha256: string;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+};
+
+export type InstallmentApplicationConsentRow = {
+  id: string;
+  application_id: string;
+  consent_type:
+    "privacy_notice_acknowledged" | "application_terms_acknowledged";
+  notice_version: string;
+  acknowledged_at: string;
+};
+
+export type InstallmentApplicationEventRow = {
+  id: string;
+  application_id: string;
+  event_type: string;
+  actor_type: "customer" | "admin" | "system";
+  actor_user_id: string | null;
+  metadata: Json;
+  created_at: string;
+};
+
+export type InstallmentRateLimitRow = {
+  key_hash: string;
+  action: "draft" | "upload" | "submit";
+  window_started_at: string;
+  request_count: number;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      installment_applications: Table<
+        InstallmentApplicationRow,
+        Partial<InstallmentApplicationRow> &
+          Pick<
+            InstallmentApplicationRow,
+            | "application_number"
+            | "idempotency_key_hash"
+            | "applicant_name"
+            | "phone_e164"
+            | "product_id"
+            | "product_name_snapshot"
+            | "sku_snapshot"
+            | "price_snapshot"
+          >
+      >;
+      installment_application_documents: Table<
+        InstallmentApplicationDocumentRow,
+        Partial<InstallmentApplicationDocumentRow> &
+          Pick<
+            InstallmentApplicationDocumentRow,
+            | "application_id"
+            | "document_type"
+            | "storage_path"
+            | "original_name"
+            | "original_mime_type"
+            | "stored_mime_type"
+            | "size_bytes"
+            | "sha256"
+          >
+      >;
+      installment_application_consents: Table<
+        InstallmentApplicationConsentRow,
+        Partial<InstallmentApplicationConsentRow> &
+          Pick<
+            InstallmentApplicationConsentRow,
+            "application_id" | "consent_type" | "notice_version"
+          >
+      >;
+      installment_application_events: Table<
+        InstallmentApplicationEventRow,
+        Partial<InstallmentApplicationEventRow> &
+          Pick<
+            InstallmentApplicationEventRow,
+            "application_id" | "event_type" | "actor_type"
+          >
+      >;
+      installment_rate_limits: Table<
+        InstallmentRateLimitRow,
+        InstallmentRateLimitRow,
+        Partial<InstallmentRateLimitRow>
+      >;
       sales_campaigns: Table<import("@/types/sales-campaign").SalesCampaign>;
       categories: Table<
         Category,
@@ -1336,6 +1466,34 @@ export type Database = {
       };
     };
     Functions: {
+      consume_installment_rate_limit: {
+        Args: {
+          p_key_hash: string;
+          p_action: "draft" | "upload" | "submit";
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: boolean;
+      };
+      admin_transition_installment_application: {
+        Args: {
+          p_application_id: string;
+          p_expected_revision: number;
+          p_action: "review" | "approve" | "reject";
+          p_public_reason?: string | null;
+          p_internal_note?: string | null;
+        };
+        Returns: Json;
+      };
+      submit_installment_application: {
+        Args: {
+          p_application_id: string;
+          p_draft_token_hash: string;
+          p_privacy_notice_version: string;
+          p_terms_version: string;
+        };
+        Returns: Json;
+      };
       submit_product_review: {
         Args: {
           p_product_id: string;
