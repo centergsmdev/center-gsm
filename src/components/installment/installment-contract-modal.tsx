@@ -6,13 +6,11 @@ import { X } from "lucide-react";
 export function InstallmentContractModal({
   open,
   title,
-  version,
   renderedContent,
   onClose,
 }: {
   open: boolean;
   title: string;
-  version: string;
   renderedContent: string;
   onClose: () => void;
 }) {
@@ -42,17 +40,12 @@ export function InstallmentContractModal({
         className="max-h-[92dvh] w-full overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-4xl sm:rounded-3xl"
       >
         <header className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 sm:px-7">
-          <div>
-            <h2
-              id="installment-contract-dialog-title"
-              className="text-lg font-black tracking-tight text-zinc-950"
-            >
-              {title}
-            </h2>
-            <p className="mt-1 text-xs font-semibold text-zinc-500">
-              Versiyon: {version}
-            </p>
-          </div>
+          <h2
+            id="installment-contract-dialog-title"
+            className="text-lg font-black tracking-tight text-zinc-950"
+          >
+            {title}
+          </h2>
           <button
             ref={closeRef}
             type="button"

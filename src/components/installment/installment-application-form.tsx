@@ -571,9 +571,6 @@ export function InstallmentApplicationForm({
                     <p className="text-sm font-bold text-zinc-900">
                       {contract.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Versiyon: {contract.version}
-                    </p>
                   </div>
                   <Button
                     type="button"
@@ -632,10 +629,6 @@ export function InstallmentApplicationForm({
               <h2 className="text-lg font-black text-zinc-950">
                 Başvuru Belgeleri
               </h2>
-              <p className="mt-1 text-sm leading-6 text-zinc-500">
-                Belgeler yalnız başvurunun değerlendirilmesi amacıyla private
-                alanda saklanır ve yetkili adminlerce görüntülenebilir.
-              </p>
             </div>
             <FileField
               id="identity_front"
@@ -870,7 +863,6 @@ export function InstallmentApplicationForm({
         <InstallmentContractModal
           open={contractOpen}
           title={contract.title}
-          version={contract.version}
           renderedContent={renderedContract}
           onClose={() => setContractOpen(false)}
         />
