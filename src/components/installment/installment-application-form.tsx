@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
+  BookOpenCheck,
   FileCheck2,
   FileSignature,
   LoaderCircle,
@@ -13,11 +14,14 @@ import {
 } from "lucide-react";
 
 import { SignaturePad } from "@/components/installment/signature-pad";
+import { InstallmentContractModal } from "@/components/installment/installment-contract-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/format";
+import { renderInstallmentContract } from "@/lib/installment/contract-render";
 import {
+  type InstallmentContractOffer,
   type InstallmentDocumentType,
   type InstallmentDraftResponse,
   type InstallmentProductSummary,
@@ -133,8 +137,10 @@ function FileField({
 
 export function InstallmentApplicationForm({
   product,
+  contract,
 }: {
   product: InstallmentProductSummary;
+  contract: InstallmentContractOffer | null;
 }) {
   const idempotencyKey = useRef(newIdempotencyKey());
   const [applicantName, setApplicantName] = useState("");
@@ -146,6 +152,8 @@ export function InstallmentApplicationForm({
     residence: null,
   });
   const [signature, setSignature] = useState<SignatureValue | null>(null);
+  const [contractAcknowledged, setContractAcknowledged] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
   const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [termsAcknowledged, setTermsAcknowledged] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -153,6 +161,20 @@ export function InstallmentApplicationForm({
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [successNumber, setSuccessNumber] = useState("");
+  const renderedContract = useMemo(() => {
+    if (!contract) return "";
+    return renderInstallmentContract(contract.contentHtml, {
+      customer_name:
+        normalizeApplicantName(applicantName) ?? "Ad Soyad bilgisi girilmedi",
+      product_name: product.productName,
+      variant_name: product.variantTitle ?? "Varyantsız ürün",
+      product_price: formatCurrency(product.price),
+      application_date: new Intl.DateTimeFormat("tr-TR", {
+        dateStyle: "long",
+        timeZone: "Europe/Istanbul",
+      }).format(new Date(contract.presentedAt)),
+    });
+  }, [applicantName, contract, product]);
 
   function validate() {
     const next: Record<string, string> = {};
@@ -174,6 +196,11 @@ export function InstallmentApplicationForm({
       next.residence = "İkametgâh belgenizi yükleyin.";
     if (missingDocuments.includes("signature"))
       next.signature = "Lütfen imzanızı atın.";
+    if (!contract)
+      next.contract =
+        "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.";
+    else if (!contractAcknowledged)
+      next.contract = "Elden Taksitli Satış Sözleşmesini kabul edin.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -225,6 +252,7 @@ export function InstallmentApplicationForm({
             applicantName,
             phone,
             email,
+            contractOfferToken: contract?.offerToken,
           }),
         }),
       );
@@ -255,6 +283,7 @@ export function InstallmentApplicationForm({
             body: JSON.stringify({
               privacyNoticeAcknowledged: true,
               applicationTermsAcknowledged: true,
+              contractAccepted: contractAcknowledged,
             }),
           },
         ),
@@ -292,6 +321,9 @@ export function InstallmentApplicationForm({
           </p>
           <p className="mt-4 text-xs text-zinc-500">
             Bu ekran otomatik onay veya sipariş oluşturulduğu anlamına gelmez.
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Sözleşme kabulünüz ve imzanız başvurunuzla birlikte kaydedilmiştir.
           </p>
         </CardContent>
       </Card>
@@ -364,7 +396,11 @@ export function InstallmentApplicationForm({
                   autoComplete="name"
                   value={applicantName}
                   invalid={Boolean(errors.applicantName)}
-                  onChange={(event) => setApplicantName(event.target.value)}
+                  onChange={(event) => {
+                    setApplicantName(event.target.value);
+                    setContractAcknowledged(false);
+                    setErrors((current) => ({ ...current, contract: "" }));
+                  }}
                 />
                 {errors.applicantName ? (
                   <span className="mt-1 block text-xs text-red-700">
@@ -408,6 +444,84 @@ export function InstallmentApplicationForm({
                 ) : null}
               </label>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className={contract ? undefined : "border-red-200 bg-red-50/30"}>
+          <CardContent className="space-y-5">
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-zinc-100">
+                <BookOpenCheck className="size-5 text-zinc-700" />
+              </span>
+              <div>
+                <h2 className="text-lg font-black text-zinc-950">
+                  Elden Taksitli Satış Sözleşmesi
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-500">
+                  İmzanızı atmadan önce sözleşmenin tamamını okuyup kabulünüzü
+                  belirtin.
+                </p>
+              </div>
+            </div>
+            {contract ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-zinc-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-bold text-zinc-900">
+                      {contract.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      Versiyon: {contract.version}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setContractOpen(true)}
+                  >
+                    Sözleşmenin Tamamını Gör
+                  </Button>
+                </div>
+                <div
+                  className="rich-product-content break-words rounded-xl border border-zinc-200 bg-white p-4 text-sm leading-7 text-zinc-700 sm:p-6 sm:text-base sm:leading-8"
+                  // Template HTML is strictly sanitized server-side and every
+                  // dynamic value is HTML-escaped before this render.
+                  dangerouslySetInnerHTML={{ __html: renderedContract }}
+                />
+                <label className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4 text-sm font-semibold leading-6 text-zinc-800">
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-5 shrink-0 accent-red-600"
+                    checked={contractAcknowledged}
+                    onChange={(event) => {
+                      setContractAcknowledged(event.target.checked);
+                      if (event.target.checked)
+                        setErrors((current) => ({
+                          ...current,
+                          contract: "",
+                        }));
+                    }}
+                  />
+                  <span>
+                    Elden Taksitli Satış Sözleşmesini okudum ve kabul ediyorum.
+                  </span>
+                </label>
+              </>
+            ) : (
+              <p
+                className="rounded-xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700"
+                role="alert"
+              >
+                Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra
+                tekrar deneyin.
+              </p>
+            )}
+            {errors.contract ? (
+              <p className="text-sm font-semibold text-red-700" role="alert">
+                {errors.contract}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -486,7 +600,12 @@ export function InstallmentApplicationForm({
         </Card>
 
         {!reviewing ? (
-          <Button size="lg" className="w-full" onClick={openReview}>
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={!contract}
+            onClick={openReview}
+          >
             <FileCheck2 className="size-5" aria-hidden="true" />
             Bilgileri Kontrol Et
           </Button>
@@ -598,7 +717,16 @@ export function InstallmentApplicationForm({
                 >
                   Bilgileri Düzenle
                 </Button>
-                <Button size="lg" disabled={busy} onClick={submit}>
+                <Button
+                  size="lg"
+                  disabled={
+                    busy ||
+                    !contractAcknowledged ||
+                    !termsAcknowledged ||
+                    !privacyAcknowledged
+                  }
+                  onClick={submit}
+                >
                   {busy ? (
                     <LoaderCircle className="size-5 animate-spin" />
                   ) : (
@@ -636,6 +764,15 @@ export function InstallmentApplicationForm({
           </CardContent>
         </Card>
       </aside>
+      {contract ? (
+        <InstallmentContractModal
+          open={contractOpen}
+          title={contract.title}
+          version={contract.version}
+          renderedContent={renderedContract}
+          onClose={() => setContractOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

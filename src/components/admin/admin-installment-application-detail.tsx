@@ -9,11 +9,13 @@ import {
   Eye,
   FileText,
   LoaderCircle,
+  ScrollText,
   XCircle,
 } from "lucide-react";
 
 import { AdminBadge } from "@/components/admin/admin-badge";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { AdminModal } from "@/components/admin/admin-modal";
 import {
   AdminErrorState,
   AdminLoadingState,
@@ -66,6 +68,7 @@ export function AdminInstallmentApplicationDetail({
   const [message, setMessage] = useState("");
   const [publicReason, setPublicReason] = useState("");
   const [internalNote, setInternalNote] = useState("");
+  const [contractOpen, setContractOpen] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -269,6 +272,40 @@ export function AdminInstallmentApplicationDetail({
         )}
       </DetailBlock>
 
+      <DetailBlock title="Sözleşme">
+        {item.contract ? (
+          <div className="space-y-4">
+            <dl>
+              <DataRow label="Sözleşme Adı" value={item.contract.title} />
+              <DataRow label="Versiyon" value={item.contract.version} />
+              <DataRow
+                label="Kabul Tarihi"
+                value={new Intl.DateTimeFormat("tr-TR", {
+                  dateStyle: "long",
+                  timeStyle: "short",
+                }).format(new Date(item.contract.acceptedAt))}
+              />
+              <DataRow
+                label="SHA-256"
+                value={
+                  <span className="font-mono">
+                    {item.contract.contentHash.slice(0, 12)}…
+                  </span>
+                }
+              />
+            </dl>
+            <Button variant="outline" onClick={() => setContractOpen(true)}>
+              <ScrollText className="size-4" /> İmzalanan Sözleşmeyi Gör
+            </Button>
+          </div>
+        ) : (
+          <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
+            Bu başvuru sözleşme snapshot özelliğinden önce oluşturulmuş legacy
+            kayıttır; sözleşme kabulü üretilmemiştir.
+          </p>
+        )}
+      </DetailBlock>
+
       <DetailBlock title="Başvuru ve Karar">
         <dl className="mb-5">
           <DataRow label="Başvuru No" value={item.applicationNumber} />
@@ -365,6 +402,23 @@ export function AdminInstallmentApplicationDetail({
           </p>
         ) : null}
       </DetailBlock>
+      {item.contract ? (
+        <AdminModal
+          open={contractOpen}
+          onClose={() => setContractOpen(false)}
+          title={item.contract.title}
+          description={`Versiyon ${item.contract.version} · SHA-256 ${item.contract.contentHash.slice(0, 12)}…`}
+          wide
+        >
+          <div
+            className="rich-product-content break-words text-sm leading-7 text-zinc-700 sm:text-base sm:leading-8"
+            // The admin API sanitizes this immutable snapshot before return.
+            dangerouslySetInnerHTML={{
+              __html: item.contract.renderedContent,
+            }}
+          />
+        </AdminModal>
+      ) : null}
     </div>
   );
 }

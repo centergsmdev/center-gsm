@@ -29,6 +29,22 @@ export type InstallmentProductSummary = {
   storageUnit: "GB" | "TB" | null;
 };
 
+export type InstallmentContractTemplate = {
+  id: string;
+  title: string;
+  version: string;
+  contentHtml: string;
+  contentHash: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InstallmentContractOffer = InstallmentContractTemplate & {
+  presentedAt: string;
+  offerToken: string;
+};
+
 export type InstallmentDraftResponse = {
   applicationId: string;
   applicationNumber: string;
@@ -62,6 +78,18 @@ export type InstallmentAdminDetail = InstallmentAdminListItem & {
   internalNote: string | null;
   retentionReviewAt: string;
   documents: InstallmentAdminDocument[];
+  contract: InstallmentAdminContractSnapshot | null;
+};
+
+export type InstallmentAdminContractSnapshot = {
+  templateId: string;
+  title: string;
+  version: string;
+  renderedContent: string;
+  contentHash: string;
+  presentedAt: string;
+  acceptedAt: string;
+  signatureDocumentId: string;
 };
 
 export const INSTALLMENT_STATUS_LABELS: Record<

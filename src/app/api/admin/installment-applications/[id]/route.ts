@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getAdminContext, mapAdminApplication } from "@/lib/installment/server";
 import { isUuid } from "@/lib/installment/validation";
+import { sanitizeInstallmentContractContent } from "@/lib/installment/contract-server";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ export async function GET(
       { error: "Admin yetkisi gerekiyor." },
       { status: 403 },
     );
-  const [application, documents] = await Promise.all([
+  const [application, documents, contract] = await Promise.all([
     context.service
       .from("installment_applications")
       .select("*")
@@ -35,8 +36,13 @@ export async function GET(
       )
       .eq("application_id", id)
       .order("created_at"),
+    context.service
+      .from("installment_application_contracts")
+      .select("*")
+      .eq("application_id", id)
+      .maybeSingle(),
   ]);
-  if (application.error || documents.error)
+  if (application.error || documents.error || contract.error)
     return NextResponse.json(
       { error: "Başvuru yüklenemedi." },
       { status: 500 },
@@ -60,6 +66,21 @@ export async function GET(
           sizeBytes: document.size_bytes,
           createdAt: document.created_at,
         })),
+        contract:
+          contract.data?.accepted_at && contract.data.signature_document_id
+            ? {
+                templateId: contract.data.contract_template_id,
+                title: contract.data.contract_title,
+                version: contract.data.contract_version,
+                renderedContent: sanitizeInstallmentContractContent(
+                  contract.data.rendered_contract_content,
+                ),
+                contentHash: contract.data.contract_content_hash,
+                presentedAt: contract.data.presented_at,
+                acceptedAt: contract.data.accepted_at,
+                signatureDocumentId: contract.data.signature_document_id,
+              }
+            : null,
       },
     },
     { headers: { "Cache-Control": "no-store" } },

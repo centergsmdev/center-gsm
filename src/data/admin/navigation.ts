@@ -71,6 +71,11 @@ export const adminNavigation = [
     href: "/admin/elden-taksit-basvurulari",
     icon: FileSignature,
   },
+  {
+    label: "Elden Taksit Sözleşmesi",
+    href: "/admin/elden-taksit-sozlesmesi",
+    icon: FileText,
+  },
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
   { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
   { label: "Ürün Yorumları", href: "/admin/yorumlar", icon: MessageSquareText },
@@ -202,6 +207,11 @@ export const adminPageTitles: Record<
     title: "Elden Taksit Başvuruları",
     description:
       "Müşteri başvurularını ve private belgeleri güvenle inceleyin.",
+  },
+  "/admin/elden-taksit-sozlesmesi": {
+    title: "Elden Taksit Sözleşmesi",
+    description:
+      "Versioned sözleşme metinlerini görüntüleyin ve yeni sürümleri yönetin.",
   },
   "/admin/dekontlar": {
     title: "Dekontlar",

@@ -2,9 +2,13 @@ import { notFound } from "next/navigation";
 
 import { InstallmentApplicationForm } from "@/components/installment/installment-application-form";
 import { Container } from "@/components/ui/container";
-import { resolveInstallmentProduct } from "@/lib/installment/server";
+import { getActiveInstallmentContractOffer } from "@/lib/installment/contract-server";
+import {
+  getInstallmentHashSecret,
+  getInstallmentServiceClient,
+  resolveInstallmentProduct,
+} from "@/lib/installment/server";
 import { isUuid } from "@/lib/installment/validation";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function Page({
   searchParams,
@@ -16,7 +20,7 @@ export default async function Page({
   const variantId = params.variantId?.trim() || null;
   if (!isUuid(productId) || (variantId !== null && !isUuid(variantId)))
     notFound();
-  const service = await createClient();
+  const service = getInstallmentServiceClient();
   if (!service) notFound();
   const product = await resolveInstallmentProduct(
     service,
@@ -24,10 +28,18 @@ export default async function Page({
     variantId,
   );
   if (!product.data) notFound();
+  const contract = await getActiveInstallmentContractOffer(
+    service,
+    product.data,
+    getInstallmentHashSecret(),
+  );
   return (
     <main className="min-h-screen bg-zinc-50 py-6 sm:py-10">
       <Container>
-        <InstallmentApplicationForm product={product.data} />
+        <InstallmentApplicationForm
+          product={product.data}
+          contract={contract}
+        />
       </Container>
     </main>
   );

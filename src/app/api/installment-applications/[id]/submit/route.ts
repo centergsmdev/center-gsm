@@ -13,6 +13,7 @@ import {
   sameOriginRequest,
 } from "@/lib/installment/server-security";
 import { isUuid } from "@/lib/installment/validation";
+import { installmentContractAcceptanceIsValid } from "@/lib/installment/contract-render";
 
 export const runtime = "nodejs";
 
@@ -47,6 +48,8 @@ export async function POST(
     body.applicationTermsAcknowledged !== true
   )
     return error("Zorunlu bilgilendirmeleri tamamlayın.");
+  if (!installmentContractAcceptanceIsValid(body.contractAccepted))
+    return error("Elden Taksitli Satış Sözleşmesini kabul edin.");
 
   const cookieStore = await cookies();
   const token = cookieStore.get(INSTALLMENT_DRAFT_COOKIE)?.value ?? null;
@@ -59,11 +62,12 @@ export async function POST(
   );
   if (!resolved.data) return error(resolved.error, 409);
 
-  const result = await service.rpc("submit_installment_application", {
+  const result = await service.rpc("submit_installment_application_v2", {
     p_application_id: id,
     p_draft_token_hash: hashText(token),
     p_privacy_notice_version: PRIVACY_NOTICE_VERSION,
     p_terms_version: TERMS_VERSION,
+    p_contract_accepted: true,
   });
   if (result.error || !result.data || typeof result.data !== "object") {
     const message = result.error?.message ?? "";
@@ -74,6 +78,11 @@ export async function POST(
       message.includes("invalid_variant")
     )
       return error("Ürün veya varyant artık başvuruya açık değil.", 409);
+    if (message.includes("contract_") || message.includes("signature_missing"))
+      return error(
+        "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+        409,
+      );
     return error("Başvuru gönderilemedi.", 500);
   }
   const payload = result.data as Record<string, unknown>;

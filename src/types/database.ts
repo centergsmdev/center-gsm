@@ -1133,9 +1133,53 @@ export type InstallmentRateLimitRow = {
   updated_at: string;
 };
 
+export type InstallmentContractTemplateRow = Timestamps & {
+  id: string;
+  title: string;
+  version: string;
+  content_html: string;
+  content_sha256: string;
+  is_active: boolean;
+  created_by: string | null;
+};
+
+export type InstallmentApplicationContractRow = {
+  application_id: string;
+  contract_template_id: string;
+  contract_title: string;
+  contract_version: string;
+  rendered_contract_content: string;
+  contract_content_hash: string;
+  presented_at: string;
+  accepted_at: string | null;
+  signature_document_id: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      installment_contract_templates: Table<
+        InstallmentContractTemplateRow,
+        Partial<InstallmentContractTemplateRow> &
+          Pick<
+            InstallmentContractTemplateRow,
+            "title" | "version" | "content_html"
+          >
+      >;
+      installment_application_contracts: Table<
+        InstallmentApplicationContractRow,
+        Partial<InstallmentApplicationContractRow> &
+          Pick<
+            InstallmentApplicationContractRow,
+            | "application_id"
+            | "contract_template_id"
+            | "contract_title"
+            | "contract_version"
+            | "rendered_contract_content"
+            | "presented_at"
+          >
+      >;
       installment_applications: Table<
         InstallmentApplicationRow,
         Partial<InstallmentApplicationRow> &
@@ -1466,6 +1510,10 @@ export type Database = {
       };
     };
     Functions: {
+      activate_installment_contract_template: {
+        Args: { p_template_id: string; p_actor_user_id: string };
+        Returns: Json;
+      };
       consume_installment_rate_limit: {
         Args: {
           p_key_hash: string;
@@ -1491,6 +1539,16 @@ export type Database = {
           p_draft_token_hash: string;
           p_privacy_notice_version: string;
           p_terms_version: string;
+        };
+        Returns: Json;
+      };
+      submit_installment_application_v2: {
+        Args: {
+          p_application_id: string;
+          p_draft_token_hash: string;
+          p_privacy_notice_version: string;
+          p_terms_version: string;
+          p_contract_accepted: boolean;
         };
         Returns: Json;
       };

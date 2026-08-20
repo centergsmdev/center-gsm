@@ -8,6 +8,7 @@ import {
   getOptionalSessionUser,
   resolveInstallmentProduct,
 } from "@/lib/installment/server";
+import { resolveInstallmentContractSnapshot } from "@/lib/installment/contract-server";
 import {
   clientIpHash,
   createApplicationNumber,
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
   const variantValue = String(body.variantId ?? "").trim();
   const variantId = variantValue || null;
   const idempotencyKey = String(body.idempotencyKey ?? "");
+  const contractOfferToken = String(body.contractOfferToken ?? "");
   const applicantName = normalizeApplicantName(
     String(body.applicantName ?? ""),
   );
@@ -55,6 +57,11 @@ export async function POST(request: Request) {
   if (!isUuid(productId) || (variantId !== null && !isUuid(variantId)))
     return error("Ürün seçimi geçersiz.");
   if (!isUuid(idempotencyKey)) return error("Başvuru anahtarı geçersiz.");
+  if (!contractOfferToken)
+    return error(
+      "Başvuru sözleşmesi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+      409,
+    );
   if (!applicantName) return error("Ad soyad alanını kontrol edin.");
   if (!phone) return error("Geçerli bir Türkiye cep telefonu girin.");
   if (email === undefined) return error("E-posta adresini kontrol edin.");
@@ -128,6 +135,36 @@ export async function POST(request: Request) {
     .single();
   if (inserted.error || !inserted.data)
     return error("Başvuru taslağı oluşturulamadı.", 500);
+
+  const contractSnapshot = await resolveInstallmentContractSnapshot(
+    service,
+    {
+      applicationId: inserted.data.id,
+      offerToken: contractOfferToken,
+      product: summary,
+      applicantName,
+    },
+    secret,
+  );
+  if (!contractSnapshot.data) {
+    await service
+      .from("installment_applications")
+      .delete()
+      .eq("id", inserted.data.id)
+      .eq("status", "draft");
+    return error(contractSnapshot.error, 409);
+  }
+  const contractInsert = await service
+    .from("installment_application_contracts")
+    .insert(contractSnapshot.data);
+  if (contractInsert.error) {
+    await service
+      .from("installment_applications")
+      .delete()
+      .eq("id", inserted.data.id)
+      .eq("status", "draft");
+    return error("Başvuru sözleşmesi kaydedilemedi.", 500);
+  }
 
   const event = await service.from("installment_application_events").insert({
     application_id: inserted.data.id,
