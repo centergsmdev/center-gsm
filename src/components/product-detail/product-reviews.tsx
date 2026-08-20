@@ -167,16 +167,9 @@ export function ProductReviews({
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-black text-zinc-950">
-                      {review.author_name}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {new Intl.DateTimeFormat("tr-TR", {
-                        dateStyle: "long",
-                      }).format(new Date(review.created_at))}
-                    </p>
-                  </div>
+                  <p className="font-black text-zinc-950">
+                    {review.author_name}
+                  </p>
                   <Stars value={review.rating} />
                 </div>
                 {review.title ? (
