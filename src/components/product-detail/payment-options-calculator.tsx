@@ -111,11 +111,13 @@ export function PaymentOptionsCalculator({
                 ? "Peşin Fiyatına Taksit"
                 : "Peşinatlı Elden Taksit"}
             </p>
-            <p className="mt-1 text-xs leading-5 text-zinc-600">
-              {paymentType === "credit_card"
-                ? "Peşinat ve vade farkı yoktur. Normal kredi kartı checkout akışı değişmez."
-                : `Peşinat sonrası kalan tutara bir defa %${formatBasisPoints(plan.financeChargeRateBps)} vade farkı uygulanır.`}
-            </p>
+            {paymentType === "installment_application" ? (
+              <p className="mt-1 text-xs leading-5 text-zinc-600">
+                Peşinat sonrası kalan tutara bir defa %
+                {formatBasisPoints(plan.financeChargeRateBps)} vade farkı
+                uygulanır.
+              </p>
+            ) : null}
 
             {paymentType === "installment_application" ? (
               <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
