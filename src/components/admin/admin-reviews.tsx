@@ -28,6 +28,8 @@ import {
 } from "@/components/admin/admin-states";
 import { AdminTable, AdminTd, AdminTh } from "@/components/admin/admin-table";
 import { Button } from "@/components/ui/button";
+import { ReviewImageGallery } from "@/components/reviews/review-image-gallery";
+import { ReviewImagePicker } from "@/components/reviews/review-image-picker";
 import {
   createAdminReview,
   getAdminReviews,
@@ -51,6 +53,7 @@ export function AdminReviews() {
   const [replying, setReplying] = useState<ProductReview | null>(null);
   const [deleting, setDeleting] = useState<ProductReview | null>(null);
   const [saving, setSaving] = useState(false);
+  const [createImages, setCreateImages] = useState<File[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -145,11 +148,13 @@ export function AdminReviews() {
       status: String(
         data.get("status") ?? "approved",
       ) as ProductReview["status"],
+      imageFiles: createImages,
     });
     setSaving(false);
     if (!result.data) return setError(result.error ?? "Yorum oluşturulamadı.");
     await revalidateProductReviews(String(data.get("productId") ?? ""));
     setCreating(false);
+    setCreateImages([]);
     setNotice("Yönetici yorumu oluşturuldu.");
     await load();
   }
@@ -247,6 +252,7 @@ export function AdminReviews() {
                     <p className="mt-1 line-clamp-2 max-w-md text-xs leading-5 text-zinc-500">
                       {review.body}
                     </p>
+                    <ReviewImageGallery paths={review.image_paths} compact />
                     {review.admin_reply ? (
                       <p className="mt-2 text-xs font-semibold text-red-600">
                         Yanıtlandı
@@ -303,7 +309,12 @@ export function AdminReviews() {
       </AdminCard>
       <AdminModal
         open={creating}
-        onClose={() => !saving && setCreating(false)}
+        onClose={() => {
+          if (!saving) {
+            setCreating(false);
+            setCreateImages([]);
+          }
+        }}
         title="Müşteri görünümünde yorum oluştur"
         description="Bu yorum seçtiğiniz müşteri adıyla ürün sayfasında gösterilir."
       >
@@ -355,6 +366,11 @@ export function AdminReviews() {
               className={`${adminControlClass} h-auto py-3`}
             />
           </Field>
+          <ReviewImagePicker
+            files={createImages}
+            onChange={setCreateImages}
+            disabled={saving}
+          />
           <Field label="İlk durum">
             <select
               name="status"

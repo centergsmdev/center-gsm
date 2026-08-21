@@ -5,6 +5,8 @@ import Link from "next/link";
 import { MessageSquareText, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ReviewImageGallery } from "@/components/reviews/review-image-gallery";
+import { ReviewImagePicker } from "@/components/reviews/review-image-picker";
 import { submitProductReview } from "@/lib/reviews/client";
 import { cn } from "@/lib/utils";
 import type { ProductReview } from "@/types/database";
@@ -24,6 +26,7 @@ export function ProductReviews({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,6 +40,7 @@ export function ProductReviews({
       rating: selectedRating,
       title: String(data.get("title") ?? ""),
       body: String(data.get("body") ?? ""),
+      imageFiles,
     });
     setSaving(false);
     if (!result.data) {
@@ -45,6 +49,7 @@ export function ProductReviews({
     }
     form.reset();
     setSelectedRating(5);
+    setImageFiles([]);
     setMessage("Yorumunuz alındı. Yönetici onayından sonra yayınlanacak.");
   }
 
@@ -120,6 +125,11 @@ export function ProductReviews({
                 placeholder="Kısa bir başlık"
               />
             </label>
+            <ReviewImagePicker
+              files={imageFiles}
+              onChange={setImageFiles}
+              disabled={saving}
+            />
             <label className="block">
               <span className="text-sm font-bold">Yorumunuz</span>
               <textarea
@@ -178,6 +188,7 @@ export function ProductReviews({
                 <p className="mt-2 whitespace-pre-line text-sm leading-6 text-zinc-600">
                   {review.body}
                 </p>
+                <ReviewImageGallery paths={review.image_paths} />
                 {review.admin_reply ? (
                   <div className="mt-5 rounded-xl border border-red-100 bg-red-50/70 p-4">
                     <p className="flex items-center gap-2 text-sm font-black text-red-700">

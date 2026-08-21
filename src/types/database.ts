@@ -64,6 +64,7 @@ export type ProductReview = Timestamps & {
   rating: number;
   title: string | null;
   body: string;
+  image_paths: string[];
   status: "pending" | "approved" | "rejected";
   is_admin_created: boolean;
   admin_reply: string | null;
@@ -1657,6 +1658,16 @@ export type Database = {
         };
         Returns: string;
       };
+      submit_product_review_with_images: {
+        Args: {
+          p_product_id: string;
+          p_rating: number;
+          p_title: string;
+          p_body: string;
+          p_image_paths?: string[];
+        };
+        Returns: string;
+      };
       admin_create_product_review: {
         Args: {
           p_product_id: string;
@@ -1664,6 +1675,18 @@ export type Database = {
           p_rating: number;
           p_title: string;
           p_body: string;
+          p_status?: string;
+        };
+        Returns: string;
+      };
+      admin_create_product_review_with_images: {
+        Args: {
+          p_product_id: string;
+          p_author_name: string;
+          p_rating: number;
+          p_title: string;
+          p_body: string;
+          p_image_paths?: string[];
           p_status?: string;
         };
         Returns: string;

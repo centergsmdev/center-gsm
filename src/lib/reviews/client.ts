@@ -18,31 +18,23 @@ export async function submitProductReview(input: {
   rating: number;
   title: string;
   body: string;
+  imageFiles: File[];
 }): Promise<ReviewResult<string>> {
-  const client = createClient();
-  if (!client) return { data: null, error: connectionError };
-  const { data: userData } = await client.auth.getUser();
-  if (!userData.user)
-    return {
-      data: null,
-      error: "Yorum yapmak için hesabınıza giriş yapmalısınız.",
-    };
-  const result = await client.rpc("submit_product_review", {
-    p_product_id: input.productId,
-    p_rating: input.rating,
-    p_title: input.title,
-    p_body: input.body,
-  });
-  if (!result.error) return { data: result.data, error: null };
-  const message = result.error.message;
-  if (message.includes("review_already_exists"))
-    return { data: null, error: "Bu ürün için daha önce yorum yaptınız." };
-  if (message.includes("authentication_required"))
-    return {
-      data: null,
-      error: "Yorum yapmak için hesabınıza giriş yapmalısınız.",
-    };
-  return { data: null, error: connectionError };
+  const form = new FormData();
+  form.set("productId", input.productId);
+  form.set("rating", String(input.rating));
+  form.set("title", input.title);
+  form.set("body", input.body);
+  input.imageFiles.forEach((file) => form.append("files", file));
+  try {
+    const response = await fetch("/api/reviews", {
+      method: "POST",
+      body: form,
+    });
+    return (await response.json()) as ReviewResult<string>;
+  } catch {
+    return { data: null, error: connectionError };
+  }
 }
 
 export async function getAdminReviews(): Promise<
@@ -81,23 +73,25 @@ export async function createAdminReview(input: {
   title: string;
   body: string;
   status: ProductReview["status"];
+  imageFiles: File[];
 }): Promise<ReviewResult<string>> {
-  const client = createClient();
-  if (!client) return { data: null, error: connectionError };
-  const result = await client.rpc("admin_create_product_review", {
-    p_product_id: input.productId,
-    p_author_name: input.authorName,
-    p_rating: input.rating,
-    p_title: input.title,
-    p_body: input.body,
-    p_status: input.status,
-  });
-  return result.error
-    ? {
-        data: null,
-        error: "Yorum oluşturulamadı. Alanları ve yetkinizi kontrol edin.",
-      }
-    : { data: result.data, error: null };
+  const form = new FormData();
+  form.set("productId", input.productId);
+  form.set("authorName", input.authorName);
+  form.set("rating", String(input.rating));
+  form.set("title", input.title);
+  form.set("body", input.body);
+  form.set("status", input.status);
+  input.imageFiles.forEach((file) => form.append("files", file));
+  try {
+    const response = await fetch("/api/admin/reviews", {
+      method: "POST",
+      body: form,
+    });
+    return (await response.json()) as ReviewResult<string>;
+  } catch {
+    return { data: null, error: connectionError };
+  }
 }
 
 export async function manageAdminReview(
@@ -107,6 +101,16 @@ export async function manageAdminReview(
 ): Promise<ReviewResult<true>> {
   const client = createClient();
   if (!client) return { data: null, error: connectionError };
+  if (action === "delete") {
+    try {
+      const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+        method: "DELETE",
+      });
+      return (await response.json()) as ReviewResult<true>;
+    } catch {
+      return { data: null, error: connectionError };
+    }
+  }
   const result = await client.rpc("admin_manage_product_review", {
     p_review_id: reviewId,
     p_action: action,
