@@ -15,6 +15,7 @@ export const footerLinkGroups = [
       { label: "İade ve Değişim", href: "/iade-ve-degisim" },
       { label: "Garanti", href: "/garanti" },
       { label: "Teknik Servis", href: "/teknik-servis" },
+      { label: "Sık Sorulan Sorular", href: "/sikca-sorulan-sorular" },
     ],
   },
   {

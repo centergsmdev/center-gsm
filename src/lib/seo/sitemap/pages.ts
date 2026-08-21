@@ -18,6 +18,7 @@ export function getPageSitemap(): MetadataRoute.Sitemap {
       "/gizlilik",
       "/mesafeli-satis",
       "/cerez-tercihleri",
+      "/sikca-sorulan-sorular",
     ].map((path) => sitemapEntry(path, updated, "monthly", 0.5)),
   ];
 }

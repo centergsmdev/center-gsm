@@ -25,6 +25,7 @@ import {
   FileText,
   FileSignature,
   MessageSquareText,
+  CircleHelp,
   MessagesSquare,
   Users,
   Warehouse,
@@ -80,6 +81,11 @@ export const adminNavigation = [
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
   { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
   { label: "Ürün Yorumları", href: "/admin/yorumlar", icon: MessageSquareText },
+  {
+    label: "Sık Sorulan Sorular",
+    href: "/admin/sikca-sorulan-sorular",
+    icon: CircleHelp,
+  },
   { label: "İadeler", href: "/admin/iadeler", icon: RotateCcw },
   { label: "Sadakat", href: "/admin/sadakat", icon: Award },
   { label: "Hediye Kartları", href: "/admin/hediye-kartlari", icon: Gift },
@@ -231,6 +237,11 @@ export const adminPageTitles: Record<
   "/admin/yorumlar": {
     title: "Ürün Yorumları",
     description: "Müşteri yorumlarını, puanları ve mağaza yanıtlarını yönetin.",
+  },
+  "/admin/sikca-sorulan-sorular": {
+    title: "Sık Sorulan Sorular",
+    description:
+      "Müşterilere gösterilen soru, cevap, kategori ve yayın sırasını yönetin.",
   },
   "/admin/iadeler": {
     title: "İade ve Değişim",

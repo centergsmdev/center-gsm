@@ -163,6 +163,15 @@ export type ContentPageRecord = {
   updated_at: string;
   updated_by: string | null;
 };
+export type FaqItem = Timestamps & {
+  id: string;
+  category: string;
+  question: string;
+  answer: string;
+  sort_order: number;
+  is_published: boolean;
+  updated_by: string | null;
+};
 export type AdvertisementCenterSettings = {
   id: boolean;
   daily_budget: number;
@@ -1350,6 +1359,11 @@ export type Database = {
       }>;
       site_settings: Table<SiteSettings>;
       content_pages: Table<ContentPageRecord>;
+      faq_items: Table<
+        FaqItem,
+        Partial<FaqItem> & Pick<FaqItem, "category" | "question" | "answer">,
+        Partial<FaqItem>
+      >;
       advertisement_center_settings: Table<AdvertisementCenterSettings>;
       advertisement_product_settings: Table<
         AdvertisementProductSettings,
