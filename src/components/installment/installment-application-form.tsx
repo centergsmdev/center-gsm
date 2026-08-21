@@ -177,6 +177,7 @@ export function InstallmentApplicationForm({
   const [successNumber, setSuccessNumber] = useState("");
   const [downPaymentWarningAcknowledged, setDownPaymentWarningAcknowledged] =
     useState(false);
+  const [downPaymentConfirmed, setDownPaymentConfirmed] = useState(false);
   const selectedPaymentPlan = useMemo(
     () =>
       paymentPlan
@@ -378,9 +379,47 @@ export function InstallmentApplicationForm({
             Elden taksit başvurunuz onaylanması durumunda ilk peşinat ödenmesi
             zorunludur.
           </p>
+          {selectedPaymentPlan ? (
+            <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-amber-300 bg-white px-5 py-4">
+              <p className="text-sm font-semibold text-zinc-600">
+                Ödenmesi gereken ilk peşinat
+              </p>
+              <p className="mt-1 text-3xl font-black tracking-tight text-zinc-950">
+                {formatMinorCurrency(
+                  selectedPaymentPlan.downPaymentAmountMinor,
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="mx-auto mt-5 max-w-md rounded-xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-700">
+              Peşinat tutarı şu anda hesaplanamıyor. Lütfen daha sonra tekrar
+              deneyin.
+            </p>
+          )}
+          <label className="mx-auto mt-5 flex max-w-md cursor-pointer items-start gap-3 rounded-xl border border-amber-300 bg-white p-4 text-left text-sm font-semibold leading-6 text-zinc-800">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-5 shrink-0 accent-red-600"
+              checked={downPaymentConfirmed}
+              disabled={!selectedPaymentPlan}
+              onChange={(event) =>
+                setDownPaymentConfirmed(event.target.checked)
+              }
+            />
+            <span>
+              Başvurum onaylanırsa{" "}
+              {selectedPaymentPlan
+                ? formatMinorCurrency(
+                    selectedPaymentPlan.downPaymentAmountMinor,
+                  )
+                : "belirtilen"}{" "}
+              tutarındaki ilk peşinatı ödeyebilirim.
+            </span>
+          </label>
           <Button
             size="lg"
             className="mt-7 w-full sm:w-auto sm:min-w-64"
+            disabled={!selectedPaymentPlan || !downPaymentConfirmed}
             onClick={() => setDownPaymentWarningAcknowledged(true)}
           >
             Okudum, Başvuruya Devam Et
@@ -555,6 +594,8 @@ export function InstallmentApplicationForm({
                         aria-pressed={installmentCount === count}
                         onClick={() => {
                           setInstallmentCount(count);
+                          setDownPaymentConfirmed(false);
+                          setDownPaymentWarningAcknowledged(false);
                           setContractAcknowledged(false);
                           setErrors((current) => ({
                             ...current,

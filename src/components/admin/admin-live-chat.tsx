@@ -1,6 +1,14 @@
 "use client";
 
-import { MessageCircle, Send, Smile, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  MessageCircle,
+  MessageSquareText,
+  Send,
+  Smile,
+  Trash2,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import {
@@ -24,6 +32,32 @@ import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
 const DEFAULT_AUTO_REPLY_MESSAGE =
   "Şu anda işlem yoğunluğu nedeniyle sizi kısa süre bekleteceğim. Birazdan yanıt alacaksınız.";
+const QUICK_REPLIES = [
+  {
+    label: "Başvuru süreci",
+    body: "Elden taksit başvurusu için ürün sayfasından taksit süresini seçip ‘Elden Taksit Başvurusu’ butonuna tıklayın. Bilgilerinizi doldurun, gerekli belgeleri ve imzanızı ekleyip başvurunuzu gönderin. Başvurunuz incelendikten sonra size bilgi verilecektir.",
+  },
+  {
+    label: "Gerekli evraklar",
+    body: "Elden taksit başvurusu için kimliğinizin ön ve arka yüzü, e-Devlet üzerinden alınmış güncel ikametgâh belgesi ve dijital imzanız gereklidir.",
+  },
+  {
+    label: "Peşinat bilgisi",
+    body: "Elden taksit başvurunuz onaylandığında, başvuru ekranındaki ödeme planında belirtilen ilk peşinatın ödenmesi zorunludur.",
+  },
+  {
+    label: "Kredi kartı",
+    body: "Kredi kartıyla alışveriş için ürünü sepetinize ekleyip ödeme sayfasından mevcut kredi kartı ödeme adımlarını tamamlayabilirsiniz.",
+  },
+  {
+    label: "Güvenli başvuru",
+    body: "Başvurunuz otomatik satış veya sipariş oluşturmaz. Belgeleriniz özel alanda tutulur ve yalnızca yetkili yöneticiler tarafından başvurunun değerlendirilmesi amacıyla görüntülenir.",
+  },
+  {
+    label: "Mağaza ve iletişim",
+    body: "Mağaza ve iletişim bilgilerimize bu sayfadan ulaşabilirsiniz: https://www.centergsm.com.tr/iletisim",
+  },
+] as const;
 type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
 
 export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
@@ -37,6 +71,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [error, setError] = useState("");
   const [customerTyping, setCustomerTyping] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [autoReplyMessage, setAutoReplyMessage] = useState(
     DEFAULT_AUTO_REPLY_MESSAGE,
@@ -51,6 +86,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   );
   const lastTypingSent = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement>(null);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
   const previousSelectedId = useRef<string | null>(null);
   const conversationsRef = useRef<LiveChatConversation[]>([]);
@@ -358,6 +394,15 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     );
   }
 
+  function insertQuickReply(body: string) {
+    setReply((current) => {
+      const existing = current.trim();
+      return existing ? `${existing}\n\n${body}`.slice(0, 2000) : body;
+    });
+    setQuickRepliesOpen(false);
+    window.requestAnimationFrame(() => replyTextareaRef.current?.focus());
+  }
+
   async function sendReply(event: FormEvent) {
     event.preventDefault();
     const body = reply.trim();
@@ -621,6 +666,36 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
               ) : null}
             </div>
             <form onSubmit={sendReply} className="border-t border-zinc-200 p-3">
+              <div className="mb-2">
+                <button
+                  type="button"
+                  onClick={() => setQuickRepliesOpen((value) => !value)}
+                  aria-expanded={quickRepliesOpen}
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-left text-xs font-black text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-100"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquareText className="size-4 text-red-600" />
+                    Hızlı Cevaplar
+                  </span>
+                  <ChevronDown
+                    className={`size-4 transition-transform ${quickRepliesOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {quickRepliesOpen ? (
+                  <div className="mt-2 grid max-h-44 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2 sm:grid-cols-3">
+                    {QUICK_REPLIES.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => insertQuickReply(item.body)}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-left text-[11px] font-bold leading-4 text-zinc-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               {emojiOpen ? (
                 <div className="mb-2 flex gap-1 rounded-xl bg-zinc-100 p-2">
                   {EMOJIS.map((emoji) => (
@@ -645,6 +720,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                   <Smile className="size-4" />
                 </button>
                 <textarea
+                  ref={replyTextareaRef}
                   value={reply}
                   onChange={(event) => publishTyping(event.target.value)}
                   onKeyDown={(event) => {
