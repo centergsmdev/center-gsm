@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { removeReviewImages } from "@/lib/reviews/server";
+import { MAX_REVIEW_IMAGES } from "@/lib/reviews/images";
+import {
+  getReviewFiles,
+  removeReviewImages,
+  uploadReviewImages,
+  validateReviewFiles,
+} from "@/lib/reviews/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { authApi } from "@/lib/supabase/auth-api";
 import { createClient } from "@/lib/supabase/server";
-
-type ReviewUpdate = {
-  productId?: unknown;
-  authorName?: unknown;
-  rating?: unknown;
-  title?: unknown;
-  body?: unknown;
-  status?: unknown;
-};
 
 const errorResponse = (error: string, status: number) =>
   NextResponse.json({ data: null, error }, { status });
@@ -32,7 +29,7 @@ async function requireAdmin() {
       db: null,
       error: errorResponse("Bu işlem için admin yetkisi gerekiyor.", 403),
     };
-  return { db, error: null };
+  return { db, user, error: null };
 }
 
 export async function PATCH(
@@ -42,17 +39,28 @@ export async function PATCH(
   const auth = await requireAdmin();
   if (!auth.db) return auth.error;
 
-  const payload = (await request.json().catch(() => null)) as ReviewUpdate | null;
-  if (!payload) return errorResponse("Yorum verisi okunamadı.", 400);
+  const form = await request.formData().catch(() => null);
+  if (!form) return errorResponse("Yorum verisi okunamadı.", 400);
 
-  const productId =
-    typeof payload.productId === "string" ? payload.productId.trim() : "";
-  const authorName =
-    typeof payload.authorName === "string" ? payload.authorName.trim() : "";
-  const rating = Number(payload.rating);
-  const title = typeof payload.title === "string" ? payload.title.trim() : "";
-  const body = typeof payload.body === "string" ? payload.body.trim() : "";
-  const status = typeof payload.status === "string" ? payload.status : "";
+  const productId = String(form.get("productId") ?? "").trim();
+  const authorName = String(form.get("authorName") ?? "").trim();
+  const rating = Number(form.get("rating"));
+  const title = String(form.get("title") ?? "").trim();
+  const body = String(form.get("body") ?? "").trim();
+  const status = String(form.get("status") ?? "");
+  const files = getReviewFiles(form);
+  let imagePaths: string[];
+  try {
+    const parsed = JSON.parse(String(form.get("imagePaths") ?? "[]"));
+    if (
+      !Array.isArray(parsed) ||
+      parsed.some((path) => typeof path !== "string")
+    )
+      throw new Error("invalid image paths");
+    imagePaths = [...new Set(parsed)];
+  } catch {
+    return errorResponse("Yorum görselleri okunamadı.", 400);
+  }
 
   if (!productId) return errorResponse("Ürün seçimi zorunludur.", 400);
   if (authorName.length < 2 || authorName.length > 80)
@@ -65,6 +73,13 @@ export async function PATCH(
     return errorResponse("Yorum 10 ile 2000 karakter arasında olmalıdır.", 400);
   if (!["pending", "approved", "rejected"].includes(status))
     return errorResponse("Yorum durumu geçersiz.", 400);
+  const fileError = validateReviewFiles(files);
+  if (fileError) return errorResponse(fileError, 400);
+  if (imagePaths.length + files.length > MAX_REVIEW_IMAGES)
+    return errorResponse(
+      `Bir yorumda en fazla ${MAX_REVIEW_IMAGES} görsel olabilir.`,
+      400,
+    );
 
   const service = createServiceClient();
   if (!service)
@@ -73,16 +88,19 @@ export async function PATCH(
   const { reviewId } = await context.params;
   const current = await service
     .from("product_reviews")
-    .select("id,product_id,is_admin_created")
+    .select("id,product_id,is_admin_created,image_paths")
     .eq("id", reviewId)
     .maybeSingle();
   if (current.error || !current.data)
     return errorResponse("Yorum bulunamadı.", 404);
-  if (!current.data.is_admin_created)
+  const currentReview = current.data;
+  if (!currentReview.is_admin_created)
     return errorResponse(
       "Yalnızca yönetici tarafından oluşturulan yorumlar düzenlenebilir.",
       403,
     );
+  if (imagePaths.some((path) => !currentReview.image_paths.includes(path)))
+    return errorResponse("Yorum görselleri geçersiz.", 400);
 
   const product = await service
     .from("products")
@@ -92,29 +110,46 @@ export async function PATCH(
   if (product.error || !product.data)
     return errorResponse("Seçilen ürün bulunamadı.", 400);
 
-  const updated = await service
-    .from("product_reviews")
-    .update({
-      product_id: productId,
-      author_name: authorName,
-      rating,
-      title: title || null,
-      body,
-      status: status as "pending" | "approved" | "rejected",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", reviewId)
-    .eq("is_admin_created", true)
-    .select("id")
-    .maybeSingle();
-  if (updated.error || !updated.data)
-    return errorResponse("Yorum güncellenemedi.", 422);
+  let uploadedPaths: string[] = [];
+  try {
+    uploadedPaths = await uploadReviewImages(
+      files,
+      `admins/${auth.user.id}`,
+    );
+    const updated = await service
+      .from("product_reviews")
+      .update({
+        product_id: productId,
+        author_name: authorName,
+        rating,
+        title: title || null,
+        body,
+        status: status as "pending" | "approved" | "rejected",
+        image_paths: [...imagePaths, ...uploadedPaths],
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", reviewId)
+      .eq("is_admin_created", true)
+      .select("id")
+      .maybeSingle();
+    if (updated.error || !updated.data) {
+      await removeReviewImages(uploadedPaths);
+      return errorResponse("Yorum güncellenemedi.", 422);
+    }
+  } catch {
+    await removeReviewImages(uploadedPaths);
+    return errorResponse("Yorum görselleri yüklenemedi.", 422);
+  }
+
+  await removeReviewImages(
+    currentReview.image_paths.filter((path) => !imagePaths.includes(path)),
+  );
 
   return NextResponse.json({
     data: true,
     error: null,
     productId,
-    previousProductId: current.data.product_id,
+    previousProductId: currentReview.product_id,
   });
 }
 

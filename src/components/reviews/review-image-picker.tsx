@@ -12,10 +12,12 @@ import {
 export function ReviewImagePicker({
   files,
   onChange,
+  existingCount = 0,
   disabled = false,
 }: {
   files: File[];
   onChange: (files: File[]) => void;
+  existingCount?: number;
   disabled?: boolean;
 }) {
   const inputId = useId();
@@ -32,7 +34,7 @@ export function ReviewImagePicker({
   function select(nextFiles: FileList | null) {
     if (!nextFiles?.length) return;
     const next = [...files, ...Array.from(nextFiles)];
-    if (next.length > MAX_REVIEW_IMAGES) {
+    if (existingCount + next.length > MAX_REVIEW_IMAGES) {
       setError(`En fazla ${MAX_REVIEW_IMAGES} görsel ekleyebilirsiniz.`);
       if (inputRef.current) inputRef.current.value = "";
       return;
@@ -68,13 +70,17 @@ export function ReviewImagePicker({
         type="file"
         accept={REVIEW_IMAGE_TYPES.join(",")}
         multiple
-        disabled={disabled || files.length >= MAX_REVIEW_IMAGES}
+        disabled={
+          disabled || existingCount + files.length >= MAX_REVIEW_IMAGES
+        }
         onChange={(event) => select(event.target.files)}
         className="sr-only"
       />
       <label
         htmlFor={inputId}
-        aria-disabled={disabled || files.length >= MAX_REVIEW_IMAGES}
+        aria-disabled={
+          disabled || existingCount + files.length >= MAX_REVIEW_IMAGES
+        }
         className="mt-2 flex min-h-20 cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-center transition hover:border-emerald-500 hover:bg-emerald-50/50 aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
         <ImagePlus className="size-5 text-emerald-600" />

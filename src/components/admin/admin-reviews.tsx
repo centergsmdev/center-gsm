@@ -39,6 +39,7 @@ import {
   revalidateProductReviews,
   updateAdminReview,
 } from "@/lib/reviews/client";
+import { getReviewImageUrl } from "@/lib/reviews/images";
 import type { ProductReview, Tables } from "@/types/database";
 
 type ProductOption = Pick<Tables<"products">, "id" | "name" | "slug">;
@@ -57,6 +58,8 @@ export function AdminReviews() {
   const [deleting, setDeleting] = useState<ProductReview | null>(null);
   const [saving, setSaving] = useState(false);
   const [createImages, setCreateImages] = useState<File[]>([]);
+  const [editImages, setEditImages] = useState<File[]>([]);
+  const [editImagePaths, setEditImagePaths] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -177,6 +180,8 @@ export function AdminReviews() {
       status: String(
         data.get("status") ?? "approved",
       ) as ProductReview["status"],
+      imagePaths: editImagePaths,
+      imageFiles: editImages,
     });
     setSaving(false);
     if (!result.data) return setError(result.error ?? "Yorum güncellenemedi.");
@@ -186,8 +191,24 @@ export function AdminReviews() {
       ),
     );
     setEditing(null);
+    setEditImages([]);
+    setEditImagePaths([]);
     setNotice("Yönetici yorumu güncellendi; ürün puanı yenilendi.");
     await load();
+  }
+
+  function beginEdit(review: ProductReview) {
+    setEditing(review);
+    setEditImages([]);
+    setEditImagePaths(review.image_paths);
+    setError("");
+  }
+
+  function closeEdit() {
+    if (saving) return;
+    setEditing(null);
+    setEditImages([]);
+    setEditImagePaths([]);
   }
 
   return (
@@ -314,7 +335,7 @@ export function AdminReviews() {
                       {review.is_admin_created ? (
                         <IconButton
                           label="Düzenle"
-                          onClick={() => setEditing(review)}
+                          onClick={() => beginEdit(review)}
                         >
                           <Pencil className="size-4" />
                         </IconButton>
@@ -427,9 +448,9 @@ export function AdminReviews() {
       </AdminModal>
       <AdminModal
         open={Boolean(editing)}
-        onClose={() => !saving && setEditing(null)}
+        onClose={closeEdit}
         title="Yönetici yorumunu düzenle"
-        description="Yorum bilgilerini güncelleyin. Mevcut yorum görselleri korunur."
+        description="Yorum bilgilerini ve görsellerini güncelleyin."
       >
         {editing ? (
           <form key={editing.id} onSubmit={edit} className="space-y-4">
@@ -491,12 +512,45 @@ export function AdminReviews() {
                 className={`${adminControlClass} h-auto py-3`}
               />
             </Field>
-            {editing.image_paths.length ? (
+            {editImagePaths.length ? (
               <div>
                 <p className="mb-2 text-sm font-bold">Mevcut görseller</p>
-                <ReviewImageGallery paths={editing.image_paths} compact />
+                <div className="grid grid-cols-3 gap-2">
+                  {editImagePaths.map((path, index) => (
+                    <div
+                      key={path}
+                      className="relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getReviewImageUrl(path)}
+                        alt={`Mevcut yorum görseli ${index + 1}`}
+                        className="size-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          setEditImagePaths((paths) =>
+                            paths.filter((item) => item !== path),
+                          )
+                        }
+                        className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-black/75 text-white shadow-sm hover:bg-red-600 disabled:opacity-50"
+                        aria-label={`${index + 1}. mevcut görseli kaldır`}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
+            <ReviewImagePicker
+              files={editImages}
+              onChange={setEditImages}
+              existingCount={editImagePaths.length}
+              disabled={saving}
+            />
             <Field label="Durum">
               <select
                 name="status"

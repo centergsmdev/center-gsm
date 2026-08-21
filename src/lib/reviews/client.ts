@@ -103,13 +103,23 @@ export async function updateAdminReview(
     title: string;
     body: string;
     status: ProductReview["status"];
+    imagePaths: string[];
+    imageFiles: File[];
   },
 ): Promise<ReviewResult<true>> {
+  const form = new FormData();
+  form.set("productId", input.productId);
+  form.set("authorName", input.authorName);
+  form.set("rating", String(input.rating));
+  form.set("title", input.title);
+  form.set("body", input.body);
+  form.set("status", input.status);
+  form.set("imagePaths", JSON.stringify(input.imagePaths));
+  input.imageFiles.forEach((file) => form.append("files", file));
   try {
     const response = await fetch(`/api/admin/reviews/${reviewId}`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
+      body: form,
     });
     return (await response.json()) as ReviewResult<true>;
   } catch {
