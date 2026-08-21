@@ -16,7 +16,35 @@ export type SignalEvent =
   | "ice-candidate"
   | "ice-restart"
   | "hangup"
-  | "peer-ready";
+  | "peer-ready"
+  | "diagnostic";
+
+export type IceCandidateType = "host" | "srflx" | "relay" | "prflx" | "unknown";
+
+export type SafePeerDiagnostics = {
+  role: VideoCallRole;
+  channelState: "idle" | "connecting" | "connected" | "failed";
+  localMediaReady: boolean;
+  localAudioReady: boolean;
+  localVideoReady: boolean;
+  signalingState: RTCSignalingState | "unavailable";
+  iceGatheringState: RTCIceGatheringState | "unavailable";
+  iceConnectionState: RTCIceConnectionState | "unavailable";
+  connectionState: RTCPeerConnectionState | "unavailable";
+  localCandidateTypes: IceCandidateType[];
+  offerCreated: boolean;
+  offerSent: boolean;
+  offerReceived: boolean;
+  answerCreated: boolean;
+  answerSent: boolean;
+  answerReceived: boolean;
+  remoteDescriptionSet: boolean;
+  iceCandidatesSent: number;
+  iceCandidatesReceived: number;
+  iceCandidatesAdded: number;
+  remoteAudioReceived: boolean;
+  remoteVideoReceived: boolean;
+};
 
 export type SignalEnvelope<T = unknown> = {
   callId: string;
@@ -99,6 +127,40 @@ export function isSignalEnvelope(value: unknown): value is SignalEnvelope {
     typeof input.nonce === "string" &&
     /^[0-9a-f-]{36}$/i.test(input.nonce) &&
     Number.isFinite(input.timestamp)
+  );
+}
+
+export function getIceCandidateType(
+  candidate: string | null | undefined,
+): IceCandidateType {
+  const match = candidate?.match(
+    /(?:^|\s)typ\s+(host|srflx|relay|prflx)(?:\s|$)/i,
+  );
+  return (
+    (match?.[1]?.toLowerCase() as IceCandidateType | undefined) ?? "unknown"
+  );
+}
+
+export function isSafePeerDiagnostics(
+  value: unknown,
+): value is SafePeerDiagnostics {
+  if (!value || typeof value !== "object") return false;
+  const input = value as Partial<SafePeerDiagnostics>;
+  return (
+    (input.role === "customer" || input.role === "admin") &&
+    ["idle", "connecting", "connected", "failed"].includes(
+      String(input.channelState),
+    ) &&
+    typeof input.localMediaReady === "boolean" &&
+    typeof input.localAudioReady === "boolean" &&
+    typeof input.localVideoReady === "boolean" &&
+    Array.isArray(input.localCandidateTypes) &&
+    input.localCandidateTypes.every((type) =>
+      ["host", "srflx", "relay", "prflx", "unknown"].includes(type),
+    ) &&
+    Number.isSafeInteger(input.iceCandidatesSent) &&
+    Number.isSafeInteger(input.iceCandidatesReceived) &&
+    Number.isSafeInteger(input.iceCandidatesAdded)
   );
 }
 

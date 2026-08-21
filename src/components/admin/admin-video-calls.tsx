@@ -22,6 +22,7 @@ import {
 import { useVideoCallPeer } from "@/components/live-chat/use-video-call-peer";
 import {
   formatCallDuration,
+  type SafePeerDiagnostics,
   type VideoCallAction,
 } from "@/lib/live-chat/video-call";
 import { stopMediaStream } from "@/lib/live-chat/video-realtime";
@@ -196,8 +197,10 @@ export function AdminVideoCalls({
       }),
     onConnected: () => void updateCall("connected"),
     onReconnecting: () => void updateCall("reconnecting"),
-    onFailed: () =>
-      void updateCall("fail", "connection_failed").then(cleanupMedia),
+    onFailed: () => {
+      setError("Görüntülü görüşme medya bağlantısı kurulamadı.");
+      void updateCall("fail", "connection_failed").then(cleanupMedia);
+    },
   });
 
   useEffect(() => {
@@ -581,6 +584,10 @@ export function AdminVideoCalls({
               <X className="size-4" />
             </button>
           </header>
+          <PeerDiagnosticPanel
+            local={peer.diagnostics}
+            remote={peer.remoteDiagnostics}
+          />
           <div className="relative min-h-0 flex-1 bg-black">
             <video
               ref={customerVideoRef}
@@ -637,6 +644,95 @@ export function AdminVideoCalls({
           </div>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+function PeerDiagnosticPanel({
+  local,
+  remote,
+}: {
+  local: SafePeerDiagnostics;
+  remote: SafePeerDiagnostics | null;
+}) {
+  const customerMediaReady =
+    remote?.localMediaReady ||
+    local.remoteAudioReceived ||
+    local.remoteVideoReceived;
+  const iceLabel =
+    local.iceConnectionState === "connected" ||
+    local.iceConnectionState === "completed"
+      ? "Connected"
+      : local.iceConnectionState === "failed"
+        ? "Failed"
+        : local.iceConnectionState === "checking"
+          ? "Checking"
+          : "Waiting";
+  const connectionLabel =
+    local.connectionState === "connected"
+      ? "Connected"
+      : local.connectionState === "failed"
+        ? "Failed"
+        : local.connectionState === "connecting"
+          ? "Connecting"
+          : "Waiting";
+  const candidateLabel = (
+    values: SafePeerDiagnostics["localCandidateTypes"],
+  ) => (values.length ? values.join(", ") : "Waiting");
+
+  return (
+    <div className="grid shrink-0 grid-cols-2 gap-1.5 border-b border-white/10 bg-zinc-900 px-3 py-2 text-[10px] sm:grid-cols-3">
+      <DiagnosticValue
+        label="Signaling"
+        value={
+          local.channelState === "connected"
+            ? "Connected"
+            : local.channelState === "failed"
+              ? "Failed"
+              : "Connecting"
+        }
+      />
+      <DiagnosticValue
+        label="Customer media"
+        value={customerMediaReady ? "Ready" : "Waiting"}
+      />
+      <DiagnosticValue label="ICE" value={iceLabel} />
+      <DiagnosticValue
+        label="Remote video"
+        value={local.remoteVideoReceived ? "Received" : "Waiting"}
+      />
+      <DiagnosticValue
+        label="Remote audio"
+        value={local.remoteAudioReceived ? "Received" : "Waiting"}
+      />
+      <DiagnosticValue label="Connection" value={connectionLabel} />
+      <DiagnosticValue
+        label="Offer / Answer"
+        value={`${local.offerReceived ? "Offer ✓" : "Offer …"} · ${local.answerSent ? "Answer ✓" : "Answer …"}`}
+      />
+      <DiagnosticValue
+        label="Customer candidates"
+        value={candidateLabel(remote?.localCandidateTypes ?? [])}
+      />
+      <DiagnosticValue
+        label="Admin candidates"
+        value={candidateLabel(local.localCandidateTypes)}
+      />
+    </div>
+  );
+}
+
+function DiagnosticValue({ label, value }: { label: string; value: string }) {
+  const positive = /Connected|Ready|Received|✓|srflx|relay/.test(value);
+  const failed = /Failed/.test(value);
+  return (
+    <div className="rounded-lg bg-white/5 px-2 py-1.5">
+      <span className="block text-zinc-500">{label}</span>
+      <span
+        className={`font-bold ${failed ? "text-red-300" : positive ? "text-emerald-300" : "text-amber-200"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }

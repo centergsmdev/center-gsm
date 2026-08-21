@@ -153,8 +153,12 @@ export function CustomerVideoCall({
     onHangup: () => void updateCall("end", "remote_hangup").then(cleanupMedia),
     onConnected: () => void updateCall("connected"),
     onReconnecting: () => void updateCall("reconnecting"),
-    onFailed: () =>
-      void updateCall("fail", "connection_failed").then(cleanupMedia),
+    onFailed: () => {
+      setError(
+        "Görüntülü görüşme bağlantısı kurulamadı. Yazılı destek üzerinden devam edebilirsiniz.",
+      );
+      void updateCall("fail", "connection_failed").then(cleanupMedia);
+    },
   });
 
   useEffect(() => {

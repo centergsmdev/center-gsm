@@ -14,6 +14,12 @@ export function createCallRealtimeClient(participantToken: string) {
   });
 }
 
+export async function authorizeCallRealtimeClient(
+  client: Pick<ReturnType<typeof createClient>, "realtime">,
+) {
+  await client.realtime.setAuth();
+}
+
 export async function sendPrivateSignal(
   channel: RealtimeChannel,
   event: string,

@@ -5,6 +5,8 @@ import {
   SignalReplayGuard,
   createSignalEnvelope,
   formatCallDuration,
+  getIceCandidateType,
+  isSafePeerDiagnostics,
   isValidCallTransition,
 } from "./video-call.ts";
 import {
@@ -174,6 +176,63 @@ test("admin peer sender listesinde video track bulunamaz", () => {
 test("çağrı süresi kullanıcıya okunabilir biçimde gösterilir", () => {
   assert.equal(formatCallDuration(42), "42 sn");
   assert.equal(formatCallDuration(125), "2 dk 5 sn");
+});
+
+test("ICE diagnostic yalnız candidate tipini çıkarır", () => {
+  assert.equal(
+    getIceCandidateType(
+      "candidate:1 1 UDP 2122260223 192.0.2.1 54321 typ host generation 0",
+    ),
+    "host",
+  );
+  assert.equal(
+    getIceCandidateType(
+      "candidate:2 1 UDP 1686052607 198.51.100.2 45678 typ srflx raddr 0.0.0.0 rport 0",
+    ),
+    "srflx",
+  );
+  assert.equal(
+    getIceCandidateType(
+      "candidate:3 1 TCP 1518280447 203.0.113.3 443 typ relay tcptype passive",
+    ),
+    "relay",
+  );
+  assert.equal(getIceCandidateType("malformed-candidate"), "unknown");
+});
+
+test("güvenli peer diagnostic IP veya SDP taşımadan doğrulanır", () => {
+  const diagnostic = {
+    role: "customer",
+    channelState: "connected",
+    localMediaReady: true,
+    localAudioReady: true,
+    localVideoReady: true,
+    signalingState: "stable",
+    iceGatheringState: "gathering",
+    iceConnectionState: "checking",
+    connectionState: "connecting",
+    localCandidateTypes: ["host", "srflx"],
+    offerCreated: true,
+    offerSent: true,
+    offerReceived: false,
+    answerCreated: false,
+    answerSent: false,
+    answerReceived: false,
+    remoteDescriptionSet: false,
+    iceCandidatesSent: 2,
+    iceCandidatesReceived: 0,
+    iceCandidatesAdded: 0,
+    remoteAudioReceived: false,
+    remoteVideoReceived: false,
+  };
+  assert.equal(isSafePeerDiagnostics(diagnostic), true);
+  assert.equal(
+    isSafePeerDiagnostics({
+      ...diagnostic,
+      localCandidateTypes: ["198.51.100.2"],
+    }),
+    false,
+  );
 });
 
 test("kısa süreli call JWT doğru çağrıya bağlıdır ve süresi dolunca reddedilir", () => {
