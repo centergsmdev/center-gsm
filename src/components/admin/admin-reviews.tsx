@@ -10,6 +10,7 @@ import {
 import {
   Check,
   MessageSquareReply,
+  Pencil,
   Plus,
   Search,
   Star,
@@ -36,6 +37,7 @@ import {
   getReviewProducts,
   manageAdminReview,
   revalidateProductReviews,
+  updateAdminReview,
 } from "@/lib/reviews/client";
 import type { ProductReview, Tables } from "@/types/database";
 
@@ -50,6 +52,7 @@ export function AdminReviews() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | ProductReview["status"]>("all");
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<ProductReview | null>(null);
   const [replying, setReplying] = useState<ProductReview | null>(null);
   const [deleting, setDeleting] = useState<ProductReview | null>(null);
   const [saving, setSaving] = useState(false);
@@ -156,6 +159,34 @@ export function AdminReviews() {
     setCreating(false);
     setCreateImages([]);
     setNotice("Yönetici yorumu oluşturuldu.");
+    await load();
+  }
+
+  async function edit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing || !editing.is_admin_created) return;
+    const data = new FormData(event.currentTarget);
+    const productId = String(data.get("productId") ?? "");
+    setSaving(true);
+    const result = await updateAdminReview(editing.id, {
+      productId,
+      authorName: String(data.get("authorName") ?? ""),
+      rating: Number(data.get("rating") ?? 5),
+      title: String(data.get("title") ?? ""),
+      body: String(data.get("body") ?? ""),
+      status: String(
+        data.get("status") ?? "approved",
+      ) as ProductReview["status"],
+    });
+    setSaving(false);
+    if (!result.data) return setError(result.error ?? "Yorum güncellenemedi.");
+    await Promise.all(
+      [...new Set([editing.product_id, productId])].map((id) =>
+        revalidateProductReviews(id),
+      ),
+    );
+    setEditing(null);
+    setNotice("Yönetici yorumu güncellendi; ürün puanı yenilendi.");
     await load();
   }
 
@@ -280,6 +311,14 @@ export function AdminReviews() {
                           <X className="size-4" />
                         </IconButton>
                       ) : null}
+                      {review.is_admin_created ? (
+                        <IconButton
+                          label="Düzenle"
+                          onClick={() => setEditing(review)}
+                        >
+                          <Pencil className="size-4" />
+                        </IconButton>
+                      ) : null}
                       <IconButton
                         label="Yanıtla"
                         onClick={() => setReplying(review)}
@@ -385,6 +424,95 @@ export function AdminReviews() {
             {saving ? "Kaydediliyor…" : "Yorumu oluştur"}
           </Button>
         </form>
+      </AdminModal>
+      <AdminModal
+        open={Boolean(editing)}
+        onClose={() => !saving && setEditing(null)}
+        title="Yönetici yorumunu düzenle"
+        description="Yorum bilgilerini güncelleyin. Mevcut yorum görselleri korunur."
+      >
+        {editing ? (
+          <form key={editing.id} onSubmit={edit} className="space-y-4">
+            <Field label="Ürün">
+              <select
+                name="productId"
+                required
+                defaultValue={editing.product_id}
+                className={adminControlClass}
+              >
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Müşteri adı">
+                <input
+                  name="authorName"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  defaultValue={editing.author_name}
+                  className={adminControlClass}
+                />
+              </Field>
+              <Field label="Puan">
+                <select
+                  name="rating"
+                  defaultValue={String(editing.rating)}
+                  className={adminControlClass}
+                >
+                  {[5, 4, 3, 2, 1].map((value) => (
+                    <option key={value} value={value}>
+                      {value} yıldız
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <Field label="Başlık (isteğe bağlı)">
+              <input
+                name="title"
+                maxLength={120}
+                defaultValue={editing.title ?? ""}
+                className={adminControlClass}
+              />
+            </Field>
+            <Field label="Yorum">
+              <textarea
+                name="body"
+                required
+                minLength={10}
+                maxLength={2000}
+                rows={5}
+                defaultValue={editing.body}
+                className={`${adminControlClass} h-auto py-3`}
+              />
+            </Field>
+            {editing.image_paths.length ? (
+              <div>
+                <p className="mb-2 text-sm font-bold">Mevcut görseller</p>
+                <ReviewImageGallery paths={editing.image_paths} compact />
+              </div>
+            ) : null}
+            <Field label="Durum">
+              <select
+                name="status"
+                defaultValue={editing.status}
+                className={adminControlClass}
+              >
+                <option value="approved">Yayında</option>
+                <option value="pending">Onay bekliyor</option>
+                <option value="rejected">Reddedildi</option>
+              </select>
+            </Field>
+            <Button type="submit" disabled={saving} className="w-full">
+              {saving ? "Kaydediliyor…" : "Değişiklikleri kaydet"}
+            </Button>
+          </form>
+        ) : null}
       </AdminModal>
       <AdminModal
         open={Boolean(replying)}

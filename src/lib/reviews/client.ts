@@ -94,6 +94,29 @@ export async function createAdminReview(input: {
   }
 }
 
+export async function updateAdminReview(
+  reviewId: string,
+  input: {
+    productId: string;
+    authorName: string;
+    rating: number;
+    title: string;
+    body: string;
+    status: ProductReview["status"];
+  },
+): Promise<ReviewResult<true>> {
+  try {
+    const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    return (await response.json()) as ReviewResult<true>;
+  } catch {
+    return { data: null, error: connectionError };
+  }
+}
+
 export async function manageAdminReview(
   reviewId: string,
   action: "approve" | "reject" | "reply" | "clear_reply" | "delete",
