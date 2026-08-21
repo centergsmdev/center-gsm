@@ -46,6 +46,9 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [deletePending, setDeletePending] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const customerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const lastTypingSent = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -275,6 +278,11 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const selectedVisitorToken = selected?.visitor_token ?? null;
 
   useEffect(() => {
+    setCustomerTyping(false);
+    if (customerTypingTimer.current) {
+      clearTimeout(customerTypingTimer.current);
+      customerTypingTimer.current = null;
+    }
     if (!selectedId || !selectedVisitorToken) {
       setMessages([]);
       previousSelectedId.current = null;
@@ -290,12 +298,29 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     const channel = client
       .channel(`live-chat:${selectedVisitorToken}`)
       .on("broadcast", { event: "typing" }, ({ payload }) => {
-        if (payload?.role === "customer")
-          setCustomerTyping(Boolean(payload.typing));
+        if (payload?.role !== "customer") return;
+        if (customerTypingTimer.current) {
+          clearTimeout(customerTypingTimer.current);
+          customerTypingTimer.current = null;
+        }
+        const isTyping = Boolean(payload.typing);
+        setCustomerTyping(isTyping);
+        if (isTyping) {
+          customerTypingTimer.current = setTimeout(() => {
+            setCustomerTyping(false);
+            customerTypingTimer.current = null;
+          }, 2500);
+        }
       })
       .on("broadcast", { event: "read" }, () => void loadMessages(selectedId))
       .subscribe();
-    return () => void client.removeChannel(channel);
+    return () => {
+      if (customerTypingTimer.current) {
+        clearTimeout(customerTypingTimer.current);
+        customerTypingTimer.current = null;
+      }
+      void client.removeChannel(channel);
+    };
   }, [loadMessages, selectedId, selectedVisitorToken]);
 
   useEffect(() => {

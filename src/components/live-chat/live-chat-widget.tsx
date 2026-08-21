@@ -82,6 +82,23 @@ export function LiveChatWidget() {
   const lastTypingSent = useRef(0);
   const stickToBottom = useRef(true);
 
+  const sendCustomerTyping = useCallback((typing: boolean) => {
+    void chatChannelRef.current?.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { role: "customer", typing },
+    });
+  }, []);
+
+  const stopCustomerTyping = useCallback(() => {
+    if (typingTimer.current) {
+      clearTimeout(typingTimer.current);
+      typingTimer.current = null;
+    }
+    lastTypingSent.current = 0;
+    sendCustomerTyping(false);
+  }, [sendCustomerTyping]);
+
   const subscribeToNotifications = useCallback(async () => {
     const conversationId = conversation?.id;
     if (
@@ -328,6 +345,15 @@ export function LiveChatWidget() {
       .subscribe();
     chatChannelRef.current = channel;
     return () => {
+      if (typingTimer.current) {
+        clearTimeout(typingTimer.current);
+        typingTimer.current = null;
+      }
+      void channel.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { role: "customer", typing: false },
+      });
       chatChannelRef.current = null;
       void client.removeChannel(channel);
     };
@@ -363,6 +389,7 @@ export function LiveChatWidget() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
+        stopCustomerTyping();
         setOpen(false);
         window.requestAnimationFrame(() => launcherRef.current?.focus());
         return;
@@ -387,7 +414,7 @@ export function LiveChatWidget() {
 
     activeDialog.addEventListener("keydown", handleKeyDown);
     return () => activeDialog.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [open, stopCustomerTyping]);
 
   useEffect(() => {
     const scroll = scrollRef.current;
@@ -403,30 +430,27 @@ export function LiveChatWidget() {
   }
 
   function toggleChat() {
-    setOpen((current) => {
-      if (!current) stickToBottom.current = true;
-      return !current;
-    });
+    if (open) stopCustomerTyping();
+    else stickToBottom.current = true;
+    setOpen(!open);
   }
 
   function publishTyping(value: string) {
     setMessage(value);
+    if (!value.trim()) {
+      stopCustomerTyping();
+      return;
+    }
     const now = Date.now();
     if (now - lastTypingSent.current > 900) {
       lastTypingSent.current = now;
-      void chatChannelRef.current?.send({
-        type: "broadcast",
-        event: "typing",
-        payload: { role: "customer", typing: true },
-      });
+      sendCustomerTyping(true);
     }
     if (typingTimer.current) clearTimeout(typingTimer.current);
     typingTimer.current = setTimeout(() => {
-      void chatChannelRef.current?.send({
-        type: "broadcast",
-        event: "typing",
-        payload: { role: "customer", typing: false },
-      });
+      typingTimer.current = null;
+      lastTypingSent.current = 0;
+      sendCustomerTyping(false);
     }, 1400);
   }
 
@@ -435,6 +459,7 @@ export function LiveChatWidget() {
     const cleanName = name.trim();
     const cleanMessage = message.trim();
     if (!token || cleanName.length < 2 || !cleanMessage) return;
+    stopCustomerTyping();
     setSending(true);
     setError("");
     try {
@@ -556,6 +581,7 @@ export function LiveChatWidget() {
               ref={closeButtonRef}
               type="button"
               onClick={() => {
+                stopCustomerTyping();
                 setOpen(false);
                 window.requestAnimationFrame(() =>
                   launcherRef.current?.focus(),
@@ -706,6 +732,7 @@ export function LiveChatWidget() {
               <textarea
                 value={message}
                 onChange={(event) => publishTyping(event.target.value)}
+                onBlur={stopCustomerTyping}
                 onKeyDown={(event) => {
                   if (
                     event.key !== "Enter" ||
