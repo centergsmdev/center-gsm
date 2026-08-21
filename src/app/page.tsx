@@ -9,7 +9,6 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { HomepageWhatsAppButton } from "@/components/layout/homepage-whatsapp-button";
 import { Hero } from "@/components/home/hero";
-import { PromoVideoModal } from "@/components/home/promo-video-modal";
 import {
   BrandShowcase,
   HomepageFooterCta,
@@ -64,7 +63,6 @@ export default async function HomePage() {
       <JsonLd id="organization-schema" data={createOrganizationSchema()} />
       <JsonLd id="website-schema" data={createWebsiteSchema()} />
       <Header />
-      <PromoVideoModal />
       <MotionProvider>
         <main>
           <Hero />
