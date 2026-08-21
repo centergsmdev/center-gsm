@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   CheckCircle2,
   BookOpenCheck,
   FileCheck2,
@@ -174,6 +175,8 @@ export function InstallmentApplicationForm({
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [successNumber, setSuccessNumber] = useState("");
+  const [downPaymentWarningAcknowledged, setDownPaymentWarningAcknowledged] =
+    useState(false);
   const selectedPaymentPlan = useMemo(
     () =>
       paymentPlan
@@ -345,6 +348,46 @@ export function InstallmentApplicationForm({
       setBusy(false);
     }
   }
+
+  if (!downPaymentWarningAcknowledged)
+    return (
+      <Card
+        className="mx-auto max-w-xl border-amber-300 bg-amber-50/70 shadow-lg"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="down-payment-warning-title"
+        aria-describedby="down-payment-warning-description"
+      >
+        <CardContent className="py-8 text-center sm:px-10 sm:py-10">
+          <span className="mx-auto grid size-16 place-items-center rounded-full bg-amber-100 ring-8 ring-amber-50">
+            <AlertTriangle
+              className="size-8 text-amber-700"
+              aria-hidden="true"
+            />
+          </span>
+          <h1
+            id="down-payment-warning-title"
+            className="mt-6 text-xl font-black tracking-tight text-zinc-950 sm:text-2xl"
+          >
+            Başvuru Öncesi Önemli Uyarı
+          </h1>
+          <p
+            id="down-payment-warning-description"
+            className="mx-auto mt-4 max-w-md text-base font-bold leading-7 text-zinc-800 sm:text-lg sm:leading-8"
+          >
+            Elden taksit başvurunuz onaylanması durumunda ilk peşinat ödenmesi
+            zorunludur.
+          </p>
+          <Button
+            size="lg"
+            className="mt-7 w-full sm:w-auto sm:min-w-64"
+            onClick={() => setDownPaymentWarningAcknowledged(true)}
+          >
+            Okudum, Başvuruya Devam Et
+          </Button>
+        </CardContent>
+      </Card>
+    );
 
   if (successNumber)
     return (
