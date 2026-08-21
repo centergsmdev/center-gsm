@@ -2,6 +2,7 @@
 
 import { MessageCircle, Send, Smile, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import {
   useCallback,
   useEffect,
@@ -563,9 +564,10 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                           />
                         </a>
                       ) : null}
-                      <p className="whitespace-pre-wrap break-words">
-                        {item.body}
-                      </p>
+                      <ChatMessageText
+                        body={item.body}
+                        inverted={item.sender !== "customer"}
+                      />
                       {item.sender === "ai" ? (
                         <p className="mt-1 text-[10px] font-bold text-violet-100">
                           AI tarafından oluşturuldu

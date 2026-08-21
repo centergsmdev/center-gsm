@@ -15,6 +15,7 @@ import {
 } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import {
   formatChatDay,
   formatChatTime,
@@ -604,9 +605,10 @@ export function LiveChatWidget() {
                           />
                         </a>
                       ) : null}
-                      <p className="whitespace-pre-wrap break-words">
-                        {item.body}
-                      </p>
+                      <ChatMessageText
+                        body={item.body}
+                        inverted={item.sender === "customer"}
+                      />
                       {item.sender === "ai" ? (
                         <p className="mt-1 text-[10px] font-bold text-zinc-500">
                           CENTER GSM AI tarafından oluşturuldu
