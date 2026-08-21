@@ -16,6 +16,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
+import { CustomerVideoCall } from "@/components/live-chat/customer-video-call";
 import {
   formatChatDay,
   formatChatTime,
@@ -667,6 +668,12 @@ export function LiveChatWidget() {
             onSubmit={send}
             className="shrink-0 space-y-2 border-t border-zinc-200 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:p-3"
           >
+            {conversation && token ? (
+              <CustomerVideoCall
+                token={token}
+                conversationId={conversation.id}
+              />
+            ) : null}
             {conversation && notificationPermission === "default" ? (
               <button
                 type="button"

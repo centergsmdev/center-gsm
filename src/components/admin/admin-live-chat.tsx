@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { AdminVideoCalls } from "@/components/admin/admin-video-calls";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import {
   useCallback,
@@ -463,7 +464,10 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   }
 
   return (
-    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr]">
+    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr]">
+      <div className="col-span-full px-4 pt-4">
+        <AdminVideoCalls selectedConversationId={selectedId} />
+      </div>
       <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:max-h-none lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
           <div>

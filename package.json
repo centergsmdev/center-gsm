@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "test:installment": "node --experimental-strip-types --test src/lib/installment/*.test.mjs",
+    "test:live-chat": "node --experimental-strip-types --test src/lib/live-chat/*.test.mjs",
+    "test": "npm run test:installment && npm run test:live-chat",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

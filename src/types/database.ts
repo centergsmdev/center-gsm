@@ -135,6 +135,67 @@ export type LiveChatSettings = {
   auto_reply_message: string;
   updated_at: string;
 };
+export type LiveChatCallStatus =
+  | "requesting"
+  | "ringing"
+  | "accepted"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "ended"
+  | "rejected"
+  | "missed"
+  | "failed";
+export type LiveChatCall = {
+  id: string;
+  conversation_id: string;
+  status: LiveChatCallStatus;
+  accepted_by: string | null;
+  signaling_nonce: string;
+  revision: number;
+  requested_at: string;
+  accepted_at: string | null;
+  connecting_at: string | null;
+  connected_at: string | null;
+  ended_at: string | null;
+  expires_at: string;
+  auth_expires_at: string;
+  duration_seconds: number | null;
+  ended_by: "customer" | "admin" | "system" | null;
+  end_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+export type LiveChatCallEvent = {
+  id: number;
+  call_id: string;
+  conversation_id: string;
+  event_type:
+    | "requested"
+    | "accepted"
+    | "connecting"
+    | "started"
+    | "reconnecting"
+    | "ended"
+    | "rejected"
+    | "missed"
+    | "failed";
+  actor_role: "customer" | "admin" | "system";
+  metadata: Json;
+  created_at: string;
+};
+export type LiveChatVideoSettings = {
+  id: boolean;
+  enabled: boolean;
+  avatar_mode: "static" | "audio-reactive";
+  avatar_display_name: string;
+  avatar_image_url: string | null;
+  avatar_image_path: string | null;
+  ring_timeout_seconds: number;
+  max_duration_seconds: number;
+  updated_at: string;
+  updated_by: string | null;
+};
 export type SiteSettings = {
   id: boolean;
   company_name: string;
@@ -1347,6 +1408,19 @@ export type Database = {
         Partial<LiveChatMessage>
       >;
       live_chat_settings: Table<LiveChatSettings>;
+      live_chat_video_settings: Table<LiveChatVideoSettings>;
+      live_chat_calls: Table<LiveChatCall, never, never>;
+      live_chat_call_events: Table<LiveChatCallEvent, never, never>;
+      live_chat_call_rate_limits: Table<
+        {
+          key_hash: string;
+          window_started_at: string;
+          request_count: number;
+          updated_at: string;
+        },
+        never,
+        never
+      >;
       live_chat_push_subscriptions: Table<{
         id: string;
         conversation_id: string;
@@ -1599,6 +1673,32 @@ export type Database = {
       };
     };
     Functions: {
+      expire_live_chat_calls: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      request_live_chat_call: {
+        Args: {
+          p_conversation_id: string;
+          p_rate_key_hash: string;
+          p_limit: number;
+          p_window_seconds: number;
+          p_ring_timeout_seconds: number;
+          p_max_duration_seconds: number;
+        };
+        Returns: Json;
+      };
+      transition_live_chat_call: {
+        Args: {
+          p_call_id: string;
+          p_expected_revision: number;
+          p_action: string;
+          p_actor_role: "customer" | "admin" | "system";
+          p_actor_id?: string | null;
+          p_reason?: string | null;
+        };
+        Returns: Json;
+      };
       admin_create_payment_plan_configuration: {
         Args: {
           p_threshold_minor: number;
