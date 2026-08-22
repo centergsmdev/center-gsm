@@ -357,7 +357,7 @@ export function InstallmentApplicationForm({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="down-payment-warning-title"
-        aria-describedby="down-payment-warning-description"
+        aria-describedby="down-payment-warning-description down-payment-warning-acceptance"
       >
         <CardContent className="py-8 text-center sm:px-10 sm:py-10">
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-amber-100 ring-8 ring-amber-50">
@@ -378,6 +378,13 @@ export function InstallmentApplicationForm({
           >
             Elden taksit başvurunuz onaylanması durumunda ilk peşinat ödenmesi
             zorunludur.
+          </p>
+          <p
+            id="down-payment-warning-acceptance"
+            className="mx-auto mt-2 max-w-md text-xs font-medium leading-5 text-zinc-600 sm:text-sm sm:leading-6"
+          >
+            Başvurum onaylandığı takdirde, gün içinde ilk peşinat ödemesini
+            yapacağımı okudum, anladım ve kabul ediyorum.
           </p>
           {selectedPaymentPlan ? (
             <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-amber-300 bg-white px-5 py-4">
