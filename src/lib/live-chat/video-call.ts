@@ -1,5 +1,9 @@
 import type { LiveChatCallStatus } from "@/types/database";
 import type {
+  SimliAudioInputState,
+  SimliAudioSourceState,
+  SimliAvatarSource,
+  SimliInputLevelState,
   SimliPlaybackState,
   SimliSessionState,
   SimliVideoState,
@@ -76,6 +80,22 @@ export type SafePeerDiagnostics = {
   simliFallbackActive: boolean;
   simliSessionReadyMs: number | null;
   simliFirstFrameMs: number | null;
+  simliFaceLoaded: boolean;
+  simliAudioSourceState: SimliAudioSourceState;
+  simliAudioTrackReadyState: MediaStreamTrackState | "missing";
+  simliAudioTrackEnabled: boolean;
+  simliAudioTrackMuted: boolean;
+  simliAudioInputState: SimliAudioInputState;
+  simliInputLevelState: SimliInputLevelState;
+  simliAudioContextState: SafeAudioContextState;
+  simliAudioChunksSent: number;
+  simliAudioBytesSent: number;
+  simliAudioAckCount: number;
+  simliAvatarSource: SimliAvatarSource;
+  simliVideoFramesReceived: number;
+  simliVideoBytesReceived: number | null;
+  simliVideoPlaybackTimeMs: number;
+  simliApproxAvatarLatencyMs: number | null;
 };
 
 export type SignalEnvelope<T = unknown> = {
@@ -241,7 +261,45 @@ export function isSafePeerDiagnostics(
     (input.simliFirstFrameMs === null ||
       (Number.isSafeInteger(input.simliFirstFrameMs) &&
         Number(input.simliFirstFrameMs) >= 0 &&
-        Number(input.simliFirstFrameMs) <= 120_000))
+        Number(input.simliFirstFrameMs) <= 120_000)) &&
+    typeof input.simliFaceLoaded === "boolean" &&
+    ["waiting", "attached", "missing"].includes(
+      String(input.simliAudioSourceState),
+    ) &&
+    ["live", "ended", "missing"].includes(
+      String(input.simliAudioTrackReadyState),
+    ) &&
+    typeof input.simliAudioTrackEnabled === "boolean" &&
+    typeof input.simliAudioTrackMuted === "boolean" &&
+    ["waiting", "flowing", "silent", "failed"].includes(
+      String(input.simliAudioInputState),
+    ) &&
+    ["waiting", "active", "silent"].includes(
+      String(input.simliInputLevelState),
+    ) &&
+    ["inactive", "running", "suspended", "interrupted", "closed"].includes(
+      String(input.simliAudioContextState),
+    ) &&
+    Number.isSafeInteger(input.simliAudioChunksSent) &&
+    Number(input.simliAudioChunksSent) >= 0 &&
+    Number.isSafeInteger(input.simliAudioBytesSent) &&
+    Number(input.simliAudioBytesSent) >= 0 &&
+    Number.isSafeInteger(input.simliAudioAckCount) &&
+    Number(input.simliAudioAckCount) >= 0 &&
+    ["static-fallback", "simli-video"].includes(
+      String(input.simliAvatarSource),
+    ) &&
+    Number.isSafeInteger(input.simliVideoFramesReceived) &&
+    Number(input.simliVideoFramesReceived) >= 0 &&
+    (input.simliVideoBytesReceived === null ||
+      (Number.isSafeInteger(input.simliVideoBytesReceived) &&
+        Number(input.simliVideoBytesReceived) >= 0)) &&
+    Number.isSafeInteger(input.simliVideoPlaybackTimeMs) &&
+    Number(input.simliVideoPlaybackTimeMs) >= 0 &&
+    (input.simliApproxAvatarLatencyMs === null ||
+      (Number.isSafeInteger(input.simliApproxAvatarLatencyMs) &&
+        Number(input.simliApproxAvatarLatencyMs) >= 0 &&
+        Number(input.simliApproxAvatarLatencyMs) <= 120_000))
   );
 }
 

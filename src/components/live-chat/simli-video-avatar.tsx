@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { StaticAvatarRenderer } from "@/components/live-chat/video-avatar";
 import {
+  startSimliAudioInput,
+  type SimliAudioInput,
+  type SimliAudioInputSnapshot,
+} from "@/lib/live-chat/simli-audio-input";
+import {
   isSimliCallStatus,
   safeTiming,
   type SimliPlaybackState,
@@ -20,6 +25,7 @@ type Props = {
   displayName: string;
   imageUrl: string | null;
   stream: MediaStream | null;
+  preparedAudioContext: AudioContext | null;
   onDiagnosticsChange: (patch: Partial<SafePeerDiagnostics>) => void;
 };
 
@@ -27,7 +33,7 @@ type SessionResponse = {
   sessionToken?: string;
   attemptId?: string;
   transport?: "livekit";
-  audioStrategy?: "direct-audio";
+  audioStrategy?: "pcm16-audio";
   error?: string;
 };
 
@@ -38,6 +44,7 @@ export function SimliVideoAvatar({
   displayName,
   imageUrl,
   stream,
+  preparedAudioContext,
   onDiagnosticsChange,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -82,6 +89,22 @@ export function SimliVideoAvatar({
         simliFallbackActive: fallback,
         simliSessionReadyMs: safeTiming(timing?.readyMs),
         simliFirstFrameMs: safeTiming(timing?.firstFrameMs),
+        simliFaceLoaded: false,
+        simliAudioSourceState: "waiting",
+        simliAudioTrackReadyState: "missing",
+        simliAudioTrackEnabled: false,
+        simliAudioTrackMuted: false,
+        simliAudioInputState: "waiting",
+        simliInputLevelState: "waiting",
+        simliAudioContextState: "inactive",
+        simliAudioChunksSent: 0,
+        simliAudioBytesSent: 0,
+        simliAudioAckCount: 0,
+        simliAvatarSource: "static-fallback",
+        simliVideoFramesReceived: 0,
+        simliVideoBytesReceived: null,
+        simliVideoPlaybackTimeMs: 0,
+        simliApproxAvatarLatencyMs: null,
       });
     };
 
@@ -104,9 +127,90 @@ export function SimliVideoAvatar({
     const abortController = new AbortController();
     let disposed = false;
     let clonedTrack: MediaStreamTrack | null = null;
+    let simliAudioInput: SimliAudioInput | null = null;
+    let inputSnapshot: SimliAudioInputSnapshot | null = null;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
-    let client: { stop: () => Promise<void> } | null = null;
+    let diagnosticsTimer: ReturnType<typeof setInterval> | null = null;
+    let client: {
+      stop: () => Promise<void>;
+      sendAudioData: (audioData: Uint8Array) => void;
+    } | null = null;
     let failed = false;
+    let audioAckCount = 0;
+    let lastFrames = 0;
+    let lastPlaybackTime = 0;
+    let lastActiveInputAt: number | null = null;
+    let simliVideoActive = false;
+
+    function videoCounters() {
+      const quality = simliVideoElement.getVideoPlaybackQuality?.();
+      const extendedVideo = simliVideoElement as HTMLVideoElement & {
+        webkitDecodedFrameCount?: number;
+        webkitVideoDecodedByteCount?: number;
+      };
+      return {
+        frames: Math.max(
+          0,
+          Math.round(
+            quality?.totalVideoFrames ??
+              extendedVideo.webkitDecodedFrameCount ??
+              0,
+          ),
+        ),
+        bytes:
+          typeof extendedVideo.webkitVideoDecodedByteCount === "number"
+            ? Math.max(0, Math.round(extendedVideo.webkitVideoDecodedByteCount))
+            : null,
+      };
+    }
+
+    function publishFlowDiagnostics() {
+      const counters = videoCounters();
+      const playbackTimeMs = Math.max(
+        0,
+        Math.round(simliVideoElement.currentTime * 1000),
+      );
+      const videoTrack =
+        simliVideoElement.srcObject instanceof MediaStream
+          ? simliVideoElement.srcObject.getVideoTracks()[0]
+          : undefined;
+      const playbackAdvancing =
+        !simliVideoElement.paused &&
+        simliVideoElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        (counters.frames > lastFrames || playbackTimeMs > lastPlaybackTime);
+      lastFrames = counters.frames;
+      lastPlaybackTime = playbackTimeMs;
+      const inputLevel = inputSnapshot?.inputLevel ?? 0;
+      if (inputLevel >= 0.008) lastActiveInputAt = performance.now();
+      diagnosticsRef.current({
+        simliFaceLoaded: counters.frames > 0,
+        simliAudioSourceState: simliAudioInput ? "attached" : "missing",
+        simliAudioTrackReadyState:
+          clonedTrack?.readyState ?? inputAudioTrack.readyState,
+        simliAudioTrackEnabled: clonedTrack?.enabled ?? inputAudioTrack.enabled,
+        simliAudioTrackMuted: clonedTrack?.muted ?? inputAudioTrack.muted,
+        simliAudioInputState:
+          (inputSnapshot?.chunksSent ?? 0) > 0 ? "flowing" : "silent",
+        simliInputLevelState: inputLevel >= 0.008 ? "active" : "silent",
+        simliAudioContextState:
+          inputSnapshot?.contextState ??
+          preparedAudioContext?.state ??
+          "inactive",
+        simliAudioChunksSent: inputSnapshot?.chunksSent ?? 0,
+        simliAudioBytesSent: inputSnapshot?.bytesSent ?? 0,
+        simliAudioAckCount: audioAckCount,
+        simliAvatarSource:
+          simliVideoActive &&
+          videoTrack?.readyState === "live" &&
+          counters.frames > 0
+            ? "simli-video"
+            : "static-fallback",
+        simliVideoFramesReceived: counters.frames,
+        simliVideoBytesReceived: counters.bytes,
+        simliVideoPlaybackTimeMs: playbackTimeMs,
+        simliAvatarPlaybackState: playbackAdvancing ? "playing" : "waiting",
+      });
+    }
 
     async function closeSession(markFailed: boolean) {
       await fetch("/api/live-chat/simli-session", {
@@ -137,7 +241,7 @@ export function SimliVideoAvatar({
           !data.sessionToken ||
           data.attemptId !== attemptId ||
           data.transport !== "livekit" ||
-          data.audioStrategy !== "direct-audio"
+          data.audioStrategy !== "pcm16-audio"
         )
           throw new Error(data.error ?? "simli_session_failed");
         if (disposed) {
@@ -162,23 +266,46 @@ export function SimliVideoAvatar({
         client = simliClient;
         simliClient.on("start", () => {
           if (disposed) return;
+          simliVideoActive = true;
           const firstFrameMs = performance.now() - startedAt;
           report("connected", "received", "playing", false, {
             readyMs,
             firstFrameMs,
           });
+          diagnosticsRef.current({
+            simliFaceLoaded: true,
+            simliAvatarSource: "simli-video",
+          });
         });
         const fallback = () => {
           if (disposed || failed) return;
           failed = true;
+          simliVideoActive = false;
           report("failed", "waiting", "failed", true, { readyMs });
+          diagnosticsRef.current({
+            simliAudioInputState: "failed",
+            simliAudioSourceState: clonedTrack ? "attached" : "missing",
+          });
           if (heartbeat) clearInterval(heartbeat);
+          if (diagnosticsTimer) clearInterval(diagnosticsTimer);
+          simliAudioInput?.stop();
           clonedTrack?.stop();
           void simliClient.stop().catch(() => undefined);
           void closeSession(true);
         };
         simliClient.on("error", fallback);
         simliClient.on("startup_error", fallback);
+        simliClient.on("ack", () => {
+          audioAckCount += 1;
+        });
+        simliClient.on("speaking", () => {
+          if (lastActiveInputAt == null) return;
+          diagnosticsRef.current({
+            simliApproxAvatarLatencyMs: safeTiming(
+              performance.now() - lastActiveInputAt,
+            ),
+          });
+        });
         simliClient.on("stop", () => {
           if (!disposed && !failed)
             report("ended", "waiting", "waiting", true, { readyMs });
@@ -190,7 +317,30 @@ export function SimliVideoAvatar({
           return;
         }
         clonedTrack = inputAudioTrack.clone();
-        simliClient.listenToMediastreamTrack(clonedTrack);
+        diagnosticsRef.current({
+          simliAudioSourceState: "attached",
+          simliAudioTrackReadyState: clonedTrack.readyState,
+          simliAudioTrackEnabled: clonedTrack.enabled,
+          simliAudioTrackMuted: clonedTrack.muted,
+          simliAudioContextState: preparedAudioContext?.state ?? "suspended",
+        });
+        simliAudioInput = await startSimliAudioInput({
+          track: clonedTrack,
+          client: simliClient,
+          preparedContext: preparedAudioContext,
+          onSnapshot: (snapshot) => {
+            inputSnapshot = snapshot;
+            if (snapshot.inputLevel >= 0.008)
+              lastActiveInputAt = performance.now();
+          },
+          onError: fallback,
+        });
+        diagnosticsRef.current({
+          simliAudioSourceState: "attached",
+          simliAudioContextState: simliAudioInput.context.state,
+        });
+        diagnosticsTimer = setInterval(publishFlowDiagnostics, 1_000);
+        publishFlowDiagnostics();
         const renew = () =>
           void fetch("/api/live-chat/simli-session", {
             method: "PATCH",
@@ -209,6 +359,15 @@ export function SimliVideoAvatar({
           return;
         failed = true;
         report("failed", "waiting", "failed", true);
+        diagnosticsRef.current({
+          simliAudioInputState: "failed",
+          simliAudioSourceState: clonedTrack ? "attached" : "missing",
+          simliAudioTrackReadyState:
+            clonedTrack?.readyState ?? inputAudioTrack.readyState,
+          simliAudioTrackEnabled:
+            clonedTrack?.enabled ?? inputAudioTrack.enabled,
+          simliAudioTrackMuted: clonedTrack?.muted ?? inputAudioTrack.muted,
+        });
         await client?.stop().catch(() => undefined);
         await closeSession(true);
       }
@@ -219,11 +378,13 @@ export function SimliVideoAvatar({
       disposed = true;
       abortController.abort();
       if (heartbeat) clearInterval(heartbeat);
+      if (diagnosticsTimer) clearInterval(diagnosticsTimer);
+      simliAudioInput?.stop();
       clonedTrack?.stop();
       void client?.stop().catch(() => undefined);
       void closeSession(failed);
     };
-  }, [callActive, callId, stream, visitorToken]);
+  }, [callActive, callId, preparedAudioContext, stream, visitorToken]);
 
   return (
     <div className="relative flex h-full min-h-0 overflow-hidden rounded-3xl bg-gradient-to-b from-zinc-900 to-black">

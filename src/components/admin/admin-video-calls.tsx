@@ -803,6 +803,72 @@ function PeerDiagnosticPanel({
         value={remote?.simliSessionState ?? "Waiting"}
       />
       <DiagnosticValue
+        label="Face"
+        value={remote?.simliFaceLoaded ? "Loaded" : "Waiting"}
+      />
+      <DiagnosticValue
+        label="Audio source"
+        value={
+          remote?.simliAudioSourceState === "attached"
+            ? "Attached"
+            : remote?.simliAudioSourceState === "missing"
+              ? "Missing"
+              : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Simli input track"
+        value={
+          remote
+            ? `audio · ${remote.simliAudioTrackReadyState} · ${remote.simliAudioTrackEnabled ? "enabled" : "disabled"} · ${remote.simliAudioTrackMuted ? "muted" : "unmuted"}`
+            : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Simli audio input"
+        value={
+          remote?.simliAudioInputState === "flowing"
+            ? "Flowing"
+            : remote?.simliAudioInputState === "failed"
+              ? "Failed"
+              : remote?.simliAudioInputState === "silent"
+                ? "Silent"
+                : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Input level"
+        value={
+          remote?.simliInputLevelState === "active"
+            ? "Active"
+            : remote?.simliInputLevelState === "silent"
+              ? "Silent"
+              : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Simli AudioContext"
+        value={
+          remote ? contextLabels[remote.simliAudioContextState] : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Simli input data"
+        value={`${remote?.simliAudioChunksSent ?? 0} chunks · ${remote?.simliAudioBytesSent ?? 0} bytes`}
+      />
+      <DiagnosticValue
+        label="Simli input ACK"
+        value={`${remote?.simliAudioAckCount ?? 0}`}
+      />
+      <DiagnosticValue
+        label="Avatar source"
+        value={
+          remote?.simliAvatarSource === "simli-video"
+            ? "Simli Video"
+            : "Static Fallback"
+        }
+      />
+      <DiagnosticValue
         label="Avatar video"
         value={
           remote?.simliAvatarVideoState === "received" ? "Received" : "Waiting"
@@ -823,6 +889,14 @@ function PeerDiagnosticPanel({
         value={remote?.simliFallbackActive ? "Active" : "Inactive"}
       />
       <DiagnosticValue
+        label="Video frames / bytes"
+        value={`${remote?.simliVideoFramesReceived ?? 0} frames · ${remote?.simliVideoBytesReceived == null ? "N/A" : `${remote.simliVideoBytesReceived} bytes`}`}
+      />
+      <DiagnosticValue
+        label="Video currentTime"
+        value={`${remote?.simliVideoPlaybackTimeMs ?? 0} ms`}
+      />
+      <DiagnosticValue
         label="Session ready"
         value={
           remote?.simliSessionReadyMs != null
@@ -838,13 +912,21 @@ function PeerDiagnosticPanel({
             : "Waiting"
         }
       />
+      <DiagnosticValue
+        label="Approx avatar latency"
+        value={
+          remote?.simliApproxAvatarLatencyMs != null
+            ? `${remote.simliApproxAvatarLatencyMs} ms`
+            : "Waiting"
+        }
+      />
     </div>
   );
 }
 
 function DiagnosticValue({ label, value }: { label: string; value: string }) {
   const positive =
-    /Connected|Ready|Received|Playing|Running|Sending|sendrecv|sendonly|✓|srflx|relay/.test(
+    /Connected|Ready|Received|Playing|Running|Sending|Attached|Flowing|Loaded|Simli Video|Active|sendrecv|sendonly|✓|srflx|relay/.test(
       value,
     );
   const failed = /Failed|Missing|Blocked|Muted/.test(value);

@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useVideoCallPeer } from "@/components/live-chat/use-video-call-peer";
 import { VideoAvatar } from "@/components/live-chat/video-avatar";
 import { SimliVideoAvatar } from "@/components/live-chat/simli-video-avatar";
+import { createSimliAudioContext } from "@/lib/live-chat/simli-audio-input";
 import {
   ACTIVE_CALL_STATUSES,
   TERMINAL_CALL_STATUSES,
@@ -70,6 +71,7 @@ export function CustomerVideoCall({
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const simliAudioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     callRef.current = call;
@@ -182,6 +184,10 @@ export function CustomerVideoCall({
     setAudioActivated(false);
     setPlaybackState("waiting");
     setAudioContextState("inactive");
+    const simliAudioContext = simliAudioContextRef.current;
+    simliAudioContextRef.current = null;
+    if (simliAudioContext)
+      void simliAudioContext.close().catch(() => undefined);
   }, []);
 
   const peer = useVideoCallPeer({
@@ -290,6 +296,15 @@ export function CustomerVideoCall({
     }
     setPending(true);
     setError("");
+    if (
+      settings?.avatar_mode === "simli-trinity" &&
+      !simliAudioContextRef.current
+    ) {
+      const simliAudioContext = createSimliAudioContext();
+      simliAudioContextRef.current = simliAudioContext;
+      if (simliAudioContext)
+        void simliAudioContext.resume().catch(() => undefined);
+    }
     let stream: MediaStream | null = null;
     let onlyAudio = false;
     try {
@@ -318,6 +333,10 @@ export function CustomerVideoCall({
       setMinimized(false);
     } catch (reason) {
       stopMediaStream(stream);
+      const simliAudioContext = simliAudioContextRef.current;
+      simliAudioContextRef.current = null;
+      if (simliAudioContext)
+        void simliAudioContext.close().catch(() => undefined);
       setError(
         reason instanceof Error &&
           !reason.message.toLowerCase().includes("permission")
@@ -470,6 +489,7 @@ export function CustomerVideoCall({
                 displayName={settings.avatar_display_name}
                 imageUrl={settings.avatar_image_url}
                 stream={remoteStream}
+                preparedAudioContext={simliAudioContextRef.current}
                 onDiagnosticsChange={updateClientDiagnostics}
               />
             ) : (

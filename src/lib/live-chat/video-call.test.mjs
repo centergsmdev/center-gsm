@@ -271,6 +271,22 @@ test("güvenli peer diagnostic IP veya SDP taşımadan doğrulanır", () => {
     simliFallbackActive: false,
     simliSessionReadyMs: 420,
     simliFirstFrameMs: 980,
+    simliFaceLoaded: true,
+    simliAudioSourceState: "attached",
+    simliAudioTrackReadyState: "live",
+    simliAudioTrackEnabled: true,
+    simliAudioTrackMuted: false,
+    simliAudioInputState: "flowing",
+    simliInputLevelState: "active",
+    simliAudioContextState: "running",
+    simliAudioChunksSent: 12,
+    simliAudioBytesSent: 72_000,
+    simliAudioAckCount: 10,
+    simliAvatarSource: "simli-video",
+    simliVideoFramesReceived: 90,
+    simliVideoBytesReceived: null,
+    simliVideoPlaybackTimeMs: 3_000,
+    simliApproxAvatarLatencyMs: 480,
   };
   assert.equal(isSafePeerDiagnostics(diagnostic), true);
   assert.equal(

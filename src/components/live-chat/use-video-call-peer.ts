@@ -75,6 +75,22 @@ function initialDiagnostics(
     simliFallbackActive: false,
     simliSessionReadyMs: null,
     simliFirstFrameMs: null,
+    simliFaceLoaded: false,
+    simliAudioSourceState: "waiting",
+    simliAudioTrackReadyState: "missing",
+    simliAudioTrackEnabled: false,
+    simliAudioTrackMuted: false,
+    simliAudioInputState: "waiting",
+    simliInputLevelState: "waiting",
+    simliAudioContextState: "inactive",
+    simliAudioChunksSent: 0,
+    simliAudioBytesSent: 0,
+    simliAudioAckCount: 0,
+    simliAvatarSource: "static-fallback",
+    simliVideoFramesReceived: 0,
+    simliVideoBytesReceived: null,
+    simliVideoPlaybackTimeMs: 0,
+    simliApproxAvatarLatencyMs: null,
   };
 }
 

@@ -1,7 +1,7 @@
 import type { LiveChatCallStatus } from "@/types/database";
 
 export const SIMLI_AVATAR_MODE = "simli-trinity" as const;
-export const SIMLI_AUDIO_STRATEGY = "direct-audio" as const;
+export const SIMLI_AUDIO_STRATEGY = "pcm16-audio" as const;
 export const SIMLI_TRANSPORT = "livekit" as const;
 
 export type SimliSessionState =
@@ -14,6 +14,10 @@ export type SimliSessionState =
   | "failed";
 export type SimliVideoState = "waiting" | "received";
 export type SimliPlaybackState = "waiting" | "playing" | "failed";
+export type SimliAudioSourceState = "waiting" | "attached" | "missing";
+export type SimliAudioInputState = "waiting" | "flowing" | "silent" | "failed";
+export type SimliInputLevelState = "waiting" | "active" | "silent";
+export type SimliAvatarSource = "static-fallback" | "simli-video";
 
 const SIMLI_CALL_STATUSES = new Set<LiveChatCallStatus>([
   "accepted",

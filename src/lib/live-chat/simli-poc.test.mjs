@@ -9,6 +9,7 @@ import {
   SIMLI_AUDIO_STRATEGY,
   SIMLI_TRANSPORT,
 } from "./simli.ts";
+import { SIMLI_PCM_FORMAT } from "./simli-audio-input.ts";
 
 const migration = await readFile(
   new URL(
@@ -23,6 +24,10 @@ const route = await readFile(
 );
 const client = await readFile(
   new URL("../../components/live-chat/simli-video-avatar.tsx", import.meta.url),
+  "utf8",
+);
+const audioInput = await readFile(
+  new URL("./simli-audio-input.ts", import.meta.url),
   "utf8",
 );
 const customerCall = await readFile(
@@ -71,21 +76,59 @@ test("diagnostic zamanları privacy-safe ve sınırlıdır", () => {
   assert.equal(isTemporarySessionToken("x".repeat(32)), true);
 });
 
-test("PoC A LiveKit kullanır ve Simli sesini oynatmaz", () => {
+test("PoC A LiveKit kullanır, resmi PCM girişini gönderir ve Simli sesini oynatmaz", () => {
   assert.equal(SIMLI_TRANSPORT, "livekit");
-  assert.equal(SIMLI_AUDIO_STRATEGY, "direct-audio");
+  assert.equal(SIMLI_AUDIO_STRATEGY, "pcm16-audio");
   assert.match(client, /audio\.muted = true/);
   assert.match(client, /audio\.volume = 0/);
   assert.match(client, /<audio ref=\{mutedAudioRef\} muted playsInline/);
-  assert.match(client, /listenToMediastreamTrack\(clonedTrack\)/);
+  assert.match(client, /startSimliAudioInput/);
+  assert.doesNotMatch(client, /listenToMediastreamTrack/);
+  assert.match(audioInput, /client\.sendAudioData\(audioData\)/);
+  assert.match(audioInput, /context\.resume\(\)/);
+  assert.match(audioInput, /createMediaStreamSource/);
+  assert.match(audioInput, /AudioWorkletNode/);
+  assert.match(audioInput, /silentGain\.gain\.value = 0/);
   assert.match(client, /inputAudioTrack\.clone\(\)/);
   assert.match(
     customerCall,
     /<audio ref=\{remoteAudioRef\} autoPlay playsInline/,
   );
-  assert.doesNotMatch(client, /getUserMedia|MediaRecorder|speechSynthesis/);
+  assert.doesNotMatch(
+    `${client}\n${audioInput}`,
+    /getUserMedia|MediaRecorder|speechSynthesis/,
+  );
   assert.match(client, /simli-client\/dist\/client\.js/);
   assert.doesNotMatch(client, /import\("simli-client"\)/);
+});
+
+test("Simli PCM akışı resmi 16 kHz mono PCM16 ve 6000-byte chunk formatındadır", () => {
+  assert.deepEqual(SIMLI_PCM_FORMAT, {
+    sampleRate: 16_000,
+    channels: 1,
+    bitsPerSample: 16,
+    chunkBytes: 6_000,
+  });
+  assert.match(audioInput, /sampleRate \/ this\.targetRate/);
+  assert.match(audioInput, /Math\.round\(sample \* 32767\)/);
+});
+
+test("Simli diagnostics gerçek input ve video akış sayaçlarını yayınlar", () => {
+  for (const field of [
+    "simliAudioSourceState",
+    "simliAudioInputState",
+    "simliInputLevelState",
+    "simliAudioChunksSent",
+    "simliAudioBytesSent",
+    "simliAudioAckCount",
+    "simliAvatarSource",
+    "simliVideoFramesReceived",
+    "simliVideoBytesReceived",
+    "simliVideoPlaybackTimeMs",
+  ])
+    assert.match(client, new RegExp(field));
+  assert.match(client, /getVideoPlaybackQuality/);
+  assert.match(client, /srcObject instanceof MediaStream/);
 });
 
 test("session endpoint ownership, accepted-call, rate limit ve tek-session kilidi uygular", () => {
