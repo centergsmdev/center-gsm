@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   portalAccessCookieName,
+  portalAccessCookieOptions,
   verifyPortalAccessToken,
 } from "@/lib/installment/customer-portal-security";
 import {
@@ -44,13 +45,15 @@ export async function GET(
   )
     return NextResponse.redirect(destination, 303);
   const response = NextResponse.redirect(destination, 303);
-  response.cookies.set(portalAccessCookieName(id), token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: `/elden-taksit/takip/${id}`,
-    expires: new Date(portal.data.access_expires_at),
-  });
+  response.cookies.set(
+    portalAccessCookieName(id),
+    token,
+    portalAccessCookieOptions(
+      id,
+      portal.data.access_expires_at,
+      process.env.NODE_ENV === "production",
+    ),
+  );
   response.headers.set("Cache-Control", "no-store, private");
   response.headers.set("Referrer-Policy", "no-referrer");
   return response;

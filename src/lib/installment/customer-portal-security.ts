@@ -60,6 +60,20 @@ export function portalAccessCookieName(portalId: string) {
   return `cg_installment_${portalId.replace(/-/g, "")}`;
 }
 
+export function portalAccessCookieOptions(
+  portalId: string,
+  accessExpiresAt: string,
+  secure: boolean,
+) {
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: "lax" as const,
+    path: `/elden-taksit/takip/${portalId}`,
+    expires: new Date(accessExpiresAt),
+  };
+}
+
 export function createPortalAccessUrl(portalId: string, token: string) {
   return `${PORTAL_ORIGIN}/elden-taksit/takip/${encodeURIComponent(portalId)}/erisim?token=${encodeURIComponent(token)}`;
 }

@@ -5,6 +5,7 @@ import {
   createPortalAccessUrl,
   createPortalAccessToken,
   portalAccessCookieName,
+  portalAccessCookieOptions,
   verifyPortalAccessToken,
 } from "./customer-portal-security.ts";
 
@@ -53,6 +54,21 @@ test("portal çerezi başvuru portalına özgü ve tahmin edilebilir addadır", 
   assert.equal(
     portalAccessCookieName(claims.portalId),
     "cg_installment_11111111111141118111111111111111",
+  );
+});
+
+test("portal çerezi dış uygulamadan güvenli açılışta ilk yönlendirmeye katılır", () => {
+  const options = portalAccessCookieOptions(
+    claims.portalId,
+    claims.accessExpiresAt,
+    true,
+  );
+  assert.equal(options.httpOnly, true);
+  assert.equal(options.secure, true);
+  assert.equal(options.sameSite, "lax");
+  assert.equal(
+    options.path,
+    "/elden-taksit/takip/11111111-1111-4111-8111-111111111111",
   );
 });
 
