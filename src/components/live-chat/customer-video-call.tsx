@@ -19,6 +19,9 @@ import {
   ACTIVE_CALL_STATUSES,
   TERMINAL_CALL_STATUSES,
   callStatusMessage,
+  retainActiveParticipantToken,
+  type CustomerPlaybackState,
+  type SafeAudioContextState,
   type VideoCallAction,
 } from "@/lib/live-chat/video-call";
 import { requestCustomerMedia } from "@/lib/live-chat/video-media";
@@ -56,6 +59,10 @@ export function CustomerVideoCall({
   const [microphoneEnabled, setMicrophoneEnabled] = useState(true);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [audioActivated, setAudioActivated] = useState(false);
+  const [playbackState, setPlaybackState] =
+    useState<CustomerPlaybackState>("waiting");
+  const [audioContextState, setAudioContextState] =
+    useState<SafeAudioContextState>("inactive");
   const [error, setError] = useState("");
   const callRef = useRef<LiveChatCall | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -95,15 +102,40 @@ export function CustomerVideoCall({
   useEffect(() => {
     const audio = remoteAudioRef.current;
     if (!audio || !remoteStream) return;
+    if (!remoteStream.getAudioTracks().length) {
+      setPlaybackState("waiting");
+      return;
+    }
     audio.srcObject = remoteStream;
+    audio.muted = false;
+    audio.volume = 1;
+    const handlePlaying = () => {
+      setAudioBlocked(false);
+      setAudioActivated(true);
+      setPlaybackState("playing");
+    };
+    const handleVolumeChange = () => {
+      if (audio.muted || audio.volume === 0) setPlaybackState("muted");
+    };
+    const handleError = () => setPlaybackState("failed");
+    audio.addEventListener("playing", handlePlaying);
+    audio.addEventListener("volumechange", handleVolumeChange);
+    audio.addEventListener("error", handleError);
     void audio
       .play()
-      .then(() => {
-        setAudioBlocked(false);
-        setAudioActivated(true);
-      })
-      .catch(() => setAudioBlocked(true));
-  }, [remoteStream, minimized]);
+      .then(handlePlaying)
+      .catch((reason: unknown) => {
+        const blocked =
+          reason instanceof DOMException && reason.name === "NotAllowedError";
+        setAudioBlocked(blocked);
+        setPlaybackState(blocked ? "blocked" : "failed");
+      });
+    return () => {
+      audio.removeEventListener("playing", handlePlaying);
+      audio.removeEventListener("volumechange", handleVolumeChange);
+      audio.removeEventListener("error", handleError);
+    };
+  }, [remoteStream]);
 
   const updateCall = useCallback(
     async (action: VideoCallAction, reason?: string) => {
@@ -126,7 +158,11 @@ export function CustomerVideoCall({
         callRef.current = data.call;
         setCall(data.call);
       }
-      if (data.participant?.token) setParticipantToken(data.participant.token);
+      if (data.participant?.token) {
+        setParticipantToken((current) =>
+          retainActiveParticipantToken(current, data.participant?.token),
+        );
+      }
       if (!response.ok && data.code !== "stale_revision")
         setError(data.error ?? "Görüşme durumu güncellenemedi.");
       return data.call ?? null;
@@ -141,6 +177,10 @@ export function CustomerVideoCall({
     remoteStreamRef.current = null;
     setLocalStream(null);
     setRemoteStream(null);
+    setAudioBlocked(false);
+    setAudioActivated(false);
+    setPlaybackState("waiting");
+    setAudioContextState("inactive");
   }, []);
 
   const peer = useVideoCallPeer({
@@ -160,6 +200,19 @@ export function CustomerVideoCall({
       void updateCall("fail", "connection_failed").then(cleanupMedia);
     },
   });
+  const { updateClientDiagnostics } = peer;
+
+  useEffect(() => {
+    updateClientDiagnostics({
+      customerPlaybackState: playbackState,
+      audioContextState,
+    });
+  }, [audioContextState, playbackState, updateClientDiagnostics]);
+
+  useEffect(() => {
+    if (settings?.avatar_mode !== "audio-reactive")
+      setAudioContextState("inactive");
+  }, [settings?.avatar_mode]);
 
   useEffect(() => {
     if (!call || !ACTIVE_CALL_STATUSES.has(call.status)) return;
@@ -291,11 +344,17 @@ export function CustomerVideoCall({
 
   async function activateAudio() {
     try {
-      await remoteAudioRef.current?.play();
+      const audio = remoteAudioRef.current;
+      if (!audio) return;
+      audio.muted = false;
+      audio.volume = 1;
+      await audio.play();
       setAudioBlocked(false);
       setAudioActivated(true);
+      setPlaybackState("playing");
     } catch {
       setAudioBlocked(true);
+      setPlaybackState("blocked");
     }
   }
 
@@ -303,6 +362,7 @@ export function CustomerVideoCall({
 
   return (
     <>
+      {call ? <audio ref={remoteAudioRef} autoPlay playsInline /> : null}
       <button
         type="button"
         onClick={() => setConsentOpen(true)}
@@ -401,6 +461,7 @@ export function CustomerVideoCall({
               stream={remoteStream}
               mode={settings.avatar_mode}
               audioActivated={audioActivated}
+              onAudioContextStateChange={setAudioContextState}
             />
             {!audioOnly ? (
               <video
@@ -416,7 +477,6 @@ export function CustomerVideoCall({
                 Yalnız ses
               </span>
             )}
-            <audio ref={remoteAudioRef} autoPlay playsInline />
           </div>
           {audioBlocked ? (
             <button

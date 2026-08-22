@@ -679,6 +679,32 @@ function PeerDiagnosticPanel({
   const candidateLabel = (
     values: SafePeerDiagnostics["localCandidateTypes"],
   ) => (values.length ? values.join(", ") : "Waiting");
+  const adminMicrophoneLabel =
+    local.localAudioTrackReadyState !== "live"
+      ? "Missing"
+      : !local.localAudioTrackEnabled || local.localAudioTrackMuted
+        ? "Muted"
+        : "Ready";
+  const playbackLabels: Record<
+    SafePeerDiagnostics["customerPlaybackState"],
+    string
+  > = {
+    waiting: "Waiting",
+    playing: "Playing",
+    blocked: "Blocked",
+    muted: "Muted",
+    failed: "Failed",
+  };
+  const contextLabels: Record<
+    SafePeerDiagnostics["audioContextState"],
+    string
+  > = {
+    inactive: "Inactive",
+    running: "Running",
+    suspended: "Suspended",
+    interrupted: "Suspended",
+    closed: "Closed",
+  };
 
   return (
     <div className="grid shrink-0 grid-cols-2 gap-1.5 border-b border-white/10 bg-zinc-900 px-3 py-2 text-[10px] sm:grid-cols-3">
@@ -718,13 +744,47 @@ function PeerDiagnosticPanel({
         label="Admin candidates"
         value={candidateLabel(local.localCandidateTypes)}
       />
+      <DiagnosticValue label="Admin microphone" value={adminMicrophoneLabel} />
+      <DiagnosticValue
+        label="Admin audio sender"
+        value={local.audioSenderPresent ? "Sending" : "Missing"}
+      />
+      <DiagnosticValue
+        label="Audio negotiation"
+        value={local.audioNegotiationDirection}
+      />
+      <DiagnosticValue
+        label="Customer remote audio"
+        value={remote?.remoteAudioReceived ? "Received" : "Waiting"}
+      />
+      <DiagnosticValue
+        label="Customer playback"
+        value={
+          remote ? playbackLabels[remote.customerPlaybackState] : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="AudioContext"
+        value={remote ? contextLabels[remote.audioContextState] : "Waiting"}
+      />
+      <DiagnosticValue
+        label="Admin outbound audio"
+        value={`${local.outboundAudioPacketsSent} packets · ${local.outboundAudioBytesSent} bytes`}
+      />
+      <DiagnosticValue
+        label="Customer inbound audio"
+        value={`${remote?.inboundAudioPacketsReceived ?? 0} packets · ${remote?.inboundAudioBytesReceived ?? 0} bytes`}
+      />
     </div>
   );
 }
 
 function DiagnosticValue({ label, value }: { label: string; value: string }) {
-  const positive = /Connected|Ready|Received|✓|srflx|relay/.test(value);
-  const failed = /Failed/.test(value);
+  const positive =
+    /Connected|Ready|Received|Playing|Running|Sending|sendrecv|sendonly|✓|srflx|relay/.test(
+      value,
+    );
+  const failed = /Failed|Missing|Blocked|Muted/.test(value);
   return (
     <div className="rounded-lg bg-white/5 px-2 py-1.5">
       <span className="block text-zinc-500">{label}</span>

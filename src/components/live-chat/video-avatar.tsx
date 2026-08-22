@@ -3,12 +3,15 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+import type { SafeAudioContextState } from "@/lib/live-chat/video-call";
+
 type AvatarProps = {
   displayName: string;
   imageUrl: string | null;
   stream: MediaStream | null;
   mode: "static" | "audio-reactive";
   audioActivated: boolean;
+  onAudioContextStateChange?: (state: SafeAudioContextState) => void;
 };
 
 export function VideoAvatar(props: AvatarProps) {
@@ -30,6 +33,7 @@ export function AudioReactiveAvatarRenderer({
   imageUrl,
   stream,
   audioActivated,
+  onAudioContextStateChange,
 }: AvatarProps) {
   const [mouth, setMouth] = useState<"closed" | "small" | "medium" | "open">(
     "closed",
@@ -40,6 +44,9 @@ export function AudioReactiveAvatarRenderer({
     if (!stream || typeof AudioContext === "undefined") return;
     const context = new AudioContext();
     contextRef.current = context;
+    const reportContextState = () => onAudioContextStateChange?.(context.state);
+    context.addEventListener("statechange", reportContextState);
+    reportContextState();
     const source = context.createMediaStreamSource(stream);
     const analyser = context.createAnalyser();
     analyser.fftSize = 512;
@@ -71,16 +78,23 @@ export function AudioReactiveAvatarRenderer({
       cancelAnimationFrame(frame);
       source.disconnect();
       analyser.disconnect();
+      context.removeEventListener("statechange", reportContextState);
       void context.close();
       contextRef.current = null;
+      onAudioContextStateChange?.("inactive");
       setMouth("closed");
     };
-  }, [stream]);
+  }, [onAudioContextStateChange, stream]);
 
   useEffect(() => {
-    if (audioActivated && contextRef.current?.state === "suspended")
-      void contextRef.current.resume();
-  }, [audioActivated]);
+    if (audioActivated && contextRef.current?.state === "suspended") {
+      void contextRef.current
+        .resume()
+        .then(() =>
+          onAudioContextStateChange?.(contextRef.current?.state ?? "inactive"),
+        );
+    }
+  }, [audioActivated, onAudioContextStateChange]);
 
   return (
     <AvatarFrame displayName={displayName} imageUrl={imageUrl} mouth={mouth} />

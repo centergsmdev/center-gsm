@@ -8,10 +8,12 @@ import {
   getIceCandidateType,
   isSafePeerDiagnostics,
   isValidCallTransition,
+  retainActiveParticipantToken,
 } from "./video-call.ts";
 import {
   ADMIN_MEDIA_CONSTRAINTS,
   assertAdminPeerHasNoVideoSender,
+  ensureAdminAudioSender,
   requestAdminMedia,
   requestCustomerMedia,
 } from "./video-media.ts";
@@ -173,6 +175,33 @@ test("admin peer sender listesinde video track bulunamaz", () => {
   );
 });
 
+test("admin audio sender canlı mikrofon track'i ile yalnız bir kez eklenir", () => {
+  const audioTrack = { kind: "audio", readyState: "live" };
+  const senders = [];
+  const stream = { getAudioTracks: () => [audioTrack] };
+  const peer = {
+    getSenders: () => senders,
+    addTrack: (track) => {
+      senders.push({ track });
+      return senders[0];
+    },
+  };
+  assert.equal(ensureAdminAudioSender(peer, stream), audioTrack);
+  assert.equal(ensureAdminAudioSender(peer, stream), audioTrack);
+  assert.equal(senders.length, 1);
+});
+
+test("aktif görüşmede yenilenen token mevcut peer kimliğini değiştirmez", () => {
+  assert.equal(
+    retainActiveParticipantToken("active-token", "refreshed-token"),
+    "active-token",
+  );
+  assert.equal(
+    retainActiveParticipantToken(null, "first-token"),
+    "first-token",
+  );
+});
+
 test("çağrı süresi kullanıcıya okunabilir biçimde gösterilir", () => {
   assert.equal(formatCallDuration(42), "42 sn");
   assert.equal(formatCallDuration(125), "2 dk 5 sn");
@@ -207,6 +236,11 @@ test("güvenli peer diagnostic IP veya SDP taşımadan doğrulanır", () => {
     localMediaReady: true,
     localAudioReady: true,
     localVideoReady: true,
+    localAudioTrackReadyState: "live",
+    localAudioTrackEnabled: true,
+    localAudioTrackMuted: false,
+    audioSenderPresent: true,
+    audioNegotiationDirection: "sendrecv",
     signalingState: "stable",
     iceGatheringState: "gathering",
     iceConnectionState: "checking",
@@ -224,6 +258,12 @@ test("güvenli peer diagnostic IP veya SDP taşımadan doğrulanır", () => {
     iceCandidatesAdded: 0,
     remoteAudioReceived: false,
     remoteVideoReceived: false,
+    customerPlaybackState: "waiting",
+    audioContextState: "inactive",
+    outboundAudioPacketsSent: 0,
+    outboundAudioBytesSent: 0,
+    inboundAudioPacketsReceived: 0,
+    inboundAudioBytesReceived: 0,
   };
   assert.equal(isSafePeerDiagnostics(diagnostic), true);
   assert.equal(

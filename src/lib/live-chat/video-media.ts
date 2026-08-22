@@ -56,3 +56,16 @@ export function assertAdminPeerHasNoVideoSender(
   if (peer.getSenders().some((sender) => sender.track?.kind === "video"))
     throw new Error("admin_video_sender_forbidden");
 }
+
+export function ensureAdminAudioSender(
+  peer: Pick<RTCPeerConnection, "addTrack" | "getSenders">,
+  stream: MediaStream,
+) {
+  const audioTrack = stream.getAudioTracks()[0];
+  if (!audioTrack || audioTrack.readyState !== "live")
+    throw new Error("admin_audio_track_missing");
+  if (!peer.getSenders().some((sender) => sender.track?.kind === "audio"))
+    peer.addTrack(audioTrack, stream);
+  assertAdminPeerHasNoVideoSender(peer);
+  return audioTrack;
+}

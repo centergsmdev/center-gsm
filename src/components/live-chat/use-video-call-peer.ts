@@ -19,7 +19,10 @@ import {
   createCallRealtimeClient,
   sendPrivateSignal,
 } from "@/lib/live-chat/video-realtime";
-import { assertAdminPeerHasNoVideoSender } from "@/lib/live-chat/video-media";
+import {
+  assertAdminPeerHasNoVideoSender,
+  ensureAdminAudioSender,
+} from "@/lib/live-chat/video-media";
 
 type PeerState =
   "idle" | "connecting" | "connected" | "reconnecting" | "failed";
@@ -28,7 +31,8 @@ function initialDiagnostics(
   role: VideoCallRole,
   stream: MediaStream | null,
 ): SafePeerDiagnostics {
-  const localAudioReady = Boolean(stream?.getAudioTracks().length);
+  const localAudioTrack = stream?.getAudioTracks()[0];
+  const localAudioReady = Boolean(localAudioTrack);
   const localVideoReady = Boolean(stream?.getVideoTracks().length);
   return {
     role,
@@ -36,6 +40,11 @@ function initialDiagnostics(
     localMediaReady: localAudioReady || localVideoReady,
     localAudioReady,
     localVideoReady,
+    localAudioTrackReadyState: localAudioTrack?.readyState ?? "missing",
+    localAudioTrackEnabled: localAudioTrack?.enabled ?? false,
+    localAudioTrackMuted: localAudioTrack?.muted ?? false,
+    audioSenderPresent: false,
+    audioNegotiationDirection: "unavailable",
     signalingState: "unavailable",
     iceGatheringState: "unavailable",
     iceConnectionState: "unavailable",
@@ -53,6 +62,12 @@ function initialDiagnostics(
     iceCandidatesAdded: 0,
     remoteAudioReceived: false,
     remoteVideoReceived: false,
+    customerPlaybackState: "waiting",
+    audioContextState: "inactive",
+    outboundAudioPacketsSent: 0,
+    outboundAudioBytesSent: 0,
+    inboundAudioPacketsReceived: 0,
+    inboundAudioBytesReceived: 0,
   };
 }
 
@@ -83,6 +98,9 @@ export function useVideoCallPeer(input: {
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbacksRef = useRef(input);
   const diagnosticsRef = useRef(diagnostics);
+  const clientDiagnosticsUpdaterRef = useRef<
+    (patch: Partial<SafePeerDiagnostics>) => void
+  >(() => undefined);
   callbacksRef.current = input;
   diagnosticsRef.current = diagnostics;
   const { callId, participantToken, role, localStream, iceServers } = input;
@@ -145,6 +163,7 @@ export function useVideoCallPeer(input: {
     )
       return;
     const activeCallId = callId;
+    const activeLocalStream = localStream;
     const client = createCallRealtimeClient(participantToken);
     if (!client) {
       callbacksRef.current.onFailed();
@@ -153,16 +172,19 @@ export function useVideoCallPeer(input: {
     let disposed = false;
     let channelSubscribed = false;
     let initialOfferSent = false;
+    let statsTimer: ReturnType<typeof setInterval> | null = null;
     const remoteRole: VideoCallRole =
       role === "customer" ? "admin" : "customer";
     const peer = new RTCPeerConnection({ iceServers });
     peerRef.current = peer;
-    localStream
-      .getTracks()
-      .forEach((track) => peer.addTrack(track, localStream));
+    if (role === "customer") {
+      activeLocalStream
+        .getTracks()
+        .forEach((track) => peer.addTrack(track, activeLocalStream));
+    }
     if (role === "admin") assertAdminPeerHasNoVideoSender(peer);
 
-    const startingDiagnostics = initialDiagnostics(role, localStream);
+    const startingDiagnostics = initialDiagnostics(role, activeLocalStream);
     startingDiagnostics.signalingState = peer.signalingState;
     startingDiagnostics.iceGatheringState = peer.iceGatheringState;
     startingDiagnostics.iceConnectionState = peer.iceConnectionState;
@@ -181,6 +203,79 @@ export function useVideoCallPeer(input: {
       if (publish && channelSubscribed)
         void emit("diagnostic", next).catch(() => undefined);
     }
+
+    clientDiagnosticsUpdaterRef.current = (patch) => updateDiagnostics(patch);
+
+    function refreshAudioDiagnostics(publish = true) {
+      const audioTrack = activeLocalStream.getAudioTracks()[0];
+      const audioSender = peer
+        .getSenders()
+        .find((sender) => sender.track?.kind === "audio");
+      const audioTransceiver = peer
+        .getTransceivers()
+        .find(
+          (transceiver) =>
+            transceiver.sender.track?.kind === "audio" ||
+            transceiver.receiver.track.kind === "audio",
+        );
+      const patch = {
+        localAudioReady: Boolean(audioTrack),
+        localAudioTrackReadyState: audioTrack?.readyState ?? "missing",
+        localAudioTrackEnabled: audioTrack?.enabled ?? false,
+        localAudioTrackMuted: audioTrack?.muted ?? false,
+        audioSenderPresent: Boolean(audioSender?.track),
+        audioNegotiationDirection:
+          audioTransceiver?.currentDirection ??
+          audioTransceiver?.direction ??
+          "unavailable",
+      } satisfies Partial<SafePeerDiagnostics>;
+      const current = diagnosticsRef.current;
+      const changed = Object.entries(patch).some(
+        ([key, value]) => current[key as keyof SafePeerDiagnostics] !== value,
+      );
+      if (changed) updateDiagnostics(patch, publish);
+    }
+
+    async function collectSafeAudioStats() {
+      if (disposed || peer.connectionState === "closed") return;
+      try {
+        const reports = await peer.getStats();
+        let outboundPackets = 0;
+        let outboundBytes = 0;
+        let inboundPackets = 0;
+        let inboundBytes = 0;
+        reports.forEach((report) => {
+          const mediaKind = String(report.kind ?? report.mediaType ?? "");
+          if (mediaKind !== "audio" || report.isRemote === true) return;
+          if (report.type === "outbound-rtp") {
+            outboundPackets += Number(report.packetsSent ?? 0);
+            outboundBytes += Number(report.bytesSent ?? 0);
+          } else if (report.type === "inbound-rtp") {
+            inboundPackets += Number(report.packetsReceived ?? 0);
+            inboundBytes += Number(report.bytesReceived ?? 0);
+          }
+        });
+        const current = diagnosticsRef.current;
+        const statsChanged =
+          current.outboundAudioPacketsSent !== outboundPackets ||
+          current.outboundAudioBytesSent !== outboundBytes ||
+          current.inboundAudioPacketsReceived !== inboundPackets ||
+          current.inboundAudioBytesReceived !== inboundBytes;
+        refreshAudioDiagnostics();
+        if (statsChanged) {
+          updateDiagnostics({
+            outboundAudioPacketsSent: outboundPackets,
+            outboundAudioBytesSent: outboundBytes,
+            inboundAudioPacketsReceived: inboundPackets,
+            inboundAudioBytesReceived: inboundBytes,
+          });
+        }
+      } catch {
+        /* Stats are diagnostic-only and must never interrupt media playback. */
+      }
+    }
+
+    refreshAudioDiagnostics(false);
 
     function addLocalCandidateType(type: IceCandidateType) {
       if (diagnosticsRef.current.localCandidateTypes.includes(type)) return;
@@ -260,6 +355,9 @@ export function useVideoCallPeer(input: {
         if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
         retryTimerRef.current = null;
         retryRef.current = 0;
+        if (statsTimer) clearInterval(statsTimer);
+        void collectSafeAudioStats();
+        statsTimer = setInterval(() => void collectSafeAudioStats(), 1500);
         setState("connected");
         callbacksRef.current.onConnected();
         return;
@@ -321,9 +419,12 @@ export function useVideoCallPeer(input: {
           signalingState: peer.signalingState,
         });
         await flushCandidates();
+        ensureAdminAudioSender(peer, activeLocalStream);
+        refreshAudioDiagnostics();
         const answer = await peer.createAnswer();
         updateDiagnostics({ answerCreated: true });
         await peer.setLocalDescription(answer);
+        refreshAudioDiagnostics();
         await emit("answer", {
           type: peer.localDescription?.type,
           sdp: peer.localDescription?.sdp,
@@ -419,6 +520,8 @@ export function useVideoCallPeer(input: {
     return () => {
       disposed = true;
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (statsTimer) clearInterval(statsTimer);
+      clientDiagnosticsUpdaterRef.current = () => undefined;
       peer.ontrack = null;
       peer.onicecandidate = null;
       peer.onsignalingstatechange = null;
@@ -445,5 +548,17 @@ export function useVideoCallPeer(input: {
     await emit("hangup", { reason: "user_hangup" });
   }, [emit]);
 
-  return { state, diagnostics, remoteDiagnostics, sendHangup };
+  const updateClientDiagnostics = useCallback(
+    (patch: Partial<SafePeerDiagnostics>) =>
+      clientDiagnosticsUpdaterRef.current(patch),
+    [],
+  );
+
+  return {
+    state,
+    diagnostics,
+    remoteDiagnostics,
+    sendHangup,
+    updateClientDiagnostics,
+  };
 }

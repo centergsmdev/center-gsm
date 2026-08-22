@@ -21,12 +21,26 @@ export type SignalEvent =
 
 export type IceCandidateType = "host" | "srflx" | "relay" | "prflx" | "unknown";
 
+export type CustomerPlaybackState =
+  "waiting" | "playing" | "blocked" | "muted" | "failed";
+
+export type SafeAudioContextState =
+  "inactive" | "running" | "suspended" | "interrupted" | "closed";
+
+export type AudioNegotiationDirection =
+  RTCRtpTransceiverDirection | "unavailable";
+
 export type SafePeerDiagnostics = {
   role: VideoCallRole;
   channelState: "idle" | "connecting" | "connected" | "failed";
   localMediaReady: boolean;
   localAudioReady: boolean;
   localVideoReady: boolean;
+  localAudioTrackReadyState: MediaStreamTrackState | "missing";
+  localAudioTrackEnabled: boolean;
+  localAudioTrackMuted: boolean;
+  audioSenderPresent: boolean;
+  audioNegotiationDirection: AudioNegotiationDirection;
   signalingState: RTCSignalingState | "unavailable";
   iceGatheringState: RTCIceGatheringState | "unavailable";
   iceConnectionState: RTCIceConnectionState | "unavailable";
@@ -44,6 +58,12 @@ export type SafePeerDiagnostics = {
   iceCandidatesAdded: number;
   remoteAudioReceived: boolean;
   remoteVideoReceived: boolean;
+  customerPlaybackState: CustomerPlaybackState;
+  audioContextState: SafeAudioContextState;
+  outboundAudioPacketsSent: number;
+  outboundAudioBytesSent: number;
+  inboundAudioPacketsReceived: number;
+  inboundAudioBytesReceived: number;
 };
 
 export type SignalEnvelope<T = unknown> = {
@@ -154,14 +174,45 @@ export function isSafePeerDiagnostics(
     typeof input.localMediaReady === "boolean" &&
     typeof input.localAudioReady === "boolean" &&
     typeof input.localVideoReady === "boolean" &&
+    ["live", "ended", "missing"].includes(
+      String(input.localAudioTrackReadyState),
+    ) &&
+    typeof input.localAudioTrackEnabled === "boolean" &&
+    typeof input.localAudioTrackMuted === "boolean" &&
+    typeof input.audioSenderPresent === "boolean" &&
+    [
+      "sendrecv",
+      "sendonly",
+      "recvonly",
+      "inactive",
+      "stopped",
+      "unavailable",
+    ].includes(String(input.audioNegotiationDirection)) &&
     Array.isArray(input.localCandidateTypes) &&
     input.localCandidateTypes.every((type) =>
       ["host", "srflx", "relay", "prflx", "unknown"].includes(type),
     ) &&
     Number.isSafeInteger(input.iceCandidatesSent) &&
     Number.isSafeInteger(input.iceCandidatesReceived) &&
-    Number.isSafeInteger(input.iceCandidatesAdded)
+    Number.isSafeInteger(input.iceCandidatesAdded) &&
+    ["waiting", "playing", "blocked", "muted", "failed"].includes(
+      String(input.customerPlaybackState),
+    ) &&
+    ["inactive", "running", "suspended", "interrupted", "closed"].includes(
+      String(input.audioContextState),
+    ) &&
+    Number.isSafeInteger(input.outboundAudioPacketsSent) &&
+    Number.isSafeInteger(input.outboundAudioBytesSent) &&
+    Number.isSafeInteger(input.inboundAudioPacketsReceived) &&
+    Number.isSafeInteger(input.inboundAudioBytesReceived)
   );
+}
+
+export function retainActiveParticipantToken(
+  currentToken: string | null,
+  refreshedToken: string | null | undefined,
+) {
+  return currentToken ?? refreshedToken ?? null;
 }
 
 export function isValidCallTransition(
