@@ -137,10 +137,12 @@ test("privacy-safe ad e-posta ve telefonu asla public ada dönüştürmez", () =
   );
 });
 
-test("tüm yorumlar ve şeffaflık bölümleri public sayfadan kaldırılmıştır", () => {
-  assert.doesNotMatch(page, /Tüm Müşteri Yorumları/);
+test("yorumlar görünür, filtre ve şeffaflık bölümleri kaldırılmıştır", () => {
+  assert.match(page, /Tüm Müşteri Yorumları/);
+  assert.match(page, /data\.reviews\.map/);
+  assert.match(page, /function Pagination/);
   assert.doesNotMatch(page, /Şeffaflık notu/);
-  assert.doesNotMatch(page, /ReviewControls|function Pagination|Ürünlerde ara/);
+  assert.doesNotMatch(page, /ReviewControls|Yorum filtreleri|Ürünlerde ara/);
   assert.doesNotMatch(page, /327|4\.8|Binlerce|%100 müşteri/);
 });
 

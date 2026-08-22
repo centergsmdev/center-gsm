@@ -27,35 +27,6 @@ function safeProductSearch(value: string) {
   return value.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export async function getCustomerSatisfactionOverviewData() {
-  const service = createServiceClient();
-  if (!service)
-    return {
-      featured: [] as CustomerSatisfactionReview[],
-      summary: emptySummary,
-      unavailable: true,
-    };
-
-  const [summaryResult, featuredResult] = await Promise.all([
-    service
-      .from("customer_satisfaction_review_summary")
-      .select("*")
-      .maybeSingle(),
-    service
-      .from("customer_satisfaction_reviews")
-      .select("*")
-      .eq("is_featured", true)
-      .order("created_at", { ascending: false })
-      .limit(6),
-  ]);
-
-  return {
-    featured: featuredResult.data ?? [],
-    summary: summaryResult.data ?? emptySummary,
-    unavailable: Boolean(summaryResult.error || featuredResult.error),
-  };
-}
-
 export async function getCustomerSatisfactionPageData(
   query: CustomerSatisfactionQuery,
 ) {
