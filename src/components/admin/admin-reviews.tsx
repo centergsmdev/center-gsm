@@ -13,6 +13,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Sparkles,
   Star,
   Trash2,
   X,
@@ -111,6 +112,22 @@ export function AdminReviews() {
       next === "approve"
         ? "Yorum yayınlandı; ürün puanı güncellendi."
         : "Yorum reddedildi; müşteri tarafında gösterilmeyecek.",
+    );
+    await load();
+  }
+
+  async function toggleFeatured(review: ProductReview) {
+    const next = review.is_featured ? "unfeature" : "feature";
+    setSaving(true);
+    const result = await manageAdminReview(review.id, next);
+    setSaving(false);
+    if (!result.data)
+      return setError(result.error ?? "Öne çıkarma işlemi tamamlanamadı.");
+    await revalidateProductReviews(review.product_id);
+    setNotice(
+      next === "feature"
+        ? "Yorum müşteri memnuniyeti sayfasında öne çıkarıldı."
+        : "Yorum öne çıkanlardan kaldırıldı.",
     );
     await load();
   }
@@ -310,6 +327,11 @@ export function AdminReviews() {
                         Yanıtlandı
                       </p>
                     ) : null}
+                    {review.is_featured ? (
+                      <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+                        <Sparkles className="size-3.5" /> Öne çıkan yorum
+                      </p>
+                    ) : null}
                   </AdminTd>
                   <AdminTd>
                     <StatusBadge status={review.status} />
@@ -340,8 +362,24 @@ export function AdminReviews() {
                           <Pencil className="size-4" />
                         </IconButton>
                       ) : null}
+                      {review.status === "approved" ? (
+                        <IconButton
+                          label={
+                            review.is_featured
+                              ? "Öne çıkarmayı kaldır"
+                              : "Öne çıkar"
+                          }
+                          onClick={() => void toggleFeatured(review)}
+                        >
+                          <Sparkles
+                            className={`size-4 ${review.is_featured ? "fill-amber-400 text-amber-500" : ""}`}
+                          />
+                        </IconButton>
+                      ) : null}
                       <IconButton
-                        label="Yanıtla"
+                        label={
+                          review.admin_reply ? "Yanıtı düzenle" : "Yanıtla"
+                        }
                         onClick={() => setReplying(review)}
                       >
                         <MessageSquareReply className="size-4" />
@@ -571,7 +609,11 @@ export function AdminReviews() {
       <AdminModal
         open={Boolean(replying)}
         onClose={() => !saving && setReplying(null)}
-        title="Müşteri yorumunu yanıtla"
+        title={
+          replying?.admin_reply
+            ? "CENTER GSM yanıtını düzenle"
+            : "Müşteri yorumunu yanıtla"
+        }
         description={
           replying
             ? `${replying.author_name} adlı müşteriye CENTER GSM yanıtı`

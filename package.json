@@ -9,7 +9,8 @@
     "lint": "eslint . --max-warnings=0",
     "test:installment": "node --experimental-strip-types --test src/lib/installment/*.test.mjs",
     "test:live-chat": "node --experimental-strip-types --test src/lib/live-chat/*.test.mjs",
-    "test": "npm run test:installment && npm run test:live-chat",
+    "test:reviews": "node --experimental-strip-types --test src/lib/reviews/*.test.mjs",
+    "test": "npm run test:installment && npm run test:live-chat && npm run test:reviews",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

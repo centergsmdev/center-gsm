@@ -70,6 +70,35 @@ export type ProductReview = Timestamps & {
   admin_reply: string | null;
   replied_at: string | null;
   replied_by: string | null;
+  is_featured: boolean;
+};
+export type CustomerSatisfactionReview = {
+  id: string;
+  product_id: string;
+  author_name: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  image_paths: string[];
+  admin_reply: string | null;
+  replied_at: string | null;
+  created_at: string;
+  is_featured: boolean;
+  product_name: string;
+  product_slug: string;
+  product_image_url: string | null;
+  verified_purchase: boolean;
+};
+export type CustomerSatisfactionReviewSummary = {
+  total_count: number;
+  average_rating: number;
+  rating_1_count: number;
+  rating_2_count: number;
+  rating_3_count: number;
+  rating_4_count: number;
+  rating_5_count: number;
+  photo_count: number;
+  verified_count: number;
 };
 type ProductImage = Timestamps & {
   id: string;
@@ -1743,6 +1772,14 @@ export type Database = {
     Views: {
       product_available_stock: {
         Row: { product_id: string; available_stock: number };
+        Relationships: [];
+      };
+      customer_satisfaction_reviews: {
+        Row: CustomerSatisfactionReview;
+        Relationships: [];
+      };
+      customer_satisfaction_review_summary: {
+        Row: CustomerSatisfactionReviewSummary;
         Relationships: [];
       };
     };

@@ -36,6 +36,7 @@ export async function POST(request: Request) {
   revalidateTag(CACHE_TAGS.homepage);
   revalidatePath("/");
   revalidatePath("/urunler");
+  revalidatePath("/musteri-memnuniyeti");
   if (product?.slug) revalidatePath(`/urun/${product.slug}`);
 
   return NextResponse.json({ revalidated: true });

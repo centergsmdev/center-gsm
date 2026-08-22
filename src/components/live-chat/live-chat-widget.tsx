@@ -38,6 +38,7 @@ import {
   LIVE_CHAT_DEVICE_PROFILE_HEADER,
   LIVE_CHAT_VISITOR_COOKIE_KEY,
 } from "@/lib/live-chat/abuse-shared";
+import { OPEN_LIVE_CHAT_EVENT } from "@/lib/live-chat/events";
 
 const TOKEN_KEY = "center-gsm-live-chat-token";
 const NAME_KEY = "center-gsm-live-chat-name";
@@ -287,6 +288,13 @@ export function LiveChatWidget() {
     else setNotificationPermission("unsupported");
     if (new URLSearchParams(window.location.search).get("liveChat") === "1")
       setOpen(true);
+  }, [isAdminPage]);
+
+  useEffect(() => {
+    if (isAdminPage) return;
+    const openChat = () => setOpen(true);
+    window.addEventListener(OPEN_LIVE_CHAT_EVENT, openChat);
+    return () => window.removeEventListener(OPEN_LIVE_CHAT_EVENT, openChat);
   }, [isAdminPage]);
 
   useEffect(() => {

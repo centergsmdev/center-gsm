@@ -19,6 +19,7 @@ export function getPageSitemap(): MetadataRoute.Sitemap {
       "/mesafeli-satis",
       "/cerez-tercihleri",
       "/sikca-sorulan-sorular",
+      "/musteri-memnuniyeti",
     ].map((path) => sitemapEntry(path, updated, "monthly", 0.5)),
   ];
 }

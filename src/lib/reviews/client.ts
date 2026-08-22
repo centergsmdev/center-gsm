@@ -129,7 +129,14 @@ export async function updateAdminReview(
 
 export async function manageAdminReview(
   reviewId: string,
-  action: "approve" | "reject" | "reply" | "clear_reply" | "delete",
+  action:
+    | "approve"
+    | "reject"
+    | "reply"
+    | "clear_reply"
+    | "feature"
+    | "unfeature"
+    | "delete",
   reply?: string,
 ): Promise<ReviewResult<true>> {
   const client = createClient();
