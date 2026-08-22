@@ -1351,6 +1351,33 @@ export type InstallmentApplicationPaymentPlanRow = {
   created_at: string;
 };
 
+export type InstallmentCustomerPortalRow = Timestamps & {
+  id: string;
+  application_id: string;
+  payment_account_id: string | null;
+  payment_account_snapshot: {
+    id: string;
+    bank_name: string;
+    account_holder: string;
+    iban: string;
+    branch: string | null;
+    description: string | null;
+  };
+  stage:
+    | "down_payment_pending"
+    | "payment_under_review"
+    | "payment_confirmed"
+    | "preparing_delivery"
+    | "completed"
+    | "cancelled";
+  public_note: string | null;
+  payment_due_at: string | null;
+  access_version: number;
+  access_expires_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -1389,6 +1416,16 @@ export type Database = {
             | "installment_count"
             | "installment_schedule"
             | "total_payable_minor"
+          >
+      >;
+      installment_customer_portals: Table<
+        InstallmentCustomerPortalRow,
+        Partial<InstallmentCustomerPortalRow> &
+          Pick<
+            InstallmentCustomerPortalRow,
+            | "application_id"
+            | "payment_account_snapshot"
+            | "access_expires_at"
           >
       >;
       installment_contract_templates: Table<

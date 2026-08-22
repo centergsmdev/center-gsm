@@ -80,8 +80,59 @@ export type InstallmentAdminDetail = InstallmentAdminListItem & {
   documents: InstallmentAdminDocument[];
   contract: InstallmentAdminContractSnapshot | null;
   paymentPlan: InstallmentAdminPaymentPlan | null;
-  whatsappHandoff: InstallmentWhatsAppHandoff;
+  paymentAccounts: InstallmentPortalPaymentAccount[];
+  customerPortal: InstallmentAdminCustomerPortal | null;
+  portalHandoff: InstallmentPortalHandoff;
 };
+
+export const INSTALLMENT_PORTAL_STAGES = [
+  "down_payment_pending",
+  "payment_under_review",
+  "payment_confirmed",
+  "preparing_delivery",
+  "completed",
+  "cancelled",
+] as const;
+
+export type InstallmentPortalStage =
+  (typeof INSTALLMENT_PORTAL_STAGES)[number];
+
+export type InstallmentPortalPaymentAccount = {
+  id: string;
+  bankName: string;
+  accountHolder: string;
+  iban: string;
+  branch: string | null;
+  description: string | null;
+  isDefault: boolean;
+};
+
+export type InstallmentPortalPaymentSnapshot = Omit<
+  InstallmentPortalPaymentAccount,
+  "isDefault"
+>;
+
+export type InstallmentAdminCustomerPortal = {
+  id: string;
+  stage: InstallmentPortalStage;
+  publicNote: string | null;
+  paymentDueAt: string | null;
+  accessExpiresAt: string;
+  paymentAccount: InstallmentPortalPaymentSnapshot;
+};
+
+export type InstallmentPortalHandoff =
+  | { state: "not_approved" }
+  | { state: "missing_payment_plan" }
+  | { state: "not_configured" }
+  | { state: "expired" }
+  | {
+      state: "ready";
+      phone: string;
+      message: string;
+      url: string;
+      accessUrl: string;
+    };
 
 export type InstallmentWhatsAppHandoff =
   | { state: "not_approved" }
@@ -126,6 +177,18 @@ export const INSTALLMENT_STATUS_LABELS: Record<
   approved: "Onaylandı",
   rejected: "Reddedildi",
   cancelled: "İptal edildi",
+};
+
+export const INSTALLMENT_PORTAL_STAGE_LABELS: Record<
+  InstallmentPortalStage,
+  string
+> = {
+  down_payment_pending: "Peşinat Ödemesi Bekleniyor",
+  payment_under_review: "Peşinat Kontrol Ediliyor",
+  payment_confirmed: "Peşinat Onaylandı",
+  preparing_delivery: "Teslimat Hazırlanıyor",
+  completed: "İşlem Tamamlandı",
+  cancelled: "İşlem İptal Edildi",
 };
 
 export const INSTALLMENT_DOCUMENT_LABELS: Record<

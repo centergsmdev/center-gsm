@@ -8,8 +8,10 @@ import {
   Download,
   Eye,
   FileText,
+  Link2,
   LoaderCircle,
   MessageCircle,
+  RefreshCw,
   ScrollText,
   XCircle,
 } from "lucide-react";
@@ -25,15 +27,18 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import {
   INSTALLMENT_DOCUMENT_LABELS,
+  INSTALLMENT_PORTAL_STAGES,
+  INSTALLMENT_PORTAL_STAGE_LABELS,
   INSTALLMENT_STATUS_LABELS,
   type InstallmentAdminDetail,
+  type InstallmentPortalStage,
 } from "@/lib/installment/types";
 import { PaymentPlanSummary } from "@/components/installment/payment-plan-summary";
+import { PortalCopyButton } from "@/components/installment/portal-copy-button";
 import {
   formatMinorCurrency,
   type PaymentPlan,
 } from "@/lib/payment-plan/engine";
-import { shouldShowWhatsAppApprovalAction } from "@/lib/installment/whatsapp";
 
 function DetailBlock({
   title,
@@ -77,6 +82,12 @@ export function AdminInstallmentApplicationDetail({
   const [internalNote, setInternalNote] = useState("");
   const [contractOpen, setContractOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [paymentAccountId, setPaymentAccountId] = useState("");
+  const [paymentDueAt, setPaymentDueAt] = useState("");
+  const [portalStage, setPortalStage] =
+    useState<InstallmentPortalStage>("down_payment_pending");
+  const [portalPublicNote, setPortalPublicNote] = useState("");
+  const [portalNotice, setPortalNotice] = useState("");
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -92,6 +103,22 @@ export function AdminInstallmentApplicationDetail({
       setItem(payload.item);
       setPublicReason(payload.item.rejectionReasonPublic ?? "");
       setInternalNote(payload.item.internalNote ?? "");
+      setPaymentAccountId(
+        payload.item.customerPortal?.paymentAccount.id ??
+          payload.item.paymentAccounts.find((account) => account.isDefault)
+            ?.id ??
+          payload.item.paymentAccounts[0]?.id ??
+          "",
+      );
+      setPaymentDueAt(
+        payload.item.customerPortal?.paymentDueAt
+          ? toLocalDateTime(payload.item.customerPortal.paymentDueAt)
+          : "",
+      );
+      setPortalStage(
+        payload.item.customerPortal?.stage ?? "down_payment_pending",
+      );
+      setPortalPublicNote(payload.item.customerPortal?.publicNote ?? "");
     } catch {
       setFailed(true);
     }
@@ -143,10 +170,61 @@ export function AdminInstallmentApplicationDetail({
     }
   }
 
+  async function portalAction(
+    action: "configure" | "update_stage" | "renew",
+  ) {
+    if (!item) return;
+    setBusy(true);
+    setMessage("");
+    setPortalNotice("");
+    try {
+      const body: Record<string, unknown> = { action };
+      if (action === "configure") {
+        body.paymentAccountId = paymentAccountId;
+        body.paymentDueAt = paymentDueAt
+          ? new Date(paymentDueAt).toISOString()
+          : null;
+      }
+      if (action === "update_stage") {
+        body.stage = portalStage;
+        body.publicNote = portalPublicNote;
+      }
+      const response = await fetch(
+        `/api/admin/installment-applications/${applicationId}/portal`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok)
+        throw new Error(payload.error || "Müşteri sayfası güncellenemedi.");
+      setPortalNotice(
+        action === "update_stage"
+          ? "Müşterinin göreceği işlem aşaması güncellendi."
+          : action === "renew"
+            ? "Güvenli bağlantı 30 gün süreyle yenilendi."
+            : item.customerPortal
+              ? "Ödeme bilgileri ve güvenli bağlantı güncellendi."
+              : "Müşteriye özel başvuru sayfası hazırlandı.",
+      );
+      await load();
+    } catch (caught) {
+      setMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Müşteri sayfası güncellenemedi.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (failed) return <AdminErrorState retry={() => void load()} />;
   if (!item) return <AdminLoadingState />;
   const whatsappUrl =
-    item.whatsappHandoff.state === "ready" ? item.whatsappHandoff.url : null;
+    item.portalHandoff.state === "ready" ? item.portalHandoff.url : null;
   const signature = item.documents.find(
     (document) => document.type === "signature",
   );
@@ -339,38 +417,184 @@ export function AdminInstallmentApplicationDetail({
         )}
       </DetailBlock>
 
-      {shouldShowWhatsAppApprovalAction(item.status) ? (
-        <DetailBlock title="WhatsApp Onay Mesajı">
-          {item.whatsappHandoff.state === "ready" ? (
-            <div className="space-y-3">
-              <p className="text-sm leading-6 text-zinc-600">
-                Müşterinin kabul ettiği değişmez ödeme planından hazırlanan
-                mesajı kontrol ederek WhatsApp&apos;ta açabilirsiniz.
+      {item.status === "approved" ? (
+        <DetailBlock title="Müşteriye Özel Başvuru Sayfası">
+          {item.portalHandoff.state === "missing_payment_plan" ? (
+            <p className="rounded-xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
+              Bu başvuruda kayıtlı ödeme planı bulunmadığı için müşteri sayfası
+              oluşturulamıyor.
+            </p>
+          ) : !item.paymentAccounts.length ? (
+            <div className="space-y-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              <p className="font-bold">Aktif ödeme hesabı bulunmuyor.</p>
+              <p>
+                Önce Ödeme Ayarları bölümünden müşteriye gösterilecek banka ve
+                IBAN bilgilerini ekleyin.
               </p>
               <Button
-                className="w-full bg-emerald-600 text-white hover:bg-emerald-700 sm:w-auto"
-                onClick={() => setWhatsappOpen(true)}
+                variant="outline"
+                onClick={() => router.push("/admin/odeme-ayarlari")}
               >
-                <MessageCircle className="size-4" /> WhatsApp&apos;tan Onay
-                Mesajı Gönder
+                Ödeme Ayarlarına Git
               </Button>
             </div>
-          ) : item.whatsappHandoff.state === "missing_payment_plan" ? (
-            <p className="rounded-xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
-              Bu başvuruda kayıtlı ödeme planı bulunmadığı için otomatik
-              WhatsApp mesajı oluşturulamıyor.
-            </p>
-          ) : item.whatsappHandoff.state === "invalid_phone" ? (
-            <div className="space-y-3">
-              <Button disabled className="w-full sm:w-auto">
-                <MessageCircle className="size-4" /> WhatsApp&apos;tan Onay
-                Mesajı Gönder
-              </Button>
-              <p className="text-sm font-semibold text-red-700" role="alert">
-                Geçerli WhatsApp telefon numarası bulunamadı.
+          ) : (
+            <div className="space-y-5">
+              <p className="text-sm leading-6 text-zinc-600">
+                Müşteriye ürününü, değiştirilemez ödeme planını, peşinat
+                tutarını, ödeme hesabını ve işlemin güncel aşamasını gösteren
+                güvenli bir sayfa hazırlayın.
               </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-bold text-zinc-800">
+                  Gösterilecek ödeme hesabı
+                  <select
+                    value={paymentAccountId}
+                    onChange={(event) =>
+                      setPaymentAccountId(event.target.value)
+                    }
+                    className="mt-2 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm font-semibold outline-none focus:border-red-600"
+                  >
+                    {item.paymentAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.bankName} · {account.iban.slice(-6)}
+                        {account.isDefault ? " · Varsayılan" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm font-bold text-zinc-800">
+                  Peşinat son ödeme zamanı{" "}
+                  <span className="font-normal text-zinc-500">
+                    (isteğe bağlı)
+                  </span>
+                  <input
+                    type="datetime-local"
+                    value={paymentDueAt}
+                    onChange={(event) => setPaymentDueAt(event.target.value)}
+                    className="mt-2 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm font-semibold outline-none focus:border-red-600"
+                  />
+                </label>
+              </div>
+              <Button
+                disabled={busy || !paymentAccountId}
+                onClick={() => void portalAction("configure")}
+              >
+                {busy ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Link2 className="size-4" />
+                )}
+                {item.customerPortal
+                  ? "Ödeme Bilgilerini ve Linki Güncelle"
+                  : "Müşteri Sayfasını Hazırla"}
+              </Button>
+              {item.customerPortal ? (
+                <>
+                  <div className="border-t border-zinc-100 pt-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="block text-sm font-bold text-zinc-800">
+                        Müşterinin göreceği aşama
+                        <select
+                          value={portalStage}
+                          onChange={(event) =>
+                            setPortalStage(
+                              event.target.value as InstallmentPortalStage,
+                            )
+                          }
+                          className="mt-2 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm font-semibold outline-none focus:border-red-600"
+                        >
+                          {INSTALLMENT_PORTAL_STAGES.map((stage) => (
+                            <option key={stage} value={stage}>
+                              {INSTALLMENT_PORTAL_STAGE_LABELS[stage]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block text-sm font-bold text-zinc-800">
+                        Müşteriye gösterilecek not
+                        <textarea
+                          value={portalPublicNote}
+                          onChange={(event) =>
+                            setPortalPublicNote(event.target.value)
+                          }
+                          maxLength={600}
+                          placeholder="Örn. Ödemeniz kontrol ediliyor."
+                          className="mt-2 min-h-24 w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm font-normal outline-none focus:border-red-600"
+                        />
+                      </label>
+                    </div>
+                    <Button
+                      className="mt-3"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void portalAction("update_stage")}
+                    >
+                      Güncel Aşamayı Kaydet
+                    </Button>
+                  </div>
+                  {item.portalHandoff.state === "ready" ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <p className="font-bold text-emerald-900">
+                        Güvenli müşteri bağlantısı hazır
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-emerald-800">
+                        Son geçerlilik:{" "}
+                        {formatAdminDateTime(
+                          item.customerPortal.accessExpiresAt,
+                        )}
+                      </p>
+                      <p className="mt-3 truncate rounded-lg bg-white px-3 py-2 font-mono text-xs text-zinc-700">
+                        {item.portalHandoff.accessUrl}
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          className="bg-emerald-600 text-white hover:bg-emerald-700"
+                          onClick={() => setWhatsappOpen(true)}
+                        >
+                          <MessageCircle className="size-4" /> WhatsApp&apos;tan
+                          Kişisel Linki Gönder
+                        </Button>
+                        <PortalCopyButton
+                          value={item.portalHandoff.accessUrl}
+                          label="Linki Kopyala"
+                        />
+                        <Button
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => void portalAction("renew")}
+                        >
+                          <RefreshCw className="size-4" /> Linki Yenile
+                        </Button>
+                      </div>
+                    </div>
+                  ) : item.portalHandoff.state === "expired" ? (
+                    <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
+                      <p className="font-bold">
+                        Müşteri bağlantısının süresi doldu.
+                      </p>
+                      <Button
+                        className="mt-3"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => void portalAction("renew")}
+                      >
+                        <RefreshCw className="size-4" /> 30 Gün Yenile
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+              {portalNotice ? (
+                <p
+                  role="status"
+                  className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700"
+                >
+                  {portalNotice}
+                </p>
+              ) : null}
             </div>
-          ) : null}
+          )}
         </DetailBlock>
       ) : null}
 
@@ -487,12 +711,12 @@ export function AdminInstallmentApplicationDetail({
           />
         </AdminModal>
       ) : null}
-      {item.whatsappHandoff.state === "ready" && whatsappUrl ? (
+      {item.portalHandoff.state === "ready" && whatsappUrl ? (
         <AdminModal
           open={whatsappOpen}
           onClose={() => setWhatsappOpen(false)}
-          title="WhatsApp Mesajı"
-          description="Mesaj immutable başvuru snapshot'ından hazırlanmıştır ve bu önizlemede değiştirilemez."
+          title="Müşteriye Özel Başvuru Linki"
+          description="Mesaj müşterinin güvenli takip bağlantısını içerir. Ödeme planı ve banka bilgileri WhatsApp mesajına açık metin olarak eklenmez."
           footer={
             <>
               <Button variant="outline" onClick={() => setWhatsappOpen(false)}>
@@ -511,13 +735,26 @@ export function AdminInstallmentApplicationDetail({
           }
         >
           <pre
-            aria-label="Hazırlanan WhatsApp onay mesajı"
+            aria-label="Hazırlanan kişisel başvuru bağlantısı mesajı"
             className="max-h-[60dvh] w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-xl bg-zinc-50 p-4 font-sans text-xs leading-6 text-zinc-800 sm:text-sm"
           >
-            {item.whatsappHandoff.message}
+            {item.portalHandoff.message}
           </pre>
         </AdminModal>
       ) : null}
     </div>
   );
+}
+
+function toLocalDateTime(value: string) {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function formatAdminDateTime(value: string) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

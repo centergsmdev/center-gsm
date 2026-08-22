@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { getAdminContext, mapAdminApplication } from "@/lib/installment/server";
+import {
+  getAdminContext,
+  getInstallmentHashSecret,
+  mapAdminApplication,
+} from "@/lib/installment/server";
 import { isUuid } from "@/lib/installment/validation";
 import { sanitizeInstallmentContractContent } from "@/lib/installment/contract-server";
-import { createInstallmentWhatsAppHandoff } from "@/lib/installment/whatsapp";
+import {
+  createInstallmentPortalHandoff,
+  mapAdminCustomerPortal,
+} from "@/lib/installment/customer-portal";
 import type { InstallmentAdminPaymentPlan } from "@/lib/installment/types";
 
 export const runtime = "nodejs";
@@ -24,7 +31,8 @@ export async function GET(
       { error: "Admin yetkisi gerekiyor." },
       { status: 403 },
     );
-  const [application, documents, contract, paymentPlan] = await Promise.all([
+  const [application, documents, contract, paymentPlan, portal, accounts] =
+    await Promise.all([
     context.service
       .from("installment_applications")
       .select("*")
@@ -48,12 +56,25 @@ export async function GET(
       .select("*")
       .eq("application_id", id)
       .maybeSingle(),
+    context.service
+      .from("installment_customer_portals")
+      .select("*")
+      .eq("application_id", id)
+      .maybeSingle(),
+    context.service
+      .from("payment_accounts")
+      .select("*")
+      .eq("is_active", true)
+      .order("is_default", { ascending: false })
+      .order("created_at"),
   ]);
   if (
     application.error ||
     documents.error ||
     contract.error ||
-    paymentPlan.error
+    paymentPlan.error ||
+    portal.error ||
+    accounts.error
   )
     return NextResponse.json(
       { error: "Başvuru yüklenemedi." },
@@ -91,13 +112,14 @@ export async function GET(
         totalPayableMinor: Number(paymentPlan.data.total_payable_minor),
       }
     : null;
-  const whatsappHandoff = createInstallmentWhatsAppHandoff({
+  const portalHandoff = createInstallmentPortalHandoff({
     status: mappedApplication.status,
     applicantName: mappedApplication.applicantName,
     phone: mappedApplication.phone,
-    productName: mappedApplication.productName,
-    variantTitle: mappedApplication.variantTitle,
     paymentPlan: mappedPaymentPlan,
+    portal: portal.data,
+    secret: getInstallmentHashSecret(),
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
   });
   return NextResponse.json(
     {
@@ -131,7 +153,19 @@ export async function GET(
               }
             : null,
         paymentPlan: mappedPaymentPlan,
-        whatsappHandoff,
+        paymentAccounts: accounts.data.map((account) => ({
+          id: account.id,
+          bankName: account.bank_name,
+          accountHolder: account.account_holder,
+          iban: account.iban,
+          branch: account.branch,
+          description: account.description,
+          isDefault: account.is_default,
+        })),
+        customerPortal: portal.data
+          ? mapAdminCustomerPortal(portal.data)
+          : null,
+        portalHandoff,
       },
     },
     { headers: { "Cache-Control": "no-store" } },
