@@ -33,7 +33,7 @@ export const DEFAULT_VIDEO_SETTINGS: LiveChatVideoSettings = {
   avatar_display_name: "CENTER GSM Dijital Temsilci",
   avatar_image_url: null,
   avatar_image_path: null,
-  ring_timeout_seconds: 45,
+  ring_timeout_seconds: 30,
   max_duration_seconds: 1200,
   updated_at: "",
   updated_by: null,
@@ -59,7 +59,7 @@ export function getVideoCallRuntimeConfig() {
   return {
     ringTimeoutSeconds: boundedInteger(
       process.env.VIDEO_CALL_RING_TIMEOUT_SECONDS,
-      45,
+      30,
       15,
       120,
     ),

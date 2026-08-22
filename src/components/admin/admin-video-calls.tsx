@@ -75,6 +75,7 @@ export function AdminVideoCalls({
   const [simliConfigured, setSimliConfigured] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [session, setSession] = useState<{
     call: LiveChatCall;
     participantToken: string;
@@ -102,6 +103,11 @@ export function AdminVideoCalls({
   }, [remoteStream]);
 
   const cleanupMedia = useCallback(() => {
+    const customerVideo = customerVideoRef.current;
+    if (customerVideo) {
+      customerVideo.pause();
+      customerVideo.srcObject = null;
+    }
     stopMediaStream(localStreamRef.current);
     stopMediaStream(remoteStreamRef.current);
     localStreamRef.current = null;
@@ -204,13 +210,15 @@ export function AdminVideoCalls({
     localStream,
     iceServers: session?.iceServers ?? [],
     onRemoteStream: setRemoteStream,
-    onHangup: () =>
-      void updateCall("end", "remote_hangup").then(() => {
-        cleanupMedia();
-        sessionRef.current = null;
-        setSession(null);
+    onHangup: () => {
+      const transition = updateCall("end", "remote_hangup");
+      cleanupMedia();
+      sessionRef.current = null;
+      setSession(null);
+      void transition.then(() => {
         void loadCalls();
-      }),
+      });
+    },
     onConnected: () => void updateCall("connected"),
     onReconnecting: () => void updateCall("reconnecting"),
     onFailed: () => {
@@ -303,10 +311,15 @@ export function AdminVideoCalls({
   }
 
   async function endCall() {
-    await peer.sendHangup();
-    await updateCall("end", "admin_hangup");
+    if (ending) return;
+    setEnding(true);
+    const transition = updateCall("end", "admin_hangup");
+    const signal = peer.sendHangup().catch(() => undefined);
     cleanupMedia();
+    await Promise.allSettled([signal, transition]);
+    sessionRef.current = null;
     setSession(null);
+    setEnding(false);
     await loadCalls();
   }
 
@@ -607,7 +620,8 @@ export function AdminVideoCalls({
             <button
               type="button"
               onClick={() => void endCall()}
-              className="grid size-10 place-items-center rounded-full bg-white/10"
+              disabled={ending}
+              className="grid size-10 place-items-center rounded-full bg-white/10 disabled:opacity-50"
               aria-label="Görüşmeyi kapat"
             >
               <X className="size-4" />
@@ -665,7 +679,8 @@ export function AdminVideoCalls({
             <button
               type="button"
               onClick={() => void endCall()}
-              className="flex h-12 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-black"
+              disabled={ending}
+              className="flex h-12 items-center gap-2 rounded-full bg-red-600 px-5 text-sm font-black disabled:opacity-50"
               aria-label="Görüşmeyi bitir"
             >
               <PhoneOff className="size-5" /> Görüşmeyi Bitir

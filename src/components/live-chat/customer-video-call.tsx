@@ -6,7 +6,6 @@ import {
   Maximize2,
   Mic,
   MicOff,
-  Phone,
   PhoneOff,
   Video,
   X,
@@ -21,6 +20,7 @@ import {
   ACTIVE_CALL_STATUSES,
   TERMINAL_CALL_STATUSES,
   callStatusMessage,
+  formatCallDuration,
   retainActiveParticipantToken,
   type CustomerPlaybackState,
   type SafeAudioContextState,
@@ -28,6 +28,7 @@ import {
 } from "@/lib/live-chat/video-call";
 import { requestCustomerMedia } from "@/lib/live-chat/video-media";
 import { stopMediaStream } from "@/lib/live-chat/video-realtime";
+import { callHistoryDurationSeconds } from "@/lib/live-chat/call-history";
 import type { PublicVideoSettings } from "@/lib/live-chat/video-server";
 import type { LiveChatCall } from "@/types/database";
 
@@ -44,15 +45,22 @@ export function CustomerVideoCall({
   token,
   conversationId,
   onCallChange,
+  callHistory = [],
 }: {
   token: string;
   conversationId: string;
   onCallChange?: (call: LiveChatCall) => void;
+  callHistory?: LiveChatCall[];
 }) {
   const [settings, setSettings] = useState<PublicVideoSettings | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [pending, setPending] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [remoteHangupReceived, setRemoteHangupReceived] = useState(false);
+  const [remainingRingSeconds, setRemainingRingSeconds] = useState<
+    number | null
+  >(null);
   const [call, setCall] = useState<LiveChatCall | null>(null);
   const [participantToken, setParticipantToken] = useState<string | null>(null);
   const [iceServers, setIceServers] = useState<RTCIceServer[]>([]);
@@ -177,6 +185,16 @@ export function CustomerVideoCall({
   );
 
   const cleanupMedia = useCallback(() => {
+    const remoteAudio = remoteAudioRef.current;
+    if (remoteAudio) {
+      remoteAudio.pause();
+      remoteAudio.srcObject = null;
+    }
+    const selfVideo = selfVideoRef.current;
+    if (selfVideo) {
+      selfVideo.pause();
+      selfVideo.srcObject = null;
+    }
     stopMediaStream(localStreamRef.current);
     stopMediaStream(remoteStreamRef.current);
     localStreamRef.current = null;
@@ -200,7 +218,12 @@ export function CustomerVideoCall({
     localStream,
     iceServers,
     onRemoteStream: setRemoteStream,
-    onHangup: () => void updateCall("end", "remote_hangup").then(cleanupMedia),
+    onHangup: () => {
+      setRemoteHangupReceived(true);
+      const transition = updateCall("end", "remote_hangup");
+      cleanupMedia();
+      void transition;
+    },
     onConnected: () => void updateCall("connected"),
     onReconnecting: () => void updateCall("reconnecting"),
     onFailed: () => {
@@ -211,6 +234,37 @@ export function CustomerVideoCall({
     },
   });
   const { updateClientDiagnostics } = peer;
+
+  useEffect(() => {
+    const current = callRef.current;
+    if (!current) return;
+    const reconciled = callHistory.find((item) => item.id === current.id);
+    if (
+      !reconciled ||
+      (reconciled.revision <= current.revision &&
+        reconciled.status === current.status)
+    )
+      return;
+    callRef.current = reconciled;
+    setCall(reconciled);
+    onCallChange?.(reconciled);
+    if (TERMINAL_CALL_STATUSES.has(reconciled.status)) cleanupMedia();
+  }, [callHistory, cleanupMedia, onCallChange]);
+
+  useEffect(() => {
+    if (!call || !["requesting", "ringing"].includes(call.status)) {
+      setRemainingRingSeconds(null);
+      return;
+    }
+    const expiresAt = new Date(call.expires_at).getTime();
+    const updateCountdown = () =>
+      setRemainingRingSeconds(
+        Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)),
+      );
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 250);
+    return () => clearInterval(timer);
+  }, [call]);
 
   useEffect(() => {
     updateClientDiagnostics({
@@ -336,6 +390,7 @@ export function CustomerVideoCall({
       if (data.settings) setSettings(data.settings);
       setConsentOpen(false);
       setMinimized(false);
+      setRemoteHangupReceived(false);
     } catch (reason) {
       stopMediaStream(stream);
       const simliAudioContext = simliAudioContextRef.current;
@@ -354,9 +409,24 @@ export function CustomerVideoCall({
   }
 
   async function endCall() {
-    await peer.sendHangup();
-    await updateCall("end", "customer_hangup");
+    if (ending) return;
+    setEnding(true);
+    const transition = updateCall("end", "customer_hangup");
+    const signal = peer.sendHangup().catch(() => undefined);
     cleanupMedia();
+    await Promise.allSettled([signal, transition]);
+    setEnding(false);
+  }
+
+  function dismissFinalCall() {
+    cleanupMedia();
+    callRef.current = null;
+    setCall(null);
+    setParticipantToken(null);
+    setIceServers([]);
+    setError("");
+    setEnding(false);
+    setRemoteHangupReceived(false);
   }
 
   function toggleCamera() {
@@ -390,6 +460,20 @@ export function CustomerVideoCall({
   }
 
   if (!settings?.enabled) return null;
+
+  const terminal = call
+    ? remoteHangupReceived || TERMINAL_CALL_STATUSES.has(call.status)
+    : false;
+  const finalStatus = remoteHangupReceived ? "ended" : call?.status;
+  const finalDuration = call ? callHistoryDurationSeconds(call) : null;
+  const finalTitle =
+    finalStatus === "missed"
+      ? "Görüntülü görüşme talebiniz yanıtlanamadı."
+      : finalStatus === "rejected"
+        ? "Görüntülü görüşme talebiniz şu anda kabul edilemedi."
+        : finalStatus === "failed"
+          ? "Görüntülü görüşme bağlantısı kurulamadı."
+          : "Görüntülü görüşme sona erdi.";
 
   return (
     <>
@@ -478,51 +562,91 @@ export function CustomerVideoCall({
             </div>
             <button
               type="button"
-              onClick={() => setMinimized(true)}
+              onClick={() =>
+                terminal ? dismissFinalCall() : setMinimized(true)
+              }
               className="grid size-9 place-items-center rounded-full bg-white/10"
               aria-label="Görüşmeyi küçült"
             >
               <X className="size-4" />
             </button>
           </header>
-          <div className="relative min-h-0 flex-1 p-3">
-            {settings.avatar_mode === "simli-trinity" ? (
-              <SimliVideoAvatar
-                callId={call.id}
-                callStatus={call.status}
-                visitorToken={token}
-                displayName={settings.avatar_display_name}
-                imageUrl={settings.avatar_image_url}
-                stream={remoteStream}
-                preparedAudioContext={simliAudioContextRef.current}
-                onDiagnosticsChange={updateClientDiagnostics}
-              />
-            ) : (
-              <VideoAvatar
-                displayName={settings.avatar_display_name}
-                imageUrl={settings.avatar_image_url}
-                stream={remoteStream}
-                mode={settings.avatar_mode}
-                audioActivated={audioActivated}
-                onAudioContextStateChange={setAudioContextState}
-              />
-            )}
-            {!audioOnly ? (
-              <video
-                ref={selfVideoRef}
-                autoPlay
-                muted
-                playsInline
-                style={{ transform: "none" }}
-                className="absolute bottom-6 right-6 aspect-[3/4] w-24 rounded-2xl border-2 border-white/30 bg-zinc-900 object-cover shadow-xl"
-                aria-label="Kendi kamera görüntünüz"
-              />
-            ) : (
-              <span className="absolute bottom-6 right-6 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-black text-zinc-950">
-                Yalnız ses
-              </span>
-            )}
-          </div>
+          {terminal ? (
+            <div className="flex min-h-0 flex-1 items-center justify-center p-5 text-center">
+              <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6">
+                <span className="mx-auto grid size-14 place-items-center rounded-full bg-white/10">
+                  <PhoneOff className="size-6" />
+                </span>
+                <h3 className="mt-4 text-lg font-black">{finalTitle}</h3>
+                <p className="mt-2 text-sm text-zinc-300">
+                  {finalStatus === "ended"
+                    ? finalDuration !== null
+                      ? `Görüşme süresi: ${formatCallDuration(finalDuration)}`
+                      : "Canlı destek görüşmeniz tamamlandı."
+                    : "Canlı destek üzerinden mesaj bırakabilirsiniz."}
+                </p>
+                <button
+                  type="button"
+                  onClick={dismissFinalCall}
+                  className="mt-5 w-full rounded-xl bg-white px-4 py-3 text-sm font-black text-zinc-950"
+                >
+                  {finalStatus === "ended"
+                    ? "Canlı Desteğe Dön"
+                    : "Yazılı Desteğe Dön"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative min-h-0 flex-1 p-3">
+              {settings.avatar_mode === "simli-trinity" ? (
+                <SimliVideoAvatar
+                  callId={call.id}
+                  callStatus={call.status}
+                  visitorToken={token}
+                  displayName={settings.avatar_display_name}
+                  imageUrl={settings.avatar_image_url}
+                  stream={remoteStream}
+                  preparedAudioContext={simliAudioContextRef.current}
+                  onDiagnosticsChange={updateClientDiagnostics}
+                />
+              ) : (
+                <VideoAvatar
+                  displayName={settings.avatar_display_name}
+                  imageUrl={settings.avatar_image_url}
+                  stream={remoteStream}
+                  mode={settings.avatar_mode}
+                  audioActivated={audioActivated}
+                  onAudioContextStateChange={setAudioContextState}
+                />
+              )}
+              {!audioOnly ? (
+                <video
+                  ref={selfVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  style={{ transform: "none" }}
+                  className="absolute bottom-6 right-6 aspect-[3/4] w-24 rounded-2xl border-2 border-white/30 bg-zinc-900 object-cover shadow-xl"
+                  aria-label="Kendi kamera görüntünüz"
+                />
+              ) : (
+                <span className="absolute bottom-6 right-6 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-black text-zinc-950">
+                  Yalnız ses
+                </span>
+              )}
+              {["requesting", "ringing"].includes(call.status) &&
+              remainingRingSeconds !== null ? (
+                <div className="absolute inset-x-3 top-3 rounded-2xl bg-zinc-950/80 px-4 py-3 text-center backdrop-blur">
+                  <p className="text-xs font-bold text-zinc-200">
+                    Müşteri temsilcisine bağlanılıyor…
+                  </p>
+                  <p className="mt-1 text-2xl font-black text-white">
+                    {remainingRingSeconds}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
           {audioBlocked ? (
             <button
               type="button"
@@ -532,61 +656,54 @@ export function CustomerVideoCall({
               Görüşme sesini başlat
             </button>
           ) : null}
-          <div className="shrink-0 px-3 text-center text-[10px] text-zinc-400">
-            Dijital Temsilci · Görüşme kaydedilmez ·{" "}
-            {peer.state === "reconnecting"
-              ? "Bağlantı yenileniyor"
-              : "Canlı görüşme"}
-          </div>
-          <div className="flex shrink-0 items-center justify-center gap-3 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-            <button
-              type="button"
-              onClick={toggleMicrophone}
-              className="grid size-12 place-items-center rounded-full bg-white/10"
-              aria-label={
-                microphoneEnabled ? "Mikrofonu kapat" : "Mikrofonu aç"
-              }
-            >
-              {microphoneEnabled ? (
-                <Mic className="size-5" />
-              ) : (
-                <MicOff className="size-5" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                TERMINAL_CALL_STATUSES.has(call.status)
-                  ? setCall(null)
-                  : void endCall()
-              }
-              className="grid size-14 place-items-center rounded-full bg-red-600"
-              aria-label={
-                TERMINAL_CALL_STATUSES.has(call.status)
-                  ? "Görüşme ekranını kapat"
-                  : "Görüşmeyi bitir"
-              }
-            >
-              {TERMINAL_CALL_STATUSES.has(call.status) ? (
-                <Phone className="size-5" />
-              ) : (
+          {!terminal ? (
+            <div className="shrink-0 px-3 text-center text-[10px] text-zinc-400">
+              Dijital Temsilci · Görüşme kaydedilmez ·{" "}
+              {peer.state === "reconnecting"
+                ? "Bağlantı yenileniyor"
+                : "Canlı görüşme"}
+            </div>
+          ) : null}
+          {!terminal ? (
+            <div className="flex shrink-0 items-center justify-center gap-3 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              <button
+                type="button"
+                onClick={toggleMicrophone}
+                className="grid size-12 place-items-center rounded-full bg-white/10"
+                aria-label={
+                  microphoneEnabled ? "Mikrofonu kapat" : "Mikrofonu aç"
+                }
+              >
+                {microphoneEnabled ? (
+                  <Mic className="size-5" />
+                ) : (
+                  <MicOff className="size-5" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => void endCall()}
+                disabled={ending}
+                className="grid size-14 place-items-center rounded-full bg-red-600"
+                aria-label="Görüşmeyi bitir"
+              >
                 <PhoneOff className="size-5" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={toggleCamera}
-              disabled={audioOnly}
-              className="grid size-12 place-items-center rounded-full bg-white/10 disabled:opacity-40"
-              aria-label={cameraEnabled ? "Kamerayı kapat" : "Kamerayı aç"}
-            >
-              {cameraEnabled ? (
-                <Camera className="size-5" />
-              ) : (
-                <CameraOff className="size-5" />
-              )}
-            </button>
-          </div>
+              </button>
+              <button
+                type="button"
+                onClick={toggleCamera}
+                disabled={audioOnly}
+                className="grid size-12 place-items-center rounded-full bg-white/10 disabled:opacity-40"
+                aria-label={cameraEnabled ? "Kamerayı kapat" : "Kamerayı aç"}
+              >
+                {cameraEnabled ? (
+                  <Camera className="size-5" />
+                ) : (
+                  <CameraOff className="size-5" />
+                )}
+              </button>
+            </div>
+          ) : null}
           {error ? (
             <p className="px-4 pb-3 text-center text-xs font-semibold text-red-300">
               {error}

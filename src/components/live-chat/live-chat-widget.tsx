@@ -815,6 +815,7 @@ export function LiveChatWidget() {
                 token={token}
                 conversationId={conversation.id}
                 onCallChange={handleCallChange}
+                callHistory={callHistory}
               />
             ) : null}
             {conversation && notificationPermission === "default" ? (
