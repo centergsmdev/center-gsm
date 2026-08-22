@@ -174,6 +174,37 @@ export async function loadCallEvents(conversationId: string) {
   return result.data ?? [];
 }
 
+export async function loadCallHistory(conversationId: string) {
+  const service = createServiceClient();
+  if (!service) return [] as LiveChatCall[];
+  const result = await service
+    .from("live_chat_calls")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("requested_at", { ascending: true });
+  return result.data ?? [];
+}
+
+export async function notifyCallTimeline(conversationId: string) {
+  const service = createServiceClient();
+  if (!service) return;
+  let channel: ReturnType<typeof service.channel> | null = null;
+  try {
+    const conversation = await service
+      .from("live_chat_conversations")
+      .select("visitor_token")
+      .eq("id", conversationId)
+      .maybeSingle();
+    if (!conversation.data?.visitor_token) return;
+    channel = service.channel(`live-chat:${conversation.data.visitor_token}`);
+    await channel.httpSend("call_timeline", { conversationId });
+  } catch {
+    // Timeline refresh is best-effort and must never interrupt a call transition.
+  } finally {
+    if (channel) await service.removeChannel(channel).catch(() => undefined);
+  }
+}
+
 export const VIDEO_CALL_ERROR_MESSAGES: Record<string, string> = {
   active_call_exists: "Bu sohbet için zaten aktif bir görüşme talebi var.",
   rate_limited:

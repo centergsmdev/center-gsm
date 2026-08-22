@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -16,13 +17,19 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
+import { CallHistoryCard } from "@/components/live-chat/call-history-card";
 import { CustomerVideoCall } from "@/components/live-chat/customer-video-call";
+import { buildChatTimeline } from "@/lib/live-chat/call-history";
 import {
   formatChatDay,
   formatChatTime,
   turkeyDateKey,
 } from "@/lib/format/date-time";
-import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
+import type {
+  LiveChatCall,
+  LiveChatConversation,
+  LiveChatMessage,
+} from "@/types/database";
 import {
   createCoarseDeviceProfile,
   encodeCoarseDeviceProfile,
@@ -49,6 +56,7 @@ function urlBase64ToUint8Array(value: string) {
 type ChatResponse = {
   conversation: LiveChatConversation | null;
   messages?: ChatMessage[];
+  calls?: LiveChatCall[];
   message?: ChatMessage;
   error?: string;
   code?: string;
@@ -76,6 +84,7 @@ export function LiveChatWidget() {
     null,
   );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [callHistory, setCallHistory] = useState<LiveChatCall[]>([]);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [accessBlocked, setAccessBlocked] = useState(false);
@@ -98,6 +107,24 @@ export function LiveChatWidget() {
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   const stickToBottom = useRef(true);
+  const timeline = useMemo(
+    () => buildChatTimeline(messages, callHistory),
+    [callHistory, messages],
+  );
+
+  const handleCallChange = useCallback((nextCall: LiveChatCall) => {
+    setCallHistory((current) => {
+      const existing = current.some((item) => item.id === nextCall.id);
+      const next = existing
+        ? current.map((item) => (item.id === nextCall.id ? nextCall : item))
+        : [...current, nextCall];
+      return next.sort(
+        (left, right) =>
+          new Date(left.requested_at).getTime() -
+          new Date(right.requested_at).getTime(),
+      );
+    });
+  }, []);
 
   const sendCustomerTyping = useCallback(
     (typing: boolean) => {
@@ -192,6 +219,7 @@ export function LiveChatWidget() {
       setAccessBlocked(true);
       setConversation(null);
       setMessages([]);
+      setCallHistory([]);
       setError("");
       return;
     }
@@ -200,6 +228,7 @@ export function LiveChatWidget() {
     setAccessBlocked(false);
     setConversation(data.conversation);
     setMessages(data.messages ?? []);
+    setCallHistory(data.calls ?? []);
     if (open && data.conversation) {
       await fetch("/api/live-chat", {
         method: "PATCH",
@@ -376,6 +405,15 @@ export function LiveChatWidget() {
       .on("broadcast", { event: "read" }, () => {
         if (open) void loadChat();
       })
+      .on("broadcast", { event: "call_timeline" }, ({ payload }) => {
+        if (
+          conversation?.id &&
+          payload?.conversationId &&
+          payload.conversationId !== conversation.id
+        )
+          return;
+        if (open) void loadChat();
+      })
       .on("broadcast", { event: "conversation_deleted" }, ({ payload }) => {
         if (
           conversation?.id &&
@@ -385,6 +423,7 @@ export function LiveChatWidget() {
           return;
         setConversation(null);
         setMessages([]);
+        setCallHistory([]);
         setMessage("");
         setError("");
         setHasUnreadAdminReply(false);
@@ -395,6 +434,7 @@ export function LiveChatWidget() {
         setAccessBlocked(true);
         setConversation(null);
         setMessages([]);
+        setCallHistory([]);
         setMessage("");
         setError("");
       })
@@ -488,7 +528,7 @@ export function LiveChatWidget() {
     const scroll = scrollRef.current;
     if (!scroll || !stickToBottom.current) return;
     scroll.scrollTo({ top: scroll.scrollHeight, behavior: "smooth" });
-  }, [adminTyping, messages]);
+  }, [adminTyping, callHistory, messages]);
 
   function updateScrollPosition() {
     const scroll = scrollRef.current;
@@ -546,6 +586,7 @@ export function LiveChatWidget() {
         setAccessBlocked(true);
         setConversation(null);
         setMessages([]);
+        setCallHistory([]);
         throw new Error(LIVE_CHAT_BLOCKED_MESSAGE);
       }
       if (!response.ok || !data.message)
@@ -596,6 +637,7 @@ export function LiveChatWidget() {
         setAccessBlocked(true);
         setConversation(null);
         setMessages([]);
+        setCallHistory([]);
         throw new Error(LIVE_CHAT_BLOCKED_MESSAGE);
       }
       if (!response.ok || !data.message)
@@ -690,20 +732,29 @@ export function LiveChatWidget() {
               <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-center text-sm font-semibold text-zinc-700">
                 {LIVE_CHAT_BLOCKED_MESSAGE}
               </p>
-            ) : messages.length ? (
-              messages.map((item, index) => {
-                const previous = messages[index - 1];
+            ) : timeline.length ? (
+              timeline.map((entry, index) => {
+                const previous = timeline[index - 1];
                 const showDay =
                   !previous ||
-                  turkeyDateKey(previous.created_at) !==
-                    turkeyDateKey(item.created_at);
+                  turkeyDateKey(previous.timestamp) !==
+                    turkeyDateKey(entry.timestamp);
+                const day = showDay ? (
+                  <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
+                    {formatChatDay(entry.timestamp)}
+                  </div>
+                ) : null;
+                if (entry.kind === "call")
+                  return (
+                    <div key={entry.id}>
+                      {day}
+                      <CallHistoryCard call={entry.call} audience="customer" />
+                    </div>
+                  );
+                const item = entry.message as ChatMessage;
                 return (
-                  <div key={item.id}>
-                    {showDay ? (
-                      <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
-                        {formatChatDay(item.created_at)}
-                      </div>
-                    ) : null}
+                  <div key={entry.id}>
+                    {day}
                     <div
                       className={`mb-2 max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm ${item.sender === "customer" ? "ml-auto rounded-br-md bg-red-600 text-white" : "rounded-bl-md bg-white text-zinc-900"}`}
                     >
@@ -763,6 +814,7 @@ export function LiveChatWidget() {
               <CustomerVideoCall
                 token={token}
                 conversationId={conversation.id}
+                onCallChange={handleCallChange}
               />
             ) : null}
             {conversation && notificationPermission === "default" ? (

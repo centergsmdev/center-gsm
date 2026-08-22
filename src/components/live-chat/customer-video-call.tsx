@@ -43,9 +43,11 @@ type CallResponse = {
 export function CustomerVideoCall({
   token,
   conversationId,
+  onCallChange,
 }: {
   token: string;
   conversationId: string;
+  onCallChange?: (call: LiveChatCall) => void;
 }) {
   const [settings, setSettings] = useState<PublicVideoSettings | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
@@ -160,6 +162,7 @@ export function CustomerVideoCall({
       if (data.call) {
         callRef.current = data.call;
         setCall(data.call);
+        onCallChange?.(data.call);
       }
       if (data.participant?.token) {
         setParticipantToken((current) =>
@@ -170,7 +173,7 @@ export function CustomerVideoCall({
         setError(data.error ?? "Görüşme durumu güncellenemedi.");
       return data.call ?? null;
     },
-    [token],
+    [onCallChange, token],
   );
 
   const cleanupMedia = useCallback(() => {
@@ -239,12 +242,13 @@ export function CustomerVideoCall({
           if (!data.call) return;
           callRef.current = data.call;
           setCall(data.call);
+          onCallChange?.(data.call);
           if (TERMINAL_CALL_STATUSES.has(data.call.status)) cleanupMedia();
         })
         .catch(() => undefined);
     }, 1800);
     return () => clearInterval(timer);
-  }, [call, cleanupMedia, token]);
+  }, [call, cleanupMedia, onCallChange, token]);
 
   useEffect(() => {
     if (!call?.connected_at || !settings?.max_duration_seconds) return;
@@ -326,6 +330,7 @@ export function CustomerVideoCall({
       setCameraEnabled(!onlyAudio);
       setMicrophoneEnabled(true);
       setCall(data.call);
+      onCallChange?.(data.call);
       setParticipantToken(data.participant.token);
       setIceServers(data.iceServers ?? []);
       if (data.settings) setSettings(data.settings);
@@ -508,6 +513,7 @@ export function CustomerVideoCall({
                 autoPlay
                 muted
                 playsInline
+                style={{ transform: "none" }}
                 className="absolute bottom-6 right-6 aspect-[3/4] w-24 rounded-2xl border-2 border-white/30 bg-zinc-900 object-cover shadow-xl"
                 aria-label="Kendi kamera görüntünüz"
               />

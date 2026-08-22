@@ -4,7 +4,9 @@ import {
   createParticipantToken,
   getIceServers,
   loadCallEvents,
+  loadCallHistory,
   loadVideoSettings,
+  notifyCallTimeline,
   parseCallRpcResult,
   toPublicVideoSettings,
   videoCallErrorMessage,
@@ -60,12 +62,16 @@ export async function GET(request: Request) {
     "conversationId",
   );
   const events = conversationId ? await loadCallEvents(conversationId) : [];
+  const historyCalls = conversationId
+    ? await loadCallHistory(conversationId)
+    : [];
   return NextResponse.json({
     calls: calls.data.map((call) => ({
       ...call,
       customer_name: names.get(call.conversation_id) ?? "Müşteri",
     })),
     events,
+    historyCalls,
   });
 }
 
@@ -110,6 +116,7 @@ export async function PATCH(request: Request) {
   const result = parseCallRpcResult(transitioned.data);
   if (!result.ok || !result.call)
     return error(videoCallErrorMessage(result.error), 409, result.error);
+  await notifyCallTimeline(result.call.conversation_id);
   const participant = [
     "accept",
     "connecting",

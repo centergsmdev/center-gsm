@@ -75,16 +75,23 @@ export async function GET(request: Request) {
     .maybeSingle();
   if (conversation.error) return error("Sohbet yüklenemedi.", 500);
   if (!conversation.data)
-    return NextResponse.json({ conversation: null, messages: [] });
+    return NextResponse.json({ conversation: null, messages: [], calls: [] });
   const messages = await client
     .from("live_chat_messages")
     .select("*")
     .eq("conversation_id", conversation.data.id)
     .order("created_at", { ascending: true });
   if (messages.error) return error("Mesajlar yüklenemedi.", 500);
+  const calls = await client
+    .from("live_chat_calls")
+    .select("*")
+    .eq("conversation_id", conversation.data.id)
+    .order("requested_at", { ascending: true });
+  if (calls.error) return error("Görüşme geçmişi yüklenemedi.", 500);
   return NextResponse.json({
     conversation: conversation.data,
     messages: await withAttachmentUrls(client, messages.data),
+    calls: calls.data,
   });
 }
 

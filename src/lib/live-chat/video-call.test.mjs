@@ -205,6 +205,7 @@ test("aktif görüşmede yenilenen token mevcut peer kimliğini değiştirmez", 
 test("çağrı süresi kullanıcıya okunabilir biçimde gösterilir", () => {
   assert.equal(formatCallDuration(42), "42 sn");
   assert.equal(formatCallDuration(125), "2 dk 5 sn");
+  assert.equal(formatCallDuration(7384), "2 sa 3 dk 4 sn");
 });
 
 test("ICE diagnostic yalnız candidate tipini çıkarır", () => {

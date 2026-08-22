@@ -328,8 +328,10 @@ export function isValidCallTransition(
 
 export function formatCallDuration(seconds: number | null | undefined) {
   const safe = Math.max(0, Math.floor(seconds ?? 0));
-  const minutes = Math.floor(safe / 60);
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
   const remainder = safe % 60;
+  if (hours) return `${hours} sa ${minutes} dk ${remainder} sn`;
   return minutes ? `${minutes} dk ${remainder} sn` : `${remainder} sn`;
 }
 

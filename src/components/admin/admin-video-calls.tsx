@@ -38,6 +38,7 @@ type AdminCall = LiveChatCall & { customer_name: string };
 type CallsResponse = {
   calls?: AdminCall[];
   events?: LiveChatCallEvent[];
+  historyCalls?: LiveChatCall[];
   call?: LiveChatCall;
   participant?: { token: string; expiresAt: number } | null;
   iceServers?: RTCIceServer[];
@@ -57,8 +58,12 @@ type SettingsResponse = {
 
 export function AdminVideoCalls({
   selectedConversationId,
+  onHistoryChange,
+  refreshKey = 0,
 }: {
   selectedConversationId: string | null;
+  onHistoryChange?: (calls: LiveChatCall[]) => void;
+  refreshKey?: number;
 }) {
   const [calls, setCalls] = useState<AdminCall[]>([]);
   const [events, setEvents] = useState<LiveChatCallEvent[]>([]);
@@ -129,6 +134,7 @@ export function AdminVideoCalls({
     if (!response.ok) return;
     setCalls(data.calls ?? []);
     setEvents(data.events ?? []);
+    onHistoryChange?.(data.historyCalls ?? []);
     const active = sessionRef.current;
     if (active) {
       const current = data.calls?.find((call) => call.id === active.call.id);
@@ -140,7 +146,7 @@ export function AdminVideoCalls({
         setSession(null);
       }
     }
-  }, [cleanupMedia, selectedConversationId]);
+  }, [cleanupMedia, onHistoryChange, selectedConversationId]);
 
   useEffect(() => {
     void loadSettings();
@@ -151,6 +157,10 @@ export function AdminVideoCalls({
     const timer = setInterval(() => void loadCalls(), 1800);
     return () => clearInterval(timer);
   }, [loadCalls]);
+
+  useEffect(() => {
+    if (refreshKey) void loadCalls();
+  }, [loadCalls, refreshKey]);
 
   useEffect(() => {
     const video = customerVideoRef.current;

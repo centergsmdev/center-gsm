@@ -12,6 +12,7 @@ import {
   isVideoCallEnvironmentEnabled,
   loadCallEvents,
   loadVideoSettings,
+  notifyCallTimeline,
   parseCallRpcResult,
   requestAddress,
   toPublicVideoSettings,
@@ -146,6 +147,7 @@ export async function POST(request: Request) {
   });
   if (!participant)
     return error("Görüşme yetkilendirmesi oluşturulamadı.", 503);
+  await notifyCallTimeline(result.call.conversation_id);
   return NextResponse.json(
     {
       call: result.call,
@@ -195,6 +197,7 @@ export async function PATCH(request: Request) {
   const result = parseCallRpcResult(transitioned.data);
   if (!result.ok || !result.call)
     return error(videoCallErrorMessage(result.error), 409, result.error);
+  await notifyCallTimeline(result.call.conversation_id);
   const participant = createParticipantToken({
     call: result.call,
     role: "customer",

@@ -14,7 +14,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { AdminVideoCalls } from "@/components/admin/admin-video-calls";
 import { AdminLiveChatSecurity } from "@/components/admin/admin-live-chat-security";
+import { CallHistoryCard } from "@/components/live-chat/call-history-card";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
+import { buildChatTimeline } from "@/lib/live-chat/call-history";
 import {
   useCallback,
   useEffect,
@@ -31,7 +33,11 @@ import {
   formatChatTime,
   turkeyDateKey,
 } from "@/lib/format/date-time";
-import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
+import type {
+  LiveChatCall,
+  LiveChatConversation,
+  LiveChatMessage,
+} from "@/types/database";
 
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
 const DEFAULT_AUTO_REPLY_MESSAGE =
@@ -71,6 +77,8 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [unread, setUnread] = useState<Record<string, number>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [callHistory, setCallHistory] = useState<LiveChatCall[]>([]);
+  const [callTimelineRefresh, setCallTimelineRefresh] = useState(0);
   const [reply, setReply] = useState("");
   const [error, setError] = useState("");
   const [customerTyping, setCustomerTyping] = useState(false);
@@ -104,6 +112,10 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const selected = useMemo(
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
+  );
+  const timeline = useMemo(
+    () => buildChatTimeline(messages, callHistory),
+    [callHistory, messages],
   );
   const handleSelectedBlockState = useCallback(
     (blocked: boolean) => {
@@ -370,11 +382,13 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     }
     if (!selectedId || !selectedVisitorToken) {
       setMessages([]);
+      setCallHistory([]);
       previousSelectedId.current = null;
       return;
     }
     if (previousSelectedId.current !== selectedId) {
       stickToBottom.current = true;
+      setCallHistory([]);
       previousSelectedId.current = selectedId;
     }
     void loadMessages(selectedId);
@@ -398,6 +412,10 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
         }
       })
       .on("broadcast", { event: "read" }, () => void loadMessages(selectedId))
+      .on("broadcast", { event: "call_timeline" }, ({ payload }) => {
+        if (payload?.conversationId !== selectedId) return;
+        setCallTimelineRefresh((current) => current + 1);
+      })
       .subscribe();
     return () => {
       if (customerTypingTimer.current) {
@@ -412,7 +430,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     const scroll = messageScrollRef.current;
     if (!scroll || !stickToBottom.current) return;
     scroll.scrollTo({ top: scroll.scrollHeight, behavior: "smooth" });
-  }, [customerTyping, messages]);
+  }, [callHistory, customerTyping, messages]);
 
   function updateMessageScrollPosition() {
     const scroll = messageScrollRef.current;
@@ -514,7 +532,11 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   return (
     <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr]">
       <div className="col-span-full px-4 pt-4">
-        <AdminVideoCalls selectedConversationId={selectedId} />
+        <AdminVideoCalls
+          selectedConversationId={selectedId}
+          onHistoryChange={setCallHistory}
+          refreshKey={callTimelineRefresh}
+        />
       </div>
       <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:max-h-none lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
@@ -672,19 +694,28 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
               onScroll={updateMessageScrollPosition}
               className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50 p-4"
             >
-              {messages.map((item, index) => {
-                const previous = messages[index - 1];
+              {timeline.map((entry, index) => {
+                const previous = timeline[index - 1];
                 const showDay =
                   !previous ||
-                  turkeyDateKey(previous.created_at) !==
-                    turkeyDateKey(item.created_at);
+                  turkeyDateKey(previous.timestamp) !==
+                    turkeyDateKey(entry.timestamp);
+                const day = showDay ? (
+                  <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
+                    {formatChatDay(entry.timestamp)}
+                  </div>
+                ) : null;
+                if (entry.kind === "call")
+                  return (
+                    <div key={entry.id}>
+                      {day}
+                      <CallHistoryCard call={entry.call} audience="admin" />
+                    </div>
+                  );
+                const item = entry.message as ChatMessage;
                 return (
-                  <div key={item.id}>
-                    {showDay ? (
-                      <div className="my-3 text-center text-[11px] font-bold text-zinc-400">
-                        {formatChatDay(item.created_at)}
-                      </div>
-                    ) : null}
+                  <div key={entry.id}>
+                    {day}
                     <div
                       className={`mb-2 max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%] ${item.sender === "admin" ? "ml-auto rounded-br-md bg-red-600 text-white" : item.sender === "ai" ? "ml-auto rounded-br-md bg-violet-600 text-white" : "rounded-bl-md bg-white text-zinc-900"}`}
                     >
