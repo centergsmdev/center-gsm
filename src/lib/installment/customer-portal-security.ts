@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 const TOKEN_CONTEXT = "center-gsm:installment-customer-portal:v1";
+const PORTAL_ORIGIN = "https://centergsm.com.tr";
 
 type PortalAccessClaims = {
   portalId: string;
@@ -57,6 +58,10 @@ export function verifyPortalAccessToken(
 
 export function portalAccessCookieName(portalId: string) {
   return `cg_installment_${portalId.replace(/-/g, "")}`;
+}
+
+export function createPortalAccessUrl(portalId: string, token: string) {
+  return `${PORTAL_ORIGIN}/elden-taksit/takip/${encodeURIComponent(portalId)}/erisim?token=${encodeURIComponent(token)}`;
 }
 
 export function newPortalAccessExpiry(now = new Date()) {

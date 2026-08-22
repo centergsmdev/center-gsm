@@ -1,5 +1,8 @@
 import type { InstallmentCustomerPortalRow } from "@/types/database";
-import { createPortalAccessToken } from "./customer-portal-security";
+import {
+  createPortalAccessToken,
+  createPortalAccessUrl,
+} from "./customer-portal-security";
 import type {
   InstallmentAdminCustomerPortal,
   InstallmentAdminPaymentPlan,
@@ -7,8 +10,6 @@ import type {
   InstallmentPortalHandoff,
 } from "./types";
 import { normalizeWhatsAppTurkishPhone } from "./whatsapp";
-
-const DEFAULT_SITE_URL = "https://centergsm.com.tr";
 
 export function mapAdminCustomerPortal(
   row: InstallmentCustomerPortalRow,
@@ -38,7 +39,6 @@ export function createInstallmentPortalHandoff(source: {
   paymentPlan: InstallmentAdminPaymentPlan | null;
   portal: InstallmentCustomerPortalRow | null;
   secret: string;
-  siteUrl?: string;
 }): InstallmentPortalHandoff {
   if (source.status !== "approved") return { state: "not_approved" };
   if (!source.paymentPlan) return { state: "missing_payment_plan" };
@@ -55,8 +55,7 @@ export function createInstallmentPortalHandoff(source: {
   );
   const phone = normalizeWhatsAppTurkishPhone(source.phone);
   if (!token || !phone) return { state: "expired" };
-  const baseUrl = (source.siteUrl || DEFAULT_SITE_URL).replace(/\/$/, "");
-  const accessUrl = `${baseUrl}/elden-taksit/takip/${source.portal.id}/erisim?token=${encodeURIComponent(token)}`;
+  const accessUrl = createPortalAccessUrl(source.portal.id, token);
   const firstName = source.applicantName.trim().split(/\s+/)[0];
   const message = [
     `Merhaba ${firstName},`,

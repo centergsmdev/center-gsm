@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  createPortalAccessUrl,
   createPortalAccessToken,
   portalAccessCookieName,
   verifyPortalAccessToken,
@@ -53,4 +54,13 @@ test("portal çerezi başvuru portalına özgü ve tahmin edilebilir addadır", 
     portalAccessCookieName(claims.portalId),
     "cg_installment_11111111111141118111111111111111",
   );
+});
+
+test("müşteri bağlantısı yalnız resmi CENTER GSM alan adında üretilir", () => {
+  const url = createPortalAccessUrl(claims.portalId, "1.123.imza");
+  assert.equal(
+    url,
+    "https://centergsm.com.tr/elden-taksit/takip/11111111-1111-4111-8111-111111111111/erisim?token=1.123.imza",
+  );
+  assert.equal(url.includes("vercel.app"), false);
 });

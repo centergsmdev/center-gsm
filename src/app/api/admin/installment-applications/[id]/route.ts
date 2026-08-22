@@ -119,7 +119,6 @@ export async function GET(
     paymentPlan: mappedPaymentPlan,
     portal: portal.data,
     secret: getInstallmentHashSecret(),
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
   });
   return NextResponse.json(
     {
