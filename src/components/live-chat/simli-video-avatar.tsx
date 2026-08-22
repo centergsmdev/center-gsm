@@ -146,7 +146,11 @@ export function SimliVideoAvatar({
         }
         const readyMs = performance.now() - startedAt;
         report("connecting", "waiting", "waiting", true, { readyMs });
-        const { LogLevel, SimliClient } = await import("simli-client");
+        // simli-client@3.0.2's root CommonJS entry imports "./Client" while
+        // the published Linux file is lowercase (client.js). Importing the
+        // typed implementation entry keeps Vercel's case-sensitive build safe.
+        const { LogLevel, SimliClient } =
+          await import("simli-client/dist/client.js");
         const simliClient = new SimliClient(
           data.sessionToken,
           simliVideoElement,

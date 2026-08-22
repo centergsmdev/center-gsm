@@ -84,6 +84,8 @@ test("PoC A LiveKit kullanır ve Simli sesini oynatmaz", () => {
     /<audio ref=\{remoteAudioRef\} autoPlay playsInline/,
   );
   assert.doesNotMatch(client, /getUserMedia|MediaRecorder|speechSynthesis/);
+  assert.match(client, /simli-client\/dist\/client\.js/);
+  assert.doesNotMatch(client, /import\("simli-client"\)/);
 });
 
 test("session endpoint ownership, accepted-call, rate limit ve tek-session kilidi uygular", () => {
