@@ -1,4 +1,9 @@
 import type { LiveChatCallStatus } from "@/types/database";
+import type {
+  SimliPlaybackState,
+  SimliSessionState,
+  SimliVideoState,
+} from "@/lib/live-chat/simli";
 
 export type VideoCallRole = "customer" | "admin";
 export type VideoCallAction =
@@ -64,6 +69,13 @@ export type SafePeerDiagnostics = {
   outboundAudioBytesSent: number;
   inboundAudioPacketsReceived: number;
   inboundAudioBytesReceived: number;
+  avatarMode: "static" | "audio-reactive" | "simli-trinity";
+  simliSessionState: SimliSessionState;
+  simliAvatarVideoState: SimliVideoState;
+  simliAvatarPlaybackState: SimliPlaybackState;
+  simliFallbackActive: boolean;
+  simliSessionReadyMs: number | null;
+  simliFirstFrameMs: number | null;
 };
 
 export type SignalEnvelope<T = unknown> = {
@@ -204,7 +216,32 @@ export function isSafePeerDiagnostics(
     Number.isSafeInteger(input.outboundAudioPacketsSent) &&
     Number.isSafeInteger(input.outboundAudioBytesSent) &&
     Number.isSafeInteger(input.inboundAudioPacketsReceived) &&
-    Number.isSafeInteger(input.inboundAudioBytesReceived)
+    Number.isSafeInteger(input.inboundAudioBytesReceived) &&
+    ["static", "audio-reactive", "simli-trinity"].includes(
+      String(input.avatarMode),
+    ) &&
+    [
+      "idle",
+      "waiting-audio",
+      "requesting",
+      "connecting",
+      "connected",
+      "ended",
+      "failed",
+    ].includes(String(input.simliSessionState)) &&
+    ["waiting", "received"].includes(String(input.simliAvatarVideoState)) &&
+    ["waiting", "playing", "failed"].includes(
+      String(input.simliAvatarPlaybackState),
+    ) &&
+    typeof input.simliFallbackActive === "boolean" &&
+    (input.simliSessionReadyMs === null ||
+      (Number.isSafeInteger(input.simliSessionReadyMs) &&
+        Number(input.simliSessionReadyMs) >= 0 &&
+        Number(input.simliSessionReadyMs) <= 120_000)) &&
+    (input.simliFirstFrameMs === null ||
+      (Number.isSafeInteger(input.simliFirstFrameMs) &&
+        Number(input.simliFirstFrameMs) >= 0 &&
+        Number(input.simliFirstFrameMs) <= 120_000))
   );
 }
 

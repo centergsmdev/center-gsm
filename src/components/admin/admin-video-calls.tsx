@@ -50,6 +50,8 @@ type SettingsResponse = {
   settings?: LiveChatVideoSettings;
   environmentEnabled?: boolean;
   participantAuthConfigured?: boolean;
+  simliPocEnabled?: boolean;
+  simliConfigured?: boolean;
   error?: string;
 };
 
@@ -64,6 +66,8 @@ export function AdminVideoCalls({
   const [environmentEnabled, setEnvironmentEnabled] = useState(false);
   const [participantAuthConfigured, setParticipantAuthConfigured] =
     useState(false);
+  const [simliPocEnabled, setSimliPocEnabled] = useState(false);
+  const [simliConfigured, setSimliConfigured] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [session, setSession] = useState<{
@@ -110,6 +114,8 @@ export function AdminVideoCalls({
     if (data.settings) setSettings(data.settings);
     setEnvironmentEnabled(data.environmentEnabled === true);
     setParticipantAuthConfigured(data.participantAuthConfigured === true);
+    setSimliPocEnabled(data.simliPocEnabled === true);
+    setSimliConfigured(data.simliConfigured === true);
   }, []);
 
   const loadCalls = useCallback(async () => {
@@ -442,6 +448,9 @@ export function AdminVideoCalls({
               >
                 <option value="static">Static</option>
                 <option value="audio-reactive">Audio Reactive</option>
+                <option value="simli-trinity" disabled={!simliConfigured}>
+                  Simli Trinity (PoC/Test)
+                </option>
               </select>
             </label>
             <label className="text-xs font-bold">
@@ -524,6 +533,16 @@ export function AdminVideoCalls({
                 {participantAuthConfigured
                   ? "Hazır"
                   : "SUPABASE_JWT_SECRET bekleniyor"}
+              </span>
+              <span
+                className={`text-xs font-bold ${simliConfigured ? "text-emerald-600" : "text-amber-600"}`}
+              >
+                Simli Trinity:{" "}
+                {simliConfigured
+                  ? "Hazır"
+                  : simliPocEnabled
+                    ? "API key/Face ID bekleniyor"
+                    : "PoC kapalı"}
               </span>
             </div>
           </div>
@@ -774,6 +793,50 @@ function PeerDiagnosticPanel({
       <DiagnosticValue
         label="Customer inbound audio"
         value={`${remote?.inboundAudioPacketsReceived ?? 0} packets · ${remote?.inboundAudioBytesReceived ?? 0} bytes`}
+      />
+      <DiagnosticValue
+        label="Simli mode"
+        value={remote?.avatarMode === "simli-trinity" ? "Active" : "Inactive"}
+      />
+      <DiagnosticValue
+        label="Simli session"
+        value={remote?.simliSessionState ?? "Waiting"}
+      />
+      <DiagnosticValue
+        label="Avatar video"
+        value={
+          remote?.simliAvatarVideoState === "received" ? "Received" : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Avatar playback"
+        value={
+          remote?.simliAvatarPlaybackState === "playing"
+            ? "Playing"
+            : remote?.simliAvatarPlaybackState === "failed"
+              ? "Failed"
+              : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Avatar fallback"
+        value={remote?.simliFallbackActive ? "Active" : "Inactive"}
+      />
+      <DiagnosticValue
+        label="Session ready"
+        value={
+          remote?.simliSessionReadyMs != null
+            ? `${remote.simliSessionReadyMs} ms`
+            : "Waiting"
+        }
+      />
+      <DiagnosticValue
+        label="Input → first frame"
+        value={
+          remote?.simliFirstFrameMs != null
+            ? `${remote.simliFirstFrameMs} ms`
+            : "Waiting"
+        }
       />
     </div>
   );

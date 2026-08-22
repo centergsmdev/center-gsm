@@ -68,6 +68,13 @@ function initialDiagnostics(
     outboundAudioBytesSent: 0,
     inboundAudioPacketsReceived: 0,
     inboundAudioBytesReceived: 0,
+    avatarMode: "static",
+    simliSessionState: "idle",
+    simliAvatarVideoState: "waiting",
+    simliAvatarPlaybackState: "waiting",
+    simliFallbackActive: false,
+    simliSessionReadyMs: null,
+    simliFirstFrameMs: null,
   };
 }
 

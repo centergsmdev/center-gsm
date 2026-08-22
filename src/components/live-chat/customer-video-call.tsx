@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useVideoCallPeer } from "@/components/live-chat/use-video-call-peer";
 import { VideoAvatar } from "@/components/live-chat/video-avatar";
+import { SimliVideoAvatar } from "@/components/live-chat/simli-video-avatar";
 import {
   ACTIVE_CALL_STATUSES,
   TERMINAL_CALL_STATUSES,
@@ -206,8 +207,14 @@ export function CustomerVideoCall({
     updateClientDiagnostics({
       customerPlaybackState: playbackState,
       audioContextState,
+      avatarMode: settings?.avatar_mode ?? "static",
     });
-  }, [audioContextState, playbackState, updateClientDiagnostics]);
+  }, [
+    audioContextState,
+    playbackState,
+    settings?.avatar_mode,
+    updateClientDiagnostics,
+  ]);
 
   useEffect(() => {
     if (settings?.avatar_mode !== "audio-reactive")
@@ -455,14 +462,26 @@ export function CustomerVideoCall({
             </button>
           </header>
           <div className="relative min-h-0 flex-1 p-3">
-            <VideoAvatar
-              displayName={settings.avatar_display_name}
-              imageUrl={settings.avatar_image_url}
-              stream={remoteStream}
-              mode={settings.avatar_mode}
-              audioActivated={audioActivated}
-              onAudioContextStateChange={setAudioContextState}
-            />
+            {settings.avatar_mode === "simli-trinity" ? (
+              <SimliVideoAvatar
+                callId={call.id}
+                callStatus={call.status}
+                visitorToken={token}
+                displayName={settings.avatar_display_name}
+                imageUrl={settings.avatar_image_url}
+                stream={remoteStream}
+                onDiagnosticsChange={updateClientDiagnostics}
+              />
+            ) : (
+              <VideoAvatar
+                displayName={settings.avatar_display_name}
+                imageUrl={settings.avatar_image_url}
+                stream={remoteStream}
+                mode={settings.avatar_mode}
+                audioActivated={audioActivated}
+                onAudioContextStateChange={setAudioContextState}
+              />
+            )}
             {!audioOnly ? (
               <video
                 ref={selfVideoRef}
@@ -488,7 +507,7 @@ export function CustomerVideoCall({
             </button>
           ) : null}
           <div className="shrink-0 px-3 text-center text-[10px] text-zinc-400">
-            Dijital Avatar · Görüşme kaydedilmez ·{" "}
+            Dijital Temsilci · Görüşme kaydedilmez ·{" "}
             {peer.state === "reconnecting"
               ? "Bağlantı yenileniyor"
               : "Canlı görüşme"}

@@ -216,6 +216,11 @@ export type LiveChatCall = {
   duration_seconds: number | null;
   ended_by: "customer" | "admin" | "system" | null;
   end_reason: string | null;
+  simli_session_state: "reserved" | "active" | "ended" | "failed" | null;
+  simli_session_attempt_id: string | null;
+  simli_session_started_at: string | null;
+  simli_session_ended_at: string | null;
+  simli_session_expires_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -240,7 +245,7 @@ export type LiveChatCallEvent = {
 export type LiveChatVideoSettings = {
   id: boolean;
   enabled: boolean;
-  avatar_mode: "static" | "audio-reactive";
+  avatar_mode: "static" | "audio-reactive" | "simli-trinity";
   avatar_display_name: string;
   avatar_image_url: string | null;
   avatar_image_path: string | null;
@@ -1768,6 +1773,30 @@ export type Database = {
           p_window_seconds: number;
           p_ring_timeout_seconds: number;
           p_max_duration_seconds: number;
+        };
+        Returns: Json;
+      };
+      reserve_live_chat_simli_session: {
+        Args: {
+          p_call_id: string;
+          p_attempt_id: string;
+          p_lease_seconds: number;
+        };
+        Returns: Json;
+      };
+      touch_live_chat_simli_session: {
+        Args: {
+          p_call_id: string;
+          p_attempt_id: string;
+          p_lease_seconds: number;
+        };
+        Returns: Json;
+      };
+      release_live_chat_simli_session: {
+        Args: {
+          p_call_id: string;
+          p_attempt_id: string;
+          p_failed?: boolean;
         };
         Returns: Json;
       };

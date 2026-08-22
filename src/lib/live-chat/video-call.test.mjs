@@ -264,6 +264,13 @@ test("güvenli peer diagnostic IP veya SDP taşımadan doğrulanır", () => {
     outboundAudioBytesSent: 0,
     inboundAudioPacketsReceived: 0,
     inboundAudioBytesReceived: 0,
+    avatarMode: "simli-trinity",
+    simliSessionState: "connected",
+    simliAvatarVideoState: "received",
+    simliAvatarPlaybackState: "playing",
+    simliFallbackActive: false,
+    simliSessionReadyMs: 420,
+    simliFirstFrameMs: 980,
   };
   assert.equal(isSafePeerDiagnostics(diagnostic), true);
   assert.equal(

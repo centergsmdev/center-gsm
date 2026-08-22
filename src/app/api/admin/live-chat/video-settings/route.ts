@@ -8,6 +8,7 @@ import {
   isVideoCallEnvironmentEnabled,
   loadVideoSettings,
 } from "@/lib/live-chat/video-server";
+import { publicSimliConfig } from "@/lib/live-chat/simli-server";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -35,6 +36,7 @@ export async function GET() {
     settings: await loadVideoSettings(),
     environmentEnabled: isVideoCallEnvironmentEnabled(),
     participantAuthConfigured: Boolean(process.env.SUPABASE_JWT_SECRET?.trim()),
+    ...publicSimliConfig(),
   });
 }
 
@@ -43,7 +45,7 @@ export async function PATCH(request: Request) {
   if (!admin) return error("Bu işlem için yetkiniz yok.", 403);
   let payload: {
     enabled?: boolean;
-    avatarMode?: "static" | "audio-reactive";
+    avatarMode?: "static" | "audio-reactive" | "simli-trinity";
     avatarDisplayName?: string;
     ringTimeoutSeconds?: number;
     maxDurationSeconds?: number;
@@ -58,9 +60,17 @@ export async function PATCH(request: Request) {
     return error("Avatar görünen adı 2–80 karakter olmalıdır.");
   if (
     !payload.avatarMode ||
-    !["static", "audio-reactive"].includes(payload.avatarMode)
+    !["static", "audio-reactive", "simli-trinity"].includes(payload.avatarMode)
   )
     return error("Geçersiz avatar modu.");
+  if (
+    payload.avatarMode === "simli-trinity" &&
+    !publicSimliConfig().simliConfigured
+  )
+    return error(
+      "Simli Trinity için server-only ortam ayarları henüz hazır değil.",
+      409,
+    );
   if (
     !Number.isSafeInteger(payload.ringTimeoutSeconds) ||
     Number(payload.ringTimeoutSeconds) < 15 ||
