@@ -135,6 +135,59 @@ export type LiveChatSettings = {
   auto_reply_message: string;
   updated_at: string;
 };
+export type LiveChatAbuseIdentity = {
+  conversation_id: string;
+  visitor_token: string;
+  user_id: string | null;
+  abuse_token_hash: string | null;
+  ip_hash: string | null;
+  network_label: string | null;
+  device_profile_hash: string | null;
+  browser_family: string | null;
+  os_family: string | null;
+  viewport_class: string | null;
+  timezone: string | null;
+  language: string | null;
+  display_names: string[];
+  first_seen_at: string;
+  last_seen_at: string;
+};
+export type LiveChatBlock = {
+  id: string;
+  scope: "chat" | "site";
+  target_mode: "visitor" | "visitor_network" | "site";
+  visitor_token: string | null;
+  user_id: string | null;
+  abuse_token_hash: string | null;
+  ip_hash: string | null;
+  display_name_snapshot: string | null;
+  network_label: string | null;
+  reason:
+    | "spam"
+    | "unnecessary_messages"
+    | "harassment"
+    | "fake_names"
+    | "video_abuse"
+    | "other";
+  admin_note: string | null;
+  created_by: string;
+  created_at: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  revoke_note: string | null;
+};
+export type LiveChatRateLimitEvent = {
+  key_hash: string;
+  action:
+    "conversation_create" | "message_send" | "image_upload" | "video_request";
+  window_seconds: number;
+  window_started_at: string;
+  request_count: number;
+  violation_count: number;
+  blocked_until: string | null;
+  updated_at: string;
+};
 export type LiveChatCallStatus =
   | "requesting"
   | "ringing"
@@ -1408,6 +1461,22 @@ export type Database = {
         Partial<LiveChatMessage>
       >;
       live_chat_settings: Table<LiveChatSettings>;
+      live_chat_abuse_identities: Table<
+        LiveChatAbuseIdentity,
+        Partial<LiveChatAbuseIdentity> &
+          Pick<LiveChatAbuseIdentity, "conversation_id" | "visitor_token">,
+        Partial<LiveChatAbuseIdentity>
+      >;
+      live_chat_blocks: Table<
+        LiveChatBlock,
+        Partial<LiveChatBlock> &
+          Pick<
+            LiveChatBlock,
+            "scope" | "target_mode" | "reason" | "created_by"
+          >,
+        Partial<LiveChatBlock>
+      >;
+      live_chat_rate_limit_events: Table<LiveChatRateLimitEvent, never, never>;
       live_chat_video_settings: Table<LiveChatVideoSettings>;
       live_chat_calls: Table<LiveChatCall, never, never>;
       live_chat_call_events: Table<LiveChatCallEvent, never, never>;
@@ -1673,6 +1742,20 @@ export type Database = {
       };
     };
     Functions: {
+      consume_live_chat_rate_limit: {
+        Args: {
+          p_action: string;
+          p_key_hashes: string[];
+          p_limit: number;
+          p_window_seconds: number;
+          p_cooldown_seconds: number;
+        };
+        Returns: Json;
+      };
+      end_live_chat_calls_for_block: {
+        Args: { p_conversation_id: string };
+        Returns: number;
+      };
       expire_live_chat_calls: {
         Args: Record<PropertyKey, never>;
         Returns: number;

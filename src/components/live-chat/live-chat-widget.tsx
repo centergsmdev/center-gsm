@@ -23,6 +23,14 @@ import {
   turkeyDateKey,
 } from "@/lib/format/date-time";
 import type { LiveChatConversation, LiveChatMessage } from "@/types/database";
+import {
+  createCoarseDeviceProfile,
+  encodeCoarseDeviceProfile,
+  LIVE_CHAT_ABUSE_TOKEN_KEY,
+  LIVE_CHAT_BLOCKED_MESSAGE,
+  LIVE_CHAT_DEVICE_PROFILE_HEADER,
+  LIVE_CHAT_VISITOR_COOKIE_KEY,
+} from "@/lib/live-chat/abuse-shared";
 
 const TOKEN_KEY = "center-gsm-live-chat-token";
 const NAME_KEY = "center-gsm-live-chat-name";
@@ -43,7 +51,13 @@ type ChatResponse = {
   messages?: ChatMessage[];
   message?: ChatMessage;
   error?: string;
+  code?: string;
 };
+
+function setFirstPartyCookie(key: string, value: string) {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${key}=${encodeURIComponent(value)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+}
 
 export function LiveChatWidget() {
   const pathname = usePathname();
@@ -64,6 +78,8 @@ export function LiveChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+  const [accessBlocked, setAccessBlocked] = useState(false);
+  const [deviceProfileHeader, setDeviceProfileHeader] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [adminTyping, setAdminTyping] = useState(false);
   const [adminOnline, setAdminOnline] = useState(false);
@@ -83,13 +99,17 @@ export function LiveChatWidget() {
   const lastTypingSent = useRef(0);
   const stickToBottom = useRef(true);
 
-  const sendCustomerTyping = useCallback((typing: boolean) => {
-    void chatChannelRef.current?.send({
-      type: "broadcast",
-      event: "typing",
-      payload: { role: "customer", typing },
-    });
-  }, []);
+  const sendCustomerTyping = useCallback(
+    (typing: boolean) => {
+      if (accessBlocked) return;
+      void chatChannelRef.current?.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { role: "customer", typing },
+      });
+    },
+    [accessBlocked],
+  );
 
   const stopCustomerTyping = useCallback(() => {
     if (typingTimer.current) {
@@ -160,11 +180,24 @@ export function LiveChatWidget() {
     if (!token) return;
     const response = await fetch(
       `/api/live-chat?token=${encodeURIComponent(token)}`,
-      { cache: "no-store" },
+      {
+        cache: "no-store",
+        headers: deviceProfileHeader
+          ? { [LIVE_CHAT_DEVICE_PROFILE_HEADER]: deviceProfileHeader }
+          : undefined,
+      },
     );
     const data = (await response.json()) as ChatResponse;
+    if (data.code === "LIVE_CHAT_BLOCKED") {
+      setAccessBlocked(true);
+      setConversation(null);
+      setMessages([]);
+      setError("");
+      return;
+    }
     if (!response.ok)
       throw new Error(data.error ?? "Sohbet geçmişi yüklenemedi.");
+    setAccessBlocked(false);
     setConversation(data.conversation);
     setMessages(data.messages ?? []);
     if (open && data.conversation) {
@@ -179,19 +212,38 @@ export function LiveChatWidget() {
         payload: { role: "customer" },
       });
     }
-  }, [open, token]);
+  }, [deviceProfileHeader, open, token]);
 
   useEffect(() => {
     if (isAdminPage) return;
     const storedToken = window.localStorage.getItem(TOKEN_KEY);
-    if (storedToken) setToken(storedToken);
+    if (storedToken) {
+      setToken(storedToken);
+      setFirstPartyCookie(LIVE_CHAT_VISITOR_COOKIE_KEY, storedToken);
+    }
+    const abuseToken = window.localStorage.getItem(LIVE_CHAT_ABUSE_TOKEN_KEY);
+    if (abuseToken) setFirstPartyCookie(LIVE_CHAT_ABUSE_TOKEN_KEY, abuseToken);
+    setDeviceProfileHeader(
+      encodeCoarseDeviceProfile(createCoarseDeviceProfile()),
+    );
     setName(window.localStorage.getItem(NAME_KEY) ?? "");
   }, [isAdminPage]);
+
+  useEffect(() => {
+    if (isAdminPage || !open) return;
+    let abuseToken = window.localStorage.getItem(LIVE_CHAT_ABUSE_TOKEN_KEY);
+    if (!abuseToken) {
+      abuseToken = crypto.randomUUID();
+      window.localStorage.setItem(LIVE_CHAT_ABUSE_TOKEN_KEY, abuseToken);
+    }
+    setFirstPartyCookie(LIVE_CHAT_ABUSE_TOKEN_KEY, abuseToken);
+  }, [isAdminPage, open]);
 
   useEffect(() => {
     if (isAdminPage || !open || token) return;
     const nextToken = crypto.randomUUID();
     window.localStorage.setItem(TOKEN_KEY, nextToken);
+    setFirstPartyCookie(LIVE_CHAT_VISITOR_COOKIE_KEY, nextToken);
     setToken(nextToken);
   }, [isAdminPage, open, token]);
 
@@ -338,6 +390,14 @@ export function LiveChatWidget() {
         setHasUnreadAdminReply(false);
         stickToBottom.current = true;
       })
+      .on("broadcast", { event: "access_blocked" }, () => {
+        stopCustomerTyping();
+        setAccessBlocked(true);
+        setConversation(null);
+        setMessages([]);
+        setMessage("");
+        setError("");
+      })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (!open) return;
         if (payload?.role !== "admin" && payload?.role !== "ai") return;
@@ -358,7 +418,14 @@ export function LiveChatWidget() {
       chatChannelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [conversation?.id, isAdminPage, loadChat, open, token]);
+  }, [
+    conversation?.id,
+    isAdminPage,
+    loadChat,
+    open,
+    stopCustomerTyping,
+    token,
+  ]);
 
   useEffect(() => {
     if (isAdminPage || !open) return;
@@ -466,10 +533,21 @@ export function LiveChatWidget() {
     try {
       const response = await fetch("/api/live-chat", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(deviceProfileHeader
+            ? { [LIVE_CHAT_DEVICE_PROFILE_HEADER]: deviceProfileHeader }
+            : {}),
+        },
         body: JSON.stringify({ token, name: cleanName, message: cleanMessage }),
       });
       const data = (await response.json()) as ChatResponse;
+      if (data.code === "LIVE_CHAT_BLOCKED") {
+        setAccessBlocked(true);
+        setConversation(null);
+        setMessages([]);
+        throw new Error(LIVE_CHAT_BLOCKED_MESSAGE);
+      }
       if (!response.ok || !data.message)
         throw new Error(data.error ?? "Mesaj gönderilemedi.");
       window.localStorage.setItem(NAME_KEY, cleanName);
@@ -508,9 +586,18 @@ export function LiveChatWidget() {
       form.set("file", file);
       const response = await fetch("/api/live-chat/upload", {
         method: "POST",
+        headers: deviceProfileHeader
+          ? { [LIVE_CHAT_DEVICE_PROFILE_HEADER]: deviceProfileHeader }
+          : undefined,
         body: form,
       });
       const data = (await response.json()) as ChatResponse;
+      if (data.code === "LIVE_CHAT_BLOCKED") {
+        setAccessBlocked(true);
+        setConversation(null);
+        setMessages([]);
+        throw new Error(LIVE_CHAT_BLOCKED_MESSAGE);
+      }
       if (!response.ok || !data.message)
         throw new Error(data.error ?? "Görsel gönderilemedi.");
       window.localStorage.setItem(NAME_KEY, name.trim());
@@ -599,7 +686,11 @@ export function LiveChatWidget() {
             onScroll={updateScrollPosition}
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-zinc-50 p-4"
           >
-            {messages.length ? (
+            {accessBlocked ? (
+              <p className="rounded-2xl border border-zinc-200 bg-white p-4 text-center text-sm font-semibold text-zinc-700">
+                {LIVE_CHAT_BLOCKED_MESSAGE}
+              </p>
+            ) : messages.length ? (
               messages.map((item, index) => {
                 const previous = messages[index - 1];
                 const showDay =
@@ -666,7 +757,7 @@ export function LiveChatWidget() {
           </div>
           <form
             onSubmit={send}
-            className="shrink-0 space-y-2 border-t border-zinc-200 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:p-3"
+            className={`${accessBlocked ? "hidden" : ""} shrink-0 space-y-2 border-t border-zinc-200 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:p-3`}
           >
             {conversation && token ? (
               <CustomerVideoCall
@@ -770,6 +861,11 @@ export function LiveChatWidget() {
             </p>
             {error ? <p className="text-xs text-red-600">{error}</p> : null}
           </form>
+          {accessBlocked ? (
+            <div className="shrink-0 border-t border-zinc-200 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 text-center text-xs text-zinc-500 sm:p-4">
+              Bu kanaldan yeni mesaj veya görüşme talebi gönderilemez.
+            </div>
+          ) : null}
         </section>
       ) : null}
       <button

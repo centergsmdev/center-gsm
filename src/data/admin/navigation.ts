@@ -12,6 +12,7 @@ import {
   PlugZap,
   Settings,
   ShieldCheck,
+  ShieldOff,
   ShoppingBag,
   Sparkles,
   Tags,
@@ -80,6 +81,12 @@ export const adminNavigation = [
   },
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
   { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
+  {
+    label: "Engellenen Kullanıcılar",
+    href: "/admin/canli-destek/engellenenler",
+    icon: ShieldOff,
+    child: true,
+  },
   { label: "Ürün Yorumları", href: "/admin/yorumlar", icon: MessageSquareText },
   {
     label: "Sık Sorulan Sorular",

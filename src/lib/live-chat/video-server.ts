@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { createServiceClient } from "@/lib/supabase/admin";
 import { signCallParticipantJwt } from "@/lib/live-chat/video-token";
+import { trustedClientAddress } from "@/lib/live-chat/abuse";
 import type {
   LiveChatCall,
   LiveChatCallEvent,
@@ -122,11 +123,7 @@ export function createRateKey(visitorToken: string, address: string) {
 }
 
 export function requestAddress(request: Request) {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip")?.trim() ||
-    "unknown"
-  );
+  return trustedClientAddress(request) ?? "unknown";
 }
 
 export function createParticipantToken(input: {

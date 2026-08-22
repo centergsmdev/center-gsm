@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 import { authApi } from "@/lib/supabase/auth-api";
+import { resolveSiteAccessBlock } from "@/lib/live-chat/site-block";
 
 export async function updateSupabaseSession(request: NextRequest) {
   const config = getSupabasePublicConfig();
@@ -38,6 +39,24 @@ export async function updateSupabaseSession(request: NextRequest) {
       url.pathname = "/admin/giris";
       url.search = "";
       return NextResponse.redirect(url);
+    }
+  }
+  if (path !== "/erisim-kisitli" && !path.startsWith("/admin")) {
+    const siteBlock = await resolveSiteAccessBlock(
+      request,
+      user?.id ?? null,
+      user?.app_metadata.role === "admin",
+    );
+    if (siteBlock) {
+      if (path.startsWith("/api/"))
+        return NextResponse.json(
+          { error: "Bu hizmete erişim şu anda kullanılamıyor." },
+          { status: 403 },
+        );
+      const denied = request.nextUrl.clone();
+      denied.pathname = "/erisim-kisitli";
+      denied.search = "";
+      return NextResponse.rewrite(denied, { status: 403 });
     }
   }
   return response;

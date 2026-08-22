@@ -7,10 +7,13 @@ import {
   Send,
   Smile,
   Trash2,
+  ShieldOff,
   X,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { AdminVideoCalls } from "@/components/admin/admin-video-calls";
+import { AdminLiveChatSecurity } from "@/components/admin/admin-live-chat-security";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import {
   useCallback,
@@ -81,6 +84,12 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [autoReplySaved, setAutoReplySaved] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [blockedConversationIds, setBlockedConversationIds] = useState<
+    Set<string>
+  >(new Set());
+  const [blockedVisitorTokens, setBlockedVisitorTokens] = useState<Set<string>>(
+    new Set(),
+  );
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const customerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -96,10 +105,49 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     () => conversations.find((item) => item.id === selectedId) ?? null,
     [conversations, selectedId],
   );
+  const handleSelectedBlockState = useCallback(
+    (blocked: boolean) => {
+      if (!selectedId) return;
+      setBlockedConversationIds((current) => {
+        const next = new Set(current);
+        if (blocked) next.add(selectedId);
+        else next.delete(selectedId);
+        return next;
+      });
+      if (selected?.visitor_token) {
+        setBlockedVisitorTokens((current) => {
+          const next = new Set(current);
+          if (blocked) next.add(selected.visitor_token);
+          else next.delete(selected.visitor_token);
+          return next;
+        });
+      }
+    },
+    [selected?.visitor_token, selectedId],
+  );
 
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  useEffect(() => {
+    void fetch("/api/admin/live-chat/blocks", { cache: "no-store" })
+      .then((response) => response.json())
+      .then(
+        (payload: {
+          blocks?: Array<{ active?: boolean; visitor_token?: string | null }>;
+        }) => {
+          setBlockedVisitorTokens(
+            new Set(
+              (payload.blocks ?? [])
+                .filter((block) => block.active && block.visitor_token)
+                .map((block) => block.visitor_token!),
+            ),
+          );
+        },
+      )
+      .catch(() => undefined);
+  }, []);
 
   const loadAiSettings = useCallback(async () => {
     const client = createClient();
@@ -477,6 +525,12 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
             </p>
           </div>
           <div className="text-right">
+            <Link
+              href="/admin/canli-destek/engellenenler"
+              className="mb-2 flex items-center justify-end gap-1 text-[10px] font-black text-red-600 hover:underline"
+            >
+              <ShieldOff className="size-3" /> Engel listesi
+            </Link>
             <div
               className="flex rounded-full bg-zinc-100 p-1 text-[11px] font-black"
               aria-label="AI Modu"
@@ -557,6 +611,12 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                 <span className="mt-1 block text-xs opacity-60">
                   {formatChatDateTime(item.last_message_at)}
                 </span>
+                {blockedConversationIds.has(item.id) ||
+                blockedVisitorTokens.has(item.visitor_token) ? (
+                  <span className="mt-1 inline-block rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black text-white">
+                    ENGELLENDİ
+                  </span>
+                ) : null}
               </span>
               {unread[item.id] ? (
                 <span className="ml-2 grid size-6 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-bold text-white">
@@ -601,6 +661,12 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
                 </button>
               </div>
             </header>
+            <AdminLiveChatSecurity
+              key={selected.id}
+              conversationId={selected.id}
+              customerName={selected.customer_name}
+              onBlockStateChange={handleSelectedBlockState}
+            />
             <div
               ref={messageScrollRef}
               onScroll={updateMessageScrollPosition}

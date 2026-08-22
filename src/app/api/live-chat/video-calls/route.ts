@@ -18,6 +18,12 @@ import {
   videoCallErrorMessage,
 } from "@/lib/live-chat/video-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import {
+  enforceLiveChatRateLimit,
+  resolveLiveChatBlock,
+  resolveLiveChatIdentity,
+} from "@/lib/live-chat/abuse";
+import { LIVE_CHAT_BLOCKED_MESSAGE } from "@/lib/live-chat/abuse-shared";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -98,6 +104,26 @@ export async function POST(request: Request) {
     return error("Bu sohbet için görüşme başlatamazsınız.", 403);
   const service = createServiceClient();
   if (!service) return error("Görüntülü görüşme servisi kullanılamıyor.", 503);
+  const identity = await resolveLiveChatIdentity(request, token);
+  if ((await resolveLiveChatBlock(service, identity)).blocked)
+    return error(LIVE_CHAT_BLOCKED_MESSAGE, 403, "LIVE_CHAT_BLOCKED");
+  const rateLimit = await enforceLiveChatRateLimit(
+    service,
+    "video_request",
+    identity,
+  );
+  if (!rateLimit.allowed)
+    return NextResponse.json(
+      {
+        error:
+          "Çok fazla görüşme talebi gönderdiniz. Lütfen daha sonra tekrar deneyin.",
+        code: "rate_limited",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.max(1, rateLimit.retryAfter)) },
+      },
+    );
   const settings = await loadVideoSettings();
   if (!settings.enabled)
     return error("Görüntülü görüşme şu anda aktif değil.", 404);

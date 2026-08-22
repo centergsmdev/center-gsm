@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 
 import { isLiveChatToken } from "@/lib/live-chat/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import {
+  resolveLiveChatBlock,
+  resolveLiveChatIdentity,
+} from "@/lib/live-chat/abuse";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +28,8 @@ export async function POST(request: Request) {
   if (!isLiveChatToken(token) || !messageId) return quiet();
   const client = createServiceClient();
   if (!client) return quiet();
+  const identity = await resolveLiveChatIdentity(request, token);
+  if ((await resolveLiveChatBlock(client, identity)).blocked) return quiet();
 
   const conversation = await client
     .from("live_chat_conversations")

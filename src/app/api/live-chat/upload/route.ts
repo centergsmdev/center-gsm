@@ -1,15 +1,27 @@
 import { NextResponse } from "next/server";
 
+import { isLiveChatToken } from "@/lib/live-chat/server";
 import {
-  createVisitorChatClient,
-  isLiveChatToken,
-} from "@/lib/live-chat/server";
+  enforceLiveChatRateLimit,
+  observeLiveChatIdentity,
+  resolveLiveChatBlock,
+  resolveLiveChatIdentity,
+} from "@/lib/live-chat/abuse";
+import { LIVE_CHAT_BLOCKED_MESSAGE } from "@/lib/live-chat/abuse-shared";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
 function error(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
+}
+
+function blocked() {
+  return NextResponse.json(
+    { error: LIVE_CHAT_BLOCKED_MESSAGE, code: "LIVE_CHAT_BLOCKED" },
+    { status: 403 },
+  );
 }
 
 export async function POST(request: Request) {
@@ -33,14 +45,40 @@ export async function POST(request: Request) {
   if (caption.length > 2000)
     return error("Mesaj en fazla 2000 karakter olabilir.");
 
-  const client = createVisitorChatClient(token);
+  const client = createServiceClient();
   if (!client) return error("Canlı destek şu anda kullanılamıyor.", 503);
+  const identity = await resolveLiveChatIdentity(request, token);
+  if ((await resolveLiveChatBlock(client, identity)).blocked) return blocked();
+  const uploadLimit = await enforceLiveChatRateLimit(
+    client,
+    "image_upload",
+    identity,
+  );
+  if (!uploadLimit.allowed)
+    return NextResponse.json(
+      {
+        error:
+          "Çok fazla görsel gönderdiniz. Lütfen daha sonra tekrar deneyin.",
+        code: "LIVE_CHAT_RATE_LIMITED",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.max(1, uploadLimit.retryAfter)) },
+      },
+    );
   let conversation = await client
     .from("live_chat_conversations")
     .select("*")
     .eq("visitor_token", token)
     .maybeSingle();
   if (!conversation.data) {
+    const createLimit = await enforceLiveChatRateLimit(
+      client,
+      "conversation_create",
+      identity,
+    );
+    if (!createLimit.allowed)
+      return error("Lütfen kısa bir süre sonra tekrar deneyin.", 429);
     conversation = await client
       .from("live_chat_conversations")
       .insert({ visitor_token: token, customer_name: name })
@@ -49,6 +87,11 @@ export async function POST(request: Request) {
   }
   if (conversation.error || !conversation.data)
     return error("Sohbet başlatılamadı.", 500);
+  try {
+    await observeLiveChatIdentity(client, conversation.data, name, identity);
+  } catch {
+    return error("Canlı destek güvenlik kontrolü tamamlanamadı.", 503);
+  }
 
   const extension =
     file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
