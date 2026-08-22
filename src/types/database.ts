@@ -1378,6 +1378,24 @@ export type InstallmentCustomerPortalRow = Timestamps & {
   updated_by: string | null;
 };
 
+export type InstallmentPaymentReceiptRow = Timestamps & {
+  id: string;
+  portal_id: string;
+  application_id: string;
+  payment_account_id: string | null;
+  amount_minor: number;
+  storage_path: string;
+  original_name: string;
+  mime_type: "image/webp" | "application/pdf";
+  size_bytes: number;
+  sha256: string;
+  status: "pending_review" | "approved" | "rejected";
+  rejection_reason_public: string | null;
+  uploaded_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -1423,10 +1441,24 @@ export type Database = {
         Partial<InstallmentCustomerPortalRow> &
           Pick<
             InstallmentCustomerPortalRow,
-            | "application_id"
-            | "payment_account_snapshot"
-            | "access_expires_at"
+            "application_id" | "payment_account_snapshot" | "access_expires_at"
           >
+      >;
+      installment_payment_receipts: Table<
+        InstallmentPaymentReceiptRow,
+        Partial<InstallmentPaymentReceiptRow> &
+          Pick<
+            InstallmentPaymentReceiptRow,
+            | "portal_id"
+            | "application_id"
+            | "amount_minor"
+            | "storage_path"
+            | "original_name"
+            | "mime_type"
+            | "size_bytes"
+            | "sha256"
+          >,
+        Partial<InstallmentPaymentReceiptRow>
       >;
       installment_contract_templates: Table<
         InstallmentContractTemplateRow,
@@ -1821,6 +1853,15 @@ export type Database = {
       };
     };
     Functions: {
+      admin_review_installment_payment_receipt: {
+        Args: {
+          p_receipt_id: string;
+          p_status: "approved" | "rejected";
+          p_rejection_reason: string | null;
+          p_actor_user_id: string;
+        };
+        Returns: undefined;
+      };
       consume_live_chat_rate_limit: {
         Args: {
           p_action: string;

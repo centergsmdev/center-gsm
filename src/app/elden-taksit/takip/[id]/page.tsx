@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { PortalPaymentAccount } from "@/components/installment/portal-payment-account";
+import { PortalReceiptUpload } from "@/components/installment/portal-receipt-upload";
 import { Container } from "@/components/ui/container";
 import { portalAccessCookieName } from "@/lib/installment/customer-portal-security";
 import { getCustomerPortalData } from "@/lib/installment/customer-portal-server";
@@ -212,6 +213,12 @@ export default async function Page({
             applicationNumber={data.applicationNumber}
           />
 
+          <PortalReceiptUpload
+            portalId={data.portalId}
+            initialReceipt={data.receipt}
+            initialStage={data.stage}
+          />
+
           <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm sm:p-7">
             <div className="flex items-center gap-3">
               <span className="grid size-11 place-items-center rounded-2xl bg-white text-amber-800 shadow-sm">
@@ -270,8 +277,8 @@ export default async function Page({
           </section>
 
           <p className="px-3 pb-4 text-center text-xs leading-5 text-zinc-500">
-            Bu sayfa yalnız size gönderilen güvenli bağlantıyla açılır. Kimlik ve
-            başvuru belgeleriniz bu ekranda gösterilmez.
+            Bu sayfa yalnız size gönderilen güvenli bağlantıyla açılır. Kimlik
+            ve başvuru belgeleriniz bu ekranda gösterilmez.
           </p>
         </div>
       </Container>

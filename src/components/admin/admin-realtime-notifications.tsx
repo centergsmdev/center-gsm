@@ -147,6 +147,27 @@ export function AdminRealtimeNotifications() {
       )
       .on(
         "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "installment_payment_receipts",
+        },
+        (payload) => {
+          const receipt = payload.new as Record<string, unknown>;
+          if (receipt.status !== "pending_review") return;
+          announce({
+            id: `installment-receipt:${String(receipt.id)}:${Date.now()}`,
+            entityId: String(receipt.id),
+            kind: "receipt",
+            title: "Yeni elden taksit dekontu",
+            body: "Müşteri peşinat dekontunu yükledi. Ödeme onayınızı bekliyor.",
+            href: "/admin/dekontlar",
+            createdAt: new Date(),
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "INSERT", schema: "public", table: "live_chat_messages" },
         (payload) => {
           const message = payload.new as Record<string, unknown>;

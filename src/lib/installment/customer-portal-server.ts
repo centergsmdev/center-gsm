@@ -1,6 +1,9 @@
 import "server-only";
 
-import { getInstallmentHashSecret, getInstallmentServiceClient } from "./server";
+import {
+  getInstallmentHashSecret,
+  getInstallmentServiceClient,
+} from "./server";
 import { verifyPortalAccessToken } from "./customer-portal-security";
 import type {
   InstallmentAdminPaymentPlan,
@@ -25,12 +28,22 @@ export type InstallmentCustomerPortalData = {
   updatedAt: string;
   paymentAccount: InstallmentPortalPaymentSnapshot;
   paymentPlan: InstallmentAdminPaymentPlan;
+  receipt: InstallmentCustomerPortalReceipt | null;
 };
 
-export async function getCustomerPortalData(
+export type InstallmentCustomerPortalReceipt = {
+  id: string;
+  originalName: string;
+  status: "pending_review" | "approved" | "rejected";
+  rejectionReason: string | null;
+  uploadedAt: string;
+  reviewedAt: string | null;
+};
+
+export async function getAuthorizedCustomerPortal(
   portalId: string,
   accessToken: string | null,
-): Promise<InstallmentCustomerPortalData | null> {
+) {
   const service = getInstallmentServiceClient();
   const secret = getInstallmentHashSecret();
   if (!service || !secret || !accessToken) return null;
@@ -53,30 +66,49 @@ export async function getCustomerPortalData(
     )
   )
     return null;
-  const [application, paymentPlan, currentPaymentAccount] = await Promise.all([
-    service
-      .from("installment_applications")
-      .select("*")
-      .eq("id", portal.data.application_id)
-      .eq("status", "approved")
-      .maybeSingle(),
-    service
-      .from("installment_application_payment_plans")
-      .select("*")
-      .eq("application_id", portal.data.application_id)
-      .maybeSingle(),
-    portal.data.payment_account_id
-      ? service
-          .from("payment_accounts")
-          .select("id,bank_name,account_holder,iban,branch,description")
-          .eq("id", portal.data.payment_account_id)
-          .eq("is_active", true)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+  return { service, portal: portal.data };
+}
+
+export async function getCustomerPortalData(
+  portalId: string,
+  accessToken: string | null,
+): Promise<InstallmentCustomerPortalData | null> {
+  const authorized = await getAuthorizedCustomerPortal(portalId, accessToken);
+  if (!authorized) return null;
+  const { service, portal } = authorized;
+  const [application, paymentPlan, currentPaymentAccount, latestReceipt] =
+    await Promise.all([
+      service
+        .from("installment_applications")
+        .select("*")
+        .eq("id", portal.application_id)
+        .eq("status", "approved")
+        .maybeSingle(),
+      service
+        .from("installment_application_payment_plans")
+        .select("*")
+        .eq("application_id", portal.application_id)
+        .maybeSingle(),
+      portal.payment_account_id
+        ? service
+            .from("payment_accounts")
+            .select("id,bank_name,account_holder,iban,branch,description")
+            .eq("id", portal.payment_account_id)
+            .eq("is_active", true)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      service
+        .from("installment_payment_receipts")
+        .select("*")
+        .eq("portal_id", portal.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
   if (
     application.error ||
     paymentPlan.error ||
+    latestReceipt.error ||
     !application.data ||
     !paymentPlan.data
   )
@@ -92,9 +124,9 @@ export async function getCustomerPortalData(
         branch: currentPaymentAccount.data.branch,
         description: currentPaymentAccount.data.description,
       }
-    : portal.data.payment_account_snapshot;
+    : portal.payment_account_snapshot;
   return {
-    portalId: portal.data.id,
+    portalId: portal.id,
     applicationNumber: app.application_number,
     applicantName: app.applicant_name,
     productName: app.product_name_snapshot,
@@ -104,10 +136,10 @@ export async function getCustomerPortalData(
     color: app.color_snapshot,
     storageValue: app.storage_value_snapshot,
     storageUnit: app.storage_unit_snapshot,
-    stage: portal.data.stage,
-    publicNote: portal.data.public_note,
-    paymentDueAt: portal.data.payment_due_at,
-    updatedAt: portal.data.updated_at,
+    stage: portal.stage,
+    publicNote: portal.public_note,
+    paymentDueAt: portal.payment_due_at,
+    updatedAt: portal.updated_at,
     paymentAccount: {
       id: account.id,
       bankName: account.bank_name,
@@ -134,5 +166,15 @@ export async function getCustomerPortalData(
       })),
       totalPayableMinor: Number(plan.total_payable_minor),
     },
+    receipt: latestReceipt.data
+      ? {
+          id: latestReceipt.data.id,
+          originalName: latestReceipt.data.original_name,
+          status: latestReceipt.data.status,
+          rejectionReason: latestReceipt.data.rejection_reason_public,
+          uploadedAt: latestReceipt.data.uploaded_at,
+          reviewedAt: latestReceipt.data.reviewed_at,
+        }
+      : null,
   };
 }

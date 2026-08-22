@@ -9,6 +9,13 @@ export type AdminPaymentReceipt = Tables<"payment_receipts"> & {
   total: number;
 };
 
+export type AdminInstallmentPaymentReceipt =
+  Tables<"installment_payment_receipts"> & {
+    applicationNumber: string;
+    customerName: string;
+    productName: string;
+  };
+
 const safeError = "Dekont bilgileri yüklenemedi. Lütfen tekrar deneyin.";
 
 export async function getAdminPaymentReceipts(): Promise<
@@ -49,6 +56,48 @@ export async function getAdminPaymentReceipts(): Promise<
     }),
     error: null,
   };
+}
+
+export async function getAdminInstallmentPaymentReceipts(): Promise<
+  AdminProductResult<AdminInstallmentPaymentReceipt[]>
+> {
+  try {
+    const response = await fetch("/api/admin/installment-payment-receipts", {
+      cache: "no-store",
+    });
+    const body = (await response.json()) as {
+      items?: AdminInstallmentPaymentReceipt[];
+      error?: string;
+    };
+    return response.ok && body.items
+      ? { data: body.items, error: null }
+      : { data: null, error: body.error || safeError };
+  } catch {
+    return { data: null, error: safeError };
+  }
+}
+
+export async function reviewAdminInstallmentPaymentReceipt(
+  receiptId: string,
+  status: "approved" | "rejected",
+  rejectionReason?: string,
+): Promise<AdminProductResult<true>> {
+  try {
+    const response = await fetch(
+      `/api/admin/installment-payment-receipts/${encodeURIComponent(receiptId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, rejectionReason }),
+      },
+    );
+    const body = (await response.json()) as { error?: string };
+    return response.ok
+      ? { data: true, error: null }
+      : { data: null, error: body.error || "Dekont kararı kaydedilemedi." };
+  } catch {
+    return { data: null, error: "Dekont kararı kaydedilemedi." };
+  }
 }
 
 export async function getPaymentReceiptUrl(

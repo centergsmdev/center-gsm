@@ -8,6 +8,7 @@ import {
   portalAccessCookieOptions,
   verifyPortalAccessToken,
 } from "./customer-portal-security.ts";
+import { portalReceiptPath } from "./customer-portal-path.ts";
 
 const secret = "test-secret-with-enough-entropy-for-hmac";
 const claims = {
@@ -69,6 +70,18 @@ test("portal çerezi dış uygulamadan güvenli açılışta ilk yönlendirmeye 
   assert.equal(
     options.path,
     "/elden-taksit/takip/11111111-1111-4111-8111-111111111111",
+  );
+});
+
+test("dekont adresi portal çerezinin güvenli yol kapsamı içinde kalır", () => {
+  const options = portalAccessCookieOptions(
+    claims.portalId,
+    claims.accessExpiresAt,
+    true,
+  );
+  assert.equal(
+    portalReceiptPath(claims.portalId).startsWith(options.path),
+    true,
   );
 });
 
