@@ -137,9 +137,10 @@ test("privacy-safe ad e-posta ve telefonu asla public ada dönüştürmez", () =
   );
 });
 
-test("boş durum sahte içerik üretmez ve tek mobil öncelikli DOM kullanır", () => {
-  assert.match(page, /Henüz yayınlanmış müşteri değerlendirmesi bulunmuyor\./);
-  assert.match(page, /grid gap-4 lg:grid-cols-2/);
+test("tüm yorumlar ve şeffaflık bölümleri public sayfadan kaldırılmıştır", () => {
+  assert.doesNotMatch(page, /Tüm Müşteri Yorumları/);
+  assert.doesNotMatch(page, /Şeffaflık notu/);
+  assert.doesNotMatch(page, /ReviewControls|function Pagination|Ürünlerde ara/);
   assert.doesNotMatch(page, /327|4\.8|Binlerce|%100 müşteri/);
 });
 

@@ -1,14 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   BadgeCheck,
-  ChevronLeft,
   ChevronRight,
   CreditCard,
   Headphones,
-  MessageCircle,
   Package,
-  Search,
   ShieldCheck,
   Star,
   Truck,
@@ -21,13 +17,10 @@ import { Header } from "@/components/layout/header";
 import { ReviewImageGallery } from "@/components/reviews/review-image-gallery";
 import { Container } from "@/components/ui/container";
 import {
-  parseCustomerSatisfactionQuery,
   privacySafeReviewName,
   ratingPercentage,
-  withCustomerSatisfactionQuery,
-  type CustomerSatisfactionQuery,
 } from "@/lib/reviews/customer-satisfaction-core";
-import { getCustomerSatisfactionPageData } from "@/lib/reviews/customer-satisfaction";
+import { getCustomerSatisfactionOverviewData } from "@/lib/reviews/customer-satisfaction";
 import { generateSeoMetadata } from "@/lib/seo/seo";
 import type {
   CustomerSatisfactionReview,
@@ -60,17 +53,8 @@ export const metadata = {
   title: { absolute: title },
 };
 
-type PageSearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-export default async function CustomerSatisfactionPage({
-  searchParams,
-}: {
-  searchParams: PageSearchParams;
-}) {
-  const query = parseCustomerSatisfactionQuery(await searchParams);
-  const data = await getCustomerSatisfactionPageData(query);
-  if (data.filteredCount > 0 && data.page !== query.page)
-    redirect(withCustomerSatisfactionQuery(query, { page: data.page }));
+export default async function CustomerSatisfactionPage() {
+  const data = await getCustomerSatisfactionOverviewData();
 
   return (
     <>
@@ -126,80 +110,7 @@ export default async function CustomerSatisfactionPage({
             </section>
           ) : null}
 
-          <section
-            className={data.featured.length ? "mt-12 sm:mt-16" : ""}
-            aria-labelledby="all-reviews-title"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-red-600">
-                  Gerçek ürün deneyimleri
-                </p>
-                <h2
-                  id="all-reviews-title"
-                  className="mt-1 text-3xl font-black tracking-[-0.04em] text-zinc-950 sm:text-4xl"
-                >
-                  Tüm Müşteri Yorumları
-                </h2>
-              </div>
-              <p className="text-sm font-semibold text-zinc-500">
-                {data.filteredCount.toLocaleString("tr-TR")} yayınlanmış yorum
-              </p>
-            </div>
-
-            <ReviewControls
-              query={query}
-              summary={data.summary}
-              verifiedSupported={data.summary.verified_count > 0}
-            />
-
-            {data.reviews.length ? (
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                {data.reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 rounded-3xl border border-dashed border-zinc-300 bg-white px-5 py-14 text-center shadow-sm">
-                <MessageCircle
-                  className="mx-auto size-9 text-zinc-400"
-                  aria-hidden="true"
-                />
-                <p className="mt-4 font-black text-zinc-950">
-                  {data.unavailable
-                    ? "Müşteri değerlendirmeleri şu anda yüklenemiyor."
-                    : data.summary.total_count === 0
-                      ? "Henüz yayınlanmış müşteri değerlendirmesi bulunmuyor."
-                      : "Bu filtrelere uygun yayınlanmış yorum bulunamadı."}
-                </p>
-              </div>
-            )}
-
-            {data.pageCount > 1 ? (
-              <Pagination
-                query={query}
-                page={data.page}
-                pageCount={data.pageCount}
-              />
-            ) : null}
-          </section>
-
           <TrustSection />
-
-          <section className="mt-8 rounded-3xl border border-zinc-200 bg-white p-5 text-sm leading-6 text-zinc-600 shadow-sm sm:p-7">
-            <h2 className="font-black text-zinc-950">Şeffaflık notu</h2>
-            <p className="mt-2">
-              Bu sayfadaki değerlendirmeler CENTER GSM ürünlerine müşteriler
-              tarafından gönderilen ve yayınlanması onaylanan gerçek yorumlardan
-              oluşur.
-            </p>
-            {data.summary.verified_count > 0 ? (
-              <p className="mt-2">
-                Doğrulanmış Alışveriş rozeti, sistemimizde ilgili satın alma
-                işlemi doğrulanabilen değerlendirmelerde gösterilir.
-              </p>
-            ) : null}
-          </section>
 
           <section className="mt-8 overflow-hidden rounded-3xl bg-zinc-950 px-5 py-8 text-white shadow-xl sm:px-9 sm:py-10">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -388,164 +299,6 @@ function ReviewCard({ review }: { review: CustomerSatisfactionReview }) {
         />
       </Link>
     </article>
-  );
-}
-
-function ReviewControls({
-  query,
-  summary,
-  verifiedSupported,
-}: {
-  query: CustomerSatisfactionQuery;
-  summary: CustomerSatisfactionReviewSummary;
-  verifiedSupported: boolean;
-}) {
-  const filters = [
-    { label: "Tümü", rating: null, filter: "all" as const },
-    ...([5, 4, 3, 2, 1] as const).map((rating) => ({
-      label: `${rating} Yıldız`,
-      rating,
-      filter: "all" as const,
-    })),
-    { label: "Fotoğraflı Yorumlar", rating: null, filter: "photos" as const },
-    ...(verifiedSupported
-      ? [
-          {
-            label: "Doğrulanmış Alışveriş",
-            rating: null,
-            filter: "verified" as const,
-          },
-        ]
-      : []),
-  ];
-  return (
-    <div className="mt-6 space-y-4 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
-      <div
-        className="flex gap-2 overflow-x-auto pb-1"
-        aria-label="Yorum filtreleri"
-      >
-        {filters.map((filter) => {
-          const active =
-            query.rating === filter.rating && query.filter === filter.filter;
-          return (
-            <Link
-              key={filter.label}
-              href={withCustomerSatisfactionQuery(query, {
-                page: 1,
-                rating: filter.rating,
-                filter: filter.filter,
-              })}
-              aria-current={active ? "page" : undefined}
-              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
-                active
-                  ? "border-zinc-950 bg-zinc-950 text-white"
-                  : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400"
-              }`}
-            >
-              {filter.label}
-              {filter.filter === "photos" ? ` (${summary.photo_count})` : ""}
-            </Link>
-          );
-        })}
-      </div>
-      <form
-        action="/musteri-memnuniyeti"
-        method="get"
-        className="grid gap-3 sm:grid-cols-[1fr_190px_auto]"
-      >
-        {query.rating ? (
-          <input type="hidden" name="rating" value={query.rating} />
-        ) : null}
-        {query.filter !== "all" ? (
-          <input type="hidden" name="filter" value={query.filter} />
-        ) : null}
-        <label className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-200 px-3 focus-within:border-zinc-500">
-          <Search className="size-4 text-zinc-400" aria-hidden="true" />
-          <span className="sr-only">Ürünlerde ara</span>
-          <input
-            type="search"
-            name="search"
-            defaultValue={query.search}
-            maxLength={80}
-            placeholder="Ürünlerde ara"
-            className="min-w-0 flex-1 bg-transparent text-base outline-none sm:text-sm"
-          />
-        </label>
-        <label>
-          <span className="sr-only">Yorumları sırala</span>
-          <select
-            name="sort"
-            defaultValue={query.sort}
-            className="min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-base font-semibold text-zinc-800 outline-none focus:border-zinc-500 sm:text-sm"
-          >
-            <option value="newest">En Yeni</option>
-            <option value="highest">En Yüksek Puan</option>
-            <option value="lowest">En Düşük Puan</option>
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="min-h-11 rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-        >
-          Uygula
-        </button>
-      </form>
-    </div>
-  );
-}
-
-function Pagination({
-  query,
-  page,
-  pageCount,
-}: {
-  query: CustomerSatisfactionQuery;
-  page: number;
-  pageCount: number;
-}) {
-  const start = Math.max(1, Math.min(page - 2, pageCount - 4));
-  const pages = Array.from(
-    { length: Math.min(5, pageCount) },
-    (_, index) => start + index,
-  );
-  return (
-    <nav
-      className="mt-8 flex items-center justify-center gap-2"
-      aria-label="Yorum sayfaları"
-    >
-      {page > 1 ? (
-        <Link
-          href={withCustomerSatisfactionQuery(query, { page: page - 1 })}
-          className="grid size-11 place-items-center rounded-xl border border-zinc-200 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-          aria-label="Önceki yorum sayfası"
-        >
-          <ChevronLeft className="size-4" />
-        </Link>
-      ) : null}
-      {pages.map((value) => (
-        <Link
-          key={value}
-          href={withCustomerSatisfactionQuery(query, { page: value })}
-          aria-current={value === page ? "page" : undefined}
-          className={`grid size-11 place-items-center rounded-xl border text-sm font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
-            value === page
-              ? "border-zinc-950 bg-zinc-950 text-white"
-              : "border-zinc-200 bg-white text-zinc-700"
-          }`}
-        >
-          {value}
-        </Link>
-      ))}
-      {page < pageCount ? (
-        <Link
-          href={withCustomerSatisfactionQuery(query, { page: page + 1 })}
-          className="grid size-11 place-items-center rounded-xl border border-zinc-200 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-          aria-label="Sonraki yorum sayfası"
-        >
-          <ChevronRight className="size-4" />
-        </Link>
-      ) : null}
-    </nav>
   );
 }
 
