@@ -53,7 +53,7 @@ export async function getCustomerPortalData(
     )
   )
     return null;
-  const [application, paymentPlan] = await Promise.all([
+  const [application, paymentPlan, currentPaymentAccount] = await Promise.all([
     service
       .from("installment_applications")
       .select("*")
@@ -65,6 +65,14 @@ export async function getCustomerPortalData(
       .select("*")
       .eq("application_id", portal.data.application_id)
       .maybeSingle(),
+    portal.data.payment_account_id
+      ? service
+          .from("payment_accounts")
+          .select("id,bank_name,account_holder,iban,branch,description")
+          .eq("id", portal.data.payment_account_id)
+          .eq("is_active", true)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
   if (
     application.error ||
@@ -75,7 +83,16 @@ export async function getCustomerPortalData(
     return null;
   const app = application.data;
   const plan = paymentPlan.data;
-  const account = portal.data.payment_account_snapshot;
+  const account = currentPaymentAccount.data
+    ? {
+        id: currentPaymentAccount.data.id,
+        bank_name: currentPaymentAccount.data.bank_name,
+        account_holder: currentPaymentAccount.data.account_holder,
+        iban: currentPaymentAccount.data.iban,
+        branch: currentPaymentAccount.data.branch,
+        description: currentPaymentAccount.data.description,
+      }
+    : portal.data.payment_account_snapshot;
   return {
     portalId: portal.data.id,
     applicationNumber: app.application_number,

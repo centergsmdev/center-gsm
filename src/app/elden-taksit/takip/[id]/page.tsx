@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import {
   Banknote,
-  Building2,
   CheckCircle2,
   Clock3,
   CreditCard,
@@ -11,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { PortalCopyButton } from "@/components/installment/portal-copy-button";
+import { PortalPaymentAccount } from "@/components/installment/portal-payment-account";
 import { Container } from "@/components/ui/container";
 import { portalAccessCookieName } from "@/lib/installment/customer-portal-security";
 import { getCustomerPortalData } from "@/lib/installment/customer-portal-server";
@@ -71,9 +70,6 @@ export default async function Page({
 
   const plan = data.paymentPlan;
   const productTitle = data.variantTitle || data.productName;
-  const formattedIban = data.paymentAccount.iban
-    .replace(/(.{4})/g, "$1 ")
-    .trim();
   return (
     <main className="min-h-screen bg-zinc-50 py-6 sm:py-10">
       <Container>
@@ -211,68 +207,10 @@ export default async function Page({
             </section>
           </div>
 
-          <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7">
-            <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-zinc-950 text-white">
-                <Building2 className="size-5" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
-                  Peşinat Ödeme Bilgileri
-                </p>
-                <h2 className="mt-1 text-lg font-black text-zinc-950">
-                  {data.paymentAccount.bankName}
-                </h2>
-              </div>
-            </div>
-            <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-              <PaymentInfo
-                label="Hesap sahibi"
-                value={data.paymentAccount.accountHolder}
-              />
-              <PaymentInfo
-                label="Banka / Şube"
-                value={
-                  data.paymentAccount.branch
-                    ? `${data.paymentAccount.bankName} · ${data.paymentAccount.branch}`
-                    : data.paymentAccount.bankName
-                }
-              />
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:col-span-2">
-                <dt className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-                  IBAN
-                </dt>
-                <dd className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="break-all font-mono text-sm font-black text-zinc-950 sm:text-base">
-                    {formattedIban}
-                  </span>
-                  <PortalCopyButton
-                    value={data.paymentAccount.iban}
-                    label="IBAN'ı Kopyala"
-                  />
-                </dd>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:col-span-2">
-                <dt className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-                  Ödeme açıklaması
-                </dt>
-                <dd className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="font-mono text-sm font-black text-zinc-950">
-                    {data.applicationNumber}
-                  </span>
-                  <PortalCopyButton
-                    value={data.applicationNumber}
-                    label="Açıklamayı Kopyala"
-                  />
-                </dd>
-              </div>
-            </dl>
-            {data.paymentAccount.description ? (
-              <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                {data.paymentAccount.description}
-              </p>
-            ) : null}
-          </section>
+          <PortalPaymentAccount
+            initialAccount={data.paymentAccount}
+            applicationNumber={data.applicationNumber}
+          />
 
           <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm sm:p-7">
             <div className="flex items-center gap-3">
@@ -395,17 +333,6 @@ function PortalRow({ label, value }: { label: string; value: string | null }) {
       <dd className="mt-0.5 break-words font-bold text-zinc-900">
         {value || "—"}
       </dd>
-    </div>
-  );
-}
-
-function PaymentInfo({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-      <dt className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-        {label}
-      </dt>
-      <dd className="mt-2 text-sm font-black text-zinc-950">{value}</dd>
     </div>
   );
 }
