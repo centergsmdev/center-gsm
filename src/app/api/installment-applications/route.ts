@@ -26,11 +26,25 @@ import {
   normalizeTurkishPhone,
 } from "@/lib/installment/validation";
 import { resolvePaymentPlanSnapshot } from "@/lib/payment-plan/server";
+import { isInstallmentDownPaymentTiming } from "@/lib/installment/types";
 
 export const runtime = "nodejs";
 
 const error = (message: string, status = 400) =>
   NextResponse.json({ error: message }, { status });
+
+function currentIstanbulDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const value = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  return `${value.year}-${value.month}-${value.day}`;
+}
 
 export async function POST(request: Request) {
   if (!sameOriginRequest(request)) return error("Geçersiz istek kaynağı.", 403);
@@ -52,6 +66,7 @@ export async function POST(request: Request) {
   const contractOfferToken = String(body.contractOfferToken ?? "");
   const paymentPlanOfferToken = String(body.paymentPlanOfferToken ?? "");
   const installmentCount = Number(body.installmentCount);
+  const downPaymentTiming = body.downPaymentTiming;
   const applicantName = normalizeApplicantName(
     String(body.applicantName ?? ""),
   );
@@ -76,6 +91,8 @@ export async function POST(request: Request) {
     installmentCount > 36
   )
     return error("Taksit seçimi geçersiz.");
+  if (!isInstallmentDownPaymentTiming(downPaymentTiming))
+    return error("Peşinat ödemesini yapabileceğiniz geçerli bir zaman seçin.");
   if (!applicantName) return error("Ad soyad alanını kontrol edin.");
   if (!phone) return error("Geçerli bir Türkiye cep telefonu girin.");
   if (email === undefined) return error("E-posta adresini kontrol edin.");
@@ -144,6 +161,9 @@ export async function POST(request: Request) {
       status: "draft",
       request_ip_hash: clientIpHash(request, secret),
       user_agent_summary: safeUserAgent(request),
+      down_payment_timing: downPaymentTiming,
+      down_payment_timing_date: currentIstanbulDate(),
+      down_payment_timing_selected_at: new Date().toISOString(),
     })
     .select("*")
     .single();
@@ -218,6 +238,7 @@ export async function POST(request: Request) {
     metadata: {
       payment_config_revision: paymentSnapshot.plan.configRevision,
       installment_count: paymentSnapshot.plan.installmentCount,
+      down_payment_timing: downPaymentTiming,
     },
   });
   if (event.error) {

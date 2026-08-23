@@ -1246,6 +1246,9 @@ export type InstallmentApplicationRow = Timestamps & {
   internal_note: string | null;
   request_ip_hash: string | null;
   user_agent_summary: string | null;
+  down_payment_timing: "immediate" | "today_12_15" | "today_15_18" | null;
+  down_payment_timing_date: string | null;
+  down_payment_timing_selected_at: string | null;
   retention_review_at: string;
 };
 

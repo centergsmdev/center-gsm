@@ -10,6 +10,7 @@ import {
   FileSignature,
   LoaderCircle,
   LockKeyhole,
+  Clock3,
   ShieldCheck,
   Upload,
 } from "lucide-react";
@@ -26,6 +27,9 @@ import {
   type InstallmentContractOffer,
   type InstallmentDocumentType,
   type InstallmentDraftResponse,
+  INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS,
+  isInstallmentDownPaymentTiming,
+  type InstallmentDownPaymentTiming,
   type InstallmentProductSummary,
 } from "@/lib/installment/types";
 import {
@@ -177,7 +181,9 @@ export function InstallmentApplicationForm({
   const [successNumber, setSuccessNumber] = useState("");
   const [downPaymentWarningAcknowledged, setDownPaymentWarningAcknowledged] =
     useState(false);
-  const [downPaymentConfirmed, setDownPaymentConfirmed] = useState(false);
+  const [downPaymentTiming, setDownPaymentTiming] = useState<
+    InstallmentDownPaymentTiming | "not_ready" | ""
+  >("");
   const selectedPaymentPlan = useMemo(
     () =>
       paymentPlan
@@ -303,6 +309,7 @@ export function InstallmentApplicationForm({
             contractOfferToken: contract?.offerToken,
             paymentPlanOfferToken: paymentPlan?.offerToken,
             installmentCount,
+            downPaymentTiming,
           }),
         }),
       );
@@ -403,33 +410,76 @@ export function InstallmentApplicationForm({
               deneyin.
             </p>
           )}
-          <label className="mx-auto mt-5 flex max-w-md cursor-pointer items-start gap-3 rounded-xl border border-amber-300 bg-white p-4 text-left text-sm font-semibold leading-6 text-zinc-800">
-            <input
-              type="checkbox"
-              className="mt-0.5 size-5 shrink-0 accent-red-600"
-              checked={downPaymentConfirmed}
-              disabled={!selectedPaymentPlan}
-              onChange={(event) =>
-                setDownPaymentConfirmed(event.target.checked)
-              }
-            />
-            <span>
-              Başvurum onaylanırsa{" "}
-              {selectedPaymentPlan
-                ? formatMinorCurrency(
-                    selectedPaymentPlan.downPaymentAmountMinor,
-                  )
-                : "belirtilen"}{" "}
-              tutarındaki ilk peşinatı ödeyebilirim.
-            </span>
-          </label>
+          <fieldset className="mx-auto mt-6 max-w-md text-left">
+            <legend className="flex items-center gap-2 text-sm font-black text-zinc-950 sm:text-base">
+              <Clock3 className="size-5 text-amber-700" aria-hidden="true" />
+              Ödemeyi ne zaman yapabilirsiniz?
+            </legend>
+            <div className="mt-3 grid gap-2">
+              {(
+                Object.entries(INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS) as Array<
+                  [InstallmentDownPaymentTiming, string]
+                >
+              ).map(([value, label]) => (
+                <label
+                  key={value}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-4 text-sm font-bold transition-colors ${
+                    downPaymentTiming === value
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-100"
+                      : "border-zinc-200 text-zinc-800 hover:border-amber-400"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="down-payment-timing"
+                    value={value}
+                    checked={downPaymentTiming === value}
+                    disabled={!selectedPaymentPlan}
+                    className="size-5 shrink-0 accent-emerald-600"
+                    onChange={() => setDownPaymentTiming(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+              <label
+                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 text-sm font-bold transition-colors ${
+                  downPaymentTiming === "not_ready"
+                    ? "border-red-400 bg-red-50 text-red-800 ring-2 ring-red-100"
+                    : "border-zinc-200 bg-white text-zinc-800 hover:border-red-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="down-payment-timing"
+                  value="not_ready"
+                  checked={downPaymentTiming === "not_ready"}
+                  disabled={!selectedPaymentPlan}
+                  className="size-5 shrink-0 accent-red-600"
+                  onChange={() => setDownPaymentTiming("not_ready")}
+                />
+                Şu an ödeme yapamam
+              </label>
+            </div>
+          </fieldset>
+          {downPaymentTiming === "not_ready" ? (
+            <p
+              role="alert"
+              className="mx-auto mt-4 max-w-md rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold leading-6 text-red-800"
+            >
+              Peşinat ödemesine hazır olmadığınız için başvuruya şu anda devam
+              edemezsiniz.
+            </p>
+          ) : null}
           <Button
             size="lg"
             className="mt-7 w-full sm:w-auto sm:min-w-64"
-            disabled={!selectedPaymentPlan || !downPaymentConfirmed}
+            disabled={
+              !selectedPaymentPlan ||
+              !isInstallmentDownPaymentTiming(downPaymentTiming)
+            }
             onClick={() => setDownPaymentWarningAcknowledged(true)}
           >
-            Okudum, Başvuruya Devam Et
+            Seçimimi Onayla ve Başvuruya Devam Et
           </Button>
         </CardContent>
       </Card>
@@ -601,7 +651,7 @@ export function InstallmentApplicationForm({
                         aria-pressed={installmentCount === count}
                         onClick={() => {
                           setInstallmentCount(count);
-                          setDownPaymentConfirmed(false);
+                          setDownPaymentTiming("");
                           setDownPaymentWarningAcknowledged(false);
                           setContractAcknowledged(false);
                           setErrors((current) => ({

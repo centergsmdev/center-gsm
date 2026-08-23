@@ -14,6 +14,7 @@ import {
 } from "@/lib/installment/server-security";
 import { isUuid } from "@/lib/installment/validation";
 import { installmentContractAcceptanceIsValid } from "@/lib/installment/contract-render";
+import { isInstallmentDownPaymentTiming } from "@/lib/installment/types";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,15 @@ export async function POST(
   const token = cookieStore.get(INSTALLMENT_DRAFT_COOKIE)?.value ?? null;
   const draft = await getDraftWithAccess(service, id, token);
   if (!draft || !token) return error("Başvuru taslağına erişilemiyor.", 404);
+  if (
+    !isInstallmentDownPaymentTiming(draft.down_payment_timing) ||
+    !draft.down_payment_timing_date ||
+    !draft.down_payment_timing_selected_at
+  )
+    return error(
+      "Peşinat ödeme zamanı doğrulanamadı. Lütfen başvuruyu yeniden başlatın.",
+      409,
+    );
   const resolved = await resolveInstallmentProduct(
     service,
     draft.product_id,

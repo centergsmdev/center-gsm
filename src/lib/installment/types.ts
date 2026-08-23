@@ -16,6 +16,48 @@ export type InstallmentApplicationStatus =
   | "rejected"
   | "cancelled";
 
+export const INSTALLMENT_DOWN_PAYMENT_TIMINGS = [
+  "immediate",
+  "today_12_15",
+  "today_15_18",
+] as const;
+
+export type InstallmentDownPaymentTiming =
+  (typeof INSTALLMENT_DOWN_PAYMENT_TIMINGS)[number];
+
+export const INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS: Record<
+  InstallmentDownPaymentTiming,
+  string
+> = {
+  immediate: "Hemen ödeyebilirim",
+  today_12_15: "Bugün 12.00–15.00 arasında",
+  today_15_18: "Bugün 15.00–18.00 arasında",
+};
+
+export function isInstallmentDownPaymentTiming(
+  value: unknown,
+): value is InstallmentDownPaymentTiming {
+  return INSTALLMENT_DOWN_PAYMENT_TIMINGS.includes(
+    value as InstallmentDownPaymentTiming,
+  );
+}
+
+export function formatInstallmentDownPaymentCommitment(
+  timing: InstallmentDownPaymentTiming | null,
+  date: string | null,
+) {
+  if (!timing) return "Eski başvuru · seçim kaydı yok";
+  const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date ?? "")
+    ? date!.split("-").reverse().join(".")
+    : null;
+  if (timing === "immediate")
+    return dateLabel
+      ? `${dateLabel} · Hemen ödeyebilirim`
+      : "Hemen ödeyebilirim";
+  const hours = timing === "today_12_15" ? "12.00–15.00" : "15.00–18.00";
+  return dateLabel ? `${dateLabel} · ${hours}` : `Bugün ${hours} arasında`;
+}
+
 export type InstallmentProductSummary = {
   productId: string;
   variantId: string | null;
@@ -61,6 +103,8 @@ export type InstallmentAdminListItem = InstallmentProductSummary & {
   revision: number;
   createdAt: string;
   submittedAt: string | null;
+  downPaymentTiming: InstallmentDownPaymentTiming | null;
+  downPaymentTimingDate: string | null;
 };
 
 export type InstallmentAdminDocument = {

@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { hashText, safeTokenMatch } from "./access-token.ts";
 import {
+  formatInstallmentDownPaymentCommitment,
+  isInstallmentDownPaymentTiming,
+} from "./types.ts";
+import {
   missingInstallmentDocuments,
   normalizeTurkishPhone,
   validateProductVariantSelection,
@@ -80,5 +84,28 @@ test("taslak tokenı başka başvuru tokenıyla eşleşmez", () => {
   assert.equal(
     safeTokenMatch(hashText(applicationAToken), applicationBToken),
     false,
+  );
+});
+
+test("yalnız ödeme yapmaya hazır seçenekler başvuruya devam edebilir", () => {
+  assert.equal(isInstallmentDownPaymentTiming("immediate"), true);
+  assert.equal(isInstallmentDownPaymentTiming("today_12_15"), true);
+  assert.equal(isInstallmentDownPaymentTiming("today_15_18"), true);
+  assert.equal(isInstallmentDownPaymentTiming("not_ready"), false);
+  assert.equal(isInstallmentDownPaymentTiming(""), false);
+});
+
+test("admin ödeme taahhüdünü seçilen gün ve saatle görür", () => {
+  assert.equal(
+    formatInstallmentDownPaymentCommitment("today_12_15", "2026-08-23"),
+    "23.08.2026 · 12.00–15.00",
+  );
+  assert.equal(
+    formatInstallmentDownPaymentCommitment("immediate", "2026-08-23"),
+    "23.08.2026 · Hemen ödeyebilirim",
+  );
+  assert.match(
+    formatInstallmentDownPaymentCommitment(null, null),
+    /seçim kaydı yok/,
   );
 });

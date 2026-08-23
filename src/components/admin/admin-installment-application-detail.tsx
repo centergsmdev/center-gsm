@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import {
+  formatInstallmentDownPaymentCommitment,
   INSTALLMENT_DOCUMENT_LABELS,
   INSTALLMENT_PORTAL_STAGES,
   INSTALLMENT_PORTAL_STAGE_LABELS,
@@ -601,6 +602,13 @@ export function AdminInstallmentApplicationDetail({
       <DetailBlock title="Başvuru ve Karar">
         <dl className="mb-5">
           <DataRow label="Başvuru No" value={item.applicationNumber} />
+          <DataRow
+            label="Peşinat Ödeme Taahhüdü"
+            value={formatInstallmentDownPaymentCommitment(
+              item.downPaymentTiming,
+              item.downPaymentTimingDate,
+            )}
+          />
           <DataRow
             label="Gönderim"
             value={new Intl.DateTimeFormat("tr-TR", {

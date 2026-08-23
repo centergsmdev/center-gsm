@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/format";
 import {
+  formatInstallmentDownPaymentCommitment,
   INSTALLMENT_STATUS_LABELS,
   type InstallmentAdminListItem,
   type InstallmentApplicationStatus,
@@ -132,6 +133,7 @@ export function AdminInstallmentApplications() {
                 <AdminTh>Telefon</AdminTh>
                 <AdminTh>Ürün / Varyant</AdminTh>
                 <AdminTh>Tutar</AdminTh>
+                <AdminTh>Peşinat Zamanı</AdminTh>
                 <AdminTh>Durum</AdminTh>
               </tr>
             </thead>
@@ -167,6 +169,12 @@ export function AdminInstallmentApplications() {
                   </AdminTd>
                   <AdminTd className="font-bold text-zinc-950">
                     {formatCurrency(item.price)}
+                  </AdminTd>
+                  <AdminTd className="text-xs font-semibold text-zinc-700">
+                    {formatInstallmentDownPaymentCommitment(
+                      item.downPaymentTiming,
+                      item.downPaymentTimingDate,
+                    )}
                   </AdminTd>
                   <AdminTd>
                     <AdminBadge variant={badge[item.status]}>
