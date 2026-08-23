@@ -27,9 +27,6 @@ import {
   type InstallmentContractOffer,
   type InstallmentDocumentType,
   type InstallmentDraftResponse,
-  INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS,
-  isInstallmentDownPaymentTiming,
-  type InstallmentDownPaymentTiming,
   type InstallmentProductSummary,
 } from "@/lib/installment/types";
 import {
@@ -181,9 +178,7 @@ export function InstallmentApplicationForm({
   const [successNumber, setSuccessNumber] = useState("");
   const [downPaymentWarningAcknowledged, setDownPaymentWarningAcknowledged] =
     useState(false);
-  const [downPaymentTiming, setDownPaymentTiming] = useState<
-    InstallmentDownPaymentTiming | "not_ready" | ""
-  >("");
+  const [downPaymentTiming, setDownPaymentTiming] = useState("");
   const selectedPaymentPlan = useMemo(
     () =>
       paymentPlan
@@ -196,6 +191,10 @@ export function InstallmentApplicationForm({
         : null,
     [installmentCount, paymentPlan],
   );
+  const selectedDownPaymentTimingOption =
+    paymentPlan?.config.downPaymentTimingOptions.find(
+      (option) => option.id === downPaymentTiming,
+    ) ?? null;
   const renderedContract = useMemo(() => {
     if (!contract || !selectedPaymentPlan) return "";
     return renderInstallmentContract(contract.contentHtml, {
@@ -416,15 +415,11 @@ export function InstallmentApplicationForm({
               Ödemeyi ne zaman yapabilirsiniz?
             </legend>
             <div className="mt-3 grid gap-2">
-              {(
-                Object.entries(INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS) as Array<
-                  [InstallmentDownPaymentTiming, string]
-                >
-              ).map(([value, label]) => (
+              {paymentPlan?.config.downPaymentTimingOptions.map((option) => (
                 <label
-                  key={value}
+                  key={option.id}
                   className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-4 text-sm font-bold transition-colors ${
-                    downPaymentTiming === value
+                    downPaymentTiming === option.id
                       ? "border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-100"
                       : "border-zinc-200 text-zinc-800 hover:border-amber-400"
                   }`}
@@ -432,13 +427,13 @@ export function InstallmentApplicationForm({
                   <input
                     type="radio"
                     name="down-payment-timing"
-                    value={value}
-                    checked={downPaymentTiming === value}
+                    value={option.id}
+                    checked={downPaymentTiming === option.id}
                     disabled={!selectedPaymentPlan}
                     className="size-5 shrink-0 accent-emerald-600"
-                    onChange={() => setDownPaymentTiming(value)}
+                    onChange={() => setDownPaymentTiming(option.id)}
                   />
-                  {label}
+                  {option.label}
                 </label>
               ))}
               <label
@@ -474,8 +469,7 @@ export function InstallmentApplicationForm({
             size="lg"
             className="mt-7 w-full sm:w-auto sm:min-w-64"
             disabled={
-              !selectedPaymentPlan ||
-              !isInstallmentDownPaymentTiming(downPaymentTiming)
+              !selectedPaymentPlan || !selectedDownPaymentTimingOption
             }
             onClick={() => setDownPaymentWarningAcknowledged(true)}
           >

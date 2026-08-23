@@ -26,6 +26,13 @@ function parseCounts(value: string) {
     .map(Number);
 }
 
+function parseTimingLabels(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((label) => label.trim())
+    .filter(Boolean);
+}
+
 export function AdminPaymentPlanSettings() {
   const [items, setItems] = useState<PaymentPlanConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +87,9 @@ export function AdminPaymentPlanSettings() {
         String(form.get("financeRate")),
       ),
       installmentCounts: parseCounts(String(form.get("installmentCounts"))),
+      downPaymentTimingLabels: parseTimingLabels(
+        String(form.get("downPaymentTimingLabels")),
+      ),
       creditCardFinanceChargeBps: percentToBps(
         String(form.get("cardFinanceRate")),
       ),
@@ -147,7 +157,7 @@ export function AdminPaymentPlanSettings() {
         />
         <div className="p-5 sm:p-6">
           {active ? (
-            <form className="space-y-6" onSubmit={save}>
+            <form key={active.id} className="space-y-6" onSubmit={save}>
               <div className="rounded-xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
                 Aktif revizyon: {active.revision} · Fiyat sınırı:{" "}
                 {formatMinorCurrency(active.thresholdMinor)}
@@ -219,6 +229,29 @@ export function AdminPaymentPlanSettings() {
                       placeholder="3, 6, 9, 12"
                       required
                     />
+                  </AdminField>
+                  <AdminField
+                    label="Müşteriye sunulacak peşinat ödeme zamanları"
+                    htmlFor="down-payment-timing-options"
+                    className="md:col-span-2"
+                  >
+                    <textarea
+                      id="down-payment-timing-options"
+                      name="downPaymentTimingLabels"
+                      className={`${adminControlClass} min-h-32 py-3`}
+                      defaultValue={active.downPaymentTimingOptions
+                        .map((option) => option.label)
+                        .join("\n")}
+                      placeholder={
+                        "Hemen ödeyebilirim\nBugün 12.00–15.00 arasında\nBugün 15.00–18.00 arasında"
+                      }
+                      required
+                    />
+                    <p className="mt-2 text-xs leading-5 text-zinc-500">
+                      Her satıra bir seçenek yazın. En fazla 6 seçenek
+                      ekleyebilirsiniz. “Şu an ödeme yapamam” seçeneği sistem
+                      tarafından ayrıca gösterilir ve başvuruyu engeller.
+                    </p>
                   </AdminField>
                 </div>
               </div>
@@ -299,6 +332,11 @@ export function AdminPaymentPlanSettings() {
                 {formatBasisPoints(item.belowThresholdDownPaymentBps)} · Vade
                 farkı %{formatBasisPoints(item.installmentFinanceChargeBps)} ·{" "}
                 {item.installmentCounts.join(" / ")} ay
+              </p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">
+                Peşinat zamanı: {item.downPaymentTimingOptions
+                  .map((option) => option.label)
+                  .join(" · ")}
               </p>
             </div>
           ))}

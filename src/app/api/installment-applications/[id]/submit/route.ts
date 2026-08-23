@@ -15,6 +15,7 @@ import {
 import { isUuid } from "@/lib/installment/validation";
 import { installmentContractAcceptanceIsValid } from "@/lib/installment/contract-render";
 import { isInstallmentDownPaymentTiming } from "@/lib/installment/types";
+import { storedDownPaymentTimingIsValid } from "@/lib/payment-plan/server";
 
 export const runtime = "nodejs";
 
@@ -58,11 +59,23 @@ export async function POST(
   if (!draft || !token) return error("Başvuru taslağına erişilemiyor.", 404);
   if (
     !isInstallmentDownPaymentTiming(draft.down_payment_timing) ||
+    !draft.down_payment_timing_label ||
     !draft.down_payment_timing_date ||
     !draft.down_payment_timing_selected_at
   )
     return error(
       "Peşinat ödeme zamanı doğrulanamadı. Lütfen başvuruyu yeniden başlatın.",
+      409,
+    );
+  if (
+    !(await storedDownPaymentTimingIsValid(service, {
+      applicationId: id,
+      timingId: draft.down_payment_timing,
+      timingLabel: draft.down_payment_timing_label,
+    }))
+  )
+    return error(
+      "Peşinat ödeme taahhüdü doğrulanamadı. Lütfen başvuruyu yeniden başlatın.",
       409,
     );
   const resolved = await resolveInstallmentProduct(

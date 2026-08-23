@@ -16,19 +16,9 @@ export type InstallmentApplicationStatus =
   | "rejected"
   | "cancelled";
 
-export const INSTALLMENT_DOWN_PAYMENT_TIMINGS = [
-  "immediate",
-  "today_12_15",
-  "today_15_18",
-] as const;
+export type InstallmentDownPaymentTiming = string;
 
-export type InstallmentDownPaymentTiming =
-  (typeof INSTALLMENT_DOWN_PAYMENT_TIMINGS)[number];
-
-export const INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS: Record<
-  InstallmentDownPaymentTiming,
-  string
-> = {
+const LEGACY_DOWN_PAYMENT_TIMING_LABELS: Record<string, string> = {
   immediate: "Hemen ödeyebilirim",
   today_12_15: "Bugün 12.00–15.00 arasında",
   today_15_18: "Bugün 15.00–18.00 arasında",
@@ -37,25 +27,28 @@ export const INSTALLMENT_DOWN_PAYMENT_TIMING_LABELS: Record<
 export function isInstallmentDownPaymentTiming(
   value: unknown,
 ): value is InstallmentDownPaymentTiming {
-  return INSTALLMENT_DOWN_PAYMENT_TIMINGS.includes(
-    value as InstallmentDownPaymentTiming,
+  return (
+    typeof value === "string" &&
+    value !== "not_ready" &&
+    /^[a-z0-9_]{1,40}$/.test(value)
   );
 }
 
 export function formatInstallmentDownPaymentCommitment(
   timing: InstallmentDownPaymentTiming | null,
+  timingLabel: string | null,
   date: string | null,
 ) {
   if (!timing) return "Eski başvuru · seçim kaydı yok";
+  const label =
+    timingLabel?.trim() ||
+    LEGACY_DOWN_PAYMENT_TIMING_LABELS[timing] ||
+    "Peşinat ödeme zamanı seçildi";
   const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date ?? "")
     ? date!.split("-").reverse().join(".")
     : null;
-  if (timing === "immediate")
-    return dateLabel
-      ? `${dateLabel} · Hemen ödeyebilirim`
-      : "Hemen ödeyebilirim";
-  const hours = timing === "today_12_15" ? "12.00–15.00" : "15.00–18.00";
-  return dateLabel ? `${dateLabel} · ${hours}` : `Bugün ${hours} arasında`;
+  const datedLabel = label.replace(/^Bugün\s+/i, "");
+  return dateLabel ? `${dateLabel} · ${datedLabel}` : label;
 }
 
 export type InstallmentProductSummary = {
@@ -104,6 +97,7 @@ export type InstallmentAdminListItem = InstallmentProductSummary & {
   createdAt: string;
   submittedAt: string | null;
   downPaymentTiming: InstallmentDownPaymentTiming | null;
+  downPaymentTimingLabel: string | null;
   downPaymentTimingDate: string | null;
 };
 

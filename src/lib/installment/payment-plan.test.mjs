@@ -4,9 +4,11 @@ import test from "node:test";
 import {
   calculateRateAmount,
   calculatePaymentPlan,
+  createDownPaymentTimingOptions,
   createInstallmentSchedule,
   liraToMinor,
   paymentScheduleTotal,
+  validDownPaymentTimingOptions,
 } from "../payment-plan/engine.ts";
 import {
   createPaymentPlanOfferToken,
@@ -22,10 +24,36 @@ const config = {
   belowThresholdDownPaymentBps: 2_000,
   installmentFinanceChargeBps: 500,
   installmentCounts: [3, 6, 9, 12],
+  downPaymentTimingOptions: [
+    { id: "immediate", label: "Hemen ödeyebilirim" },
+    { id: "today_12_15", label: "Bugün 12.00–15.00 arasında" },
+  ],
   creditCardFinanceChargeBps: 0,
   creditCardInstallmentCounts: [3, 6, 9, 12],
   createdAt: "2026-08-20T12:00:00.000Z",
 };
+
+test("admin peşinat zamanlarını 1–6 benzersiz seçenek olarak belirler", () => {
+  const options = createDownPaymentTimingOptions([
+    "Hemen ödeyebilirim",
+    "Bugün 10.00–13.00 arasında",
+  ]);
+  assert.deepEqual(options, [
+    { id: "option_1", label: "Hemen ödeyebilirim" },
+    { id: "option_2", label: "Bugün 10.00–13.00 arasında" },
+  ]);
+  assert.equal(validDownPaymentTimingOptions(options), true);
+  assert.equal(
+    createDownPaymentTimingOptions(["Aynı seçenek", "aynı seçenek"]),
+    null,
+  );
+  assert.equal(createDownPaymentTimingOptions([]), null);
+  assert.equal(createDownPaymentTimingOptions([null]), null);
+  assert.equal(
+    createDownPaymentTimingOptions(["1", "2", "3", "4", "5", "6", "7"]),
+    null,
+  );
+});
 
 function installment(price, count = 12) {
   return calculatePaymentPlan({

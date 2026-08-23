@@ -173,6 +173,7 @@ export function AdminInstallmentApplications() {
                   <AdminTd className="text-xs font-semibold text-zinc-700">
                     {formatInstallmentDownPaymentCommitment(
                       item.downPaymentTiming,
+                      item.downPaymentTimingLabel,
                       item.downPaymentTimingDate,
                     )}
                   </AdminTd>

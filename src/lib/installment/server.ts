@@ -195,6 +195,7 @@ export function mapAdminApplication(row: InstallmentApplicationRow) {
     createdAt: row.created_at,
     submittedAt: row.submitted_at,
     downPaymentTiming: row.down_payment_timing,
+    downPaymentTimingLabel: row.down_payment_timing_label,
     downPaymentTimingDate: row.down_payment_timing_date,
   };
 }

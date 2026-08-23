@@ -606,6 +606,7 @@ export function AdminInstallmentApplicationDetail({
             label="Peşinat Ödeme Taahhüdü"
             value={formatInstallmentDownPaymentCommitment(
               item.downPaymentTiming,
+              item.downPaymentTimingLabel,
               item.downPaymentTimingDate,
             )}
           />

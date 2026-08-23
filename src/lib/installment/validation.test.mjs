@@ -97,15 +97,23 @@ test("yalnız ödeme yapmaya hazır seçenekler başvuruya devam edebilir", () =
 
 test("admin ödeme taahhüdünü seçilen gün ve saatle görür", () => {
   assert.equal(
-    formatInstallmentDownPaymentCommitment("today_12_15", "2026-08-23"),
-    "23.08.2026 · 12.00–15.00",
+    formatInstallmentDownPaymentCommitment(
+      "today_12_15",
+      "Bugün 12.00–15.00 arasında",
+      "2026-08-23",
+    ),
+    "23.08.2026 · 12.00–15.00 arasında",
   );
   assert.equal(
-    formatInstallmentDownPaymentCommitment("immediate", "2026-08-23"),
+    formatInstallmentDownPaymentCommitment(
+      "immediate",
+      "Hemen ödeyebilirim",
+      "2026-08-23",
+    ),
     "23.08.2026 · Hemen ödeyebilirim",
   );
   assert.match(
-    formatInstallmentDownPaymentCommitment(null, null),
+    formatInstallmentDownPaymentCommitment(null, null, null),
     /seçim kaydı yok/,
   );
 });

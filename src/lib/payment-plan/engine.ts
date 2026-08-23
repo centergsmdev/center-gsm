@@ -1,5 +1,16 @@
 export const DEFAULT_INSTALLMENT_COUNTS = [3, 6, 9, 12] as const;
 
+export const DEFAULT_DOWN_PAYMENT_TIMING_OPTIONS = [
+  { id: "immediate", label: "Hemen ödeyebilirim" },
+  { id: "today_12_15", label: "Bugün 12.00–15.00 arasında" },
+  { id: "today_15_18", label: "Bugün 15.00–18.00 arasında" },
+] as const;
+
+export type DownPaymentTimingOption = {
+  id: string;
+  label: string;
+};
+
 export type PaymentPlanType = "installment_application" | "credit_card";
 
 export type PaymentPlanConfig = {
@@ -10,6 +21,7 @@ export type PaymentPlanConfig = {
   belowThresholdDownPaymentBps: number;
   installmentFinanceChargeBps: number;
   installmentCounts: number[];
+  downPaymentTimingOptions: DownPaymentTimingOption[];
   creditCardFinanceChargeBps: number;
   creditCardInstallmentCounts: number[];
   createdAt: string;
@@ -196,10 +208,65 @@ export function validatePaymentPlanConfig(input: PaymentPlanConfig) {
       (rate) => !Number.isSafeInteger(rate) || rate < 0 || rate > 10_000,
     ) ||
     !validInstallmentCounts(input.installmentCounts) ||
-    !validInstallmentCounts(input.creditCardInstallmentCounts)
+    !validInstallmentCounts(input.creditCardInstallmentCounts) ||
+    !validDownPaymentTimingOptions(input.downPaymentTimingOptions)
   )
     return false;
   return true;
+}
+
+export function validDownPaymentTimingOptions(
+  values: DownPaymentTimingOption[],
+) {
+  if (values.length < 1 || values.length > 6) return false;
+  const ids = new Set<string>();
+  const labels = new Set<string>();
+  for (const option of values) {
+    const id = option.id.trim();
+    const label = option.label.trim();
+    const normalizedLabel = label.toLocaleLowerCase("tr-TR");
+    if (
+      !/^[a-z0-9_]{1,40}$/.test(id) ||
+      id === "not_ready" ||
+      label.length < 1 ||
+      label.length > 80 ||
+      ids.has(id) ||
+      labels.has(normalizedLabel)
+    )
+      return false;
+    ids.add(id);
+    labels.add(normalizedLabel);
+  }
+  return true;
+}
+
+export function normalizeDownPaymentTimingOptions(
+  values: unknown,
+): DownPaymentTimingOption[] | null {
+  if (!Array.isArray(values)) return null;
+  const options = values.map((value) => {
+    if (!value || typeof value !== "object") return null;
+    const record = value as Record<string, unknown>;
+    return {
+      id: String(record.id ?? "").trim(),
+      label: String(record.label ?? "").trim(),
+    };
+  });
+  if (options.some((option) => option === null)) return null;
+  const normalized = options as DownPaymentTimingOption[];
+  return validDownPaymentTimingOptions(normalized) ? normalized : null;
+}
+
+export function createDownPaymentTimingOptions(
+  labels: unknown,
+): DownPaymentTimingOption[] | null {
+  if (!Array.isArray(labels)) return null;
+  if (labels.some((label) => typeof label !== "string")) return null;
+  const options = labels.map((label, index) => ({
+    id: `option_${index + 1}`,
+    label: String(label).trim(),
+  }));
+  return validDownPaymentTimingOptions(options) ? options : null;
 }
 
 export function validInstallmentCounts(values: number[]) {

@@ -1246,7 +1246,8 @@ export type InstallmentApplicationRow = Timestamps & {
   internal_note: string | null;
   request_ip_hash: string | null;
   user_agent_summary: string | null;
-  down_payment_timing: "immediate" | "today_12_15" | "today_15_18" | null;
+  down_payment_timing: string | null;
+  down_payment_timing_label: string | null;
   down_payment_timing_date: string | null;
   down_payment_timing_selected_at: string | null;
   retention_review_at: string;
@@ -1325,6 +1326,7 @@ export type PaymentPlanConfigurationRow = {
   below_threshold_down_payment_bps: number;
   installment_finance_charge_bps: number;
   installment_counts: number[];
+  down_payment_timing_options: Json;
   credit_card_finance_charge_bps: number;
   credit_card_installment_counts: number[];
   is_active: boolean;
@@ -1931,11 +1933,13 @@ export type Database = {
       };
       admin_create_payment_plan_configuration: {
         Args: {
+          p_actor_user_id: string;
           p_threshold_minor: number;
           p_above_threshold_down_payment_bps: number;
           p_below_threshold_down_payment_bps: number;
           p_installment_finance_charge_bps: number;
           p_installment_counts: number[];
+          p_down_payment_timing_options: Json;
           p_credit_card_finance_charge_bps: number;
           p_credit_card_installment_counts: number[];
         };

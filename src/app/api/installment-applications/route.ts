@@ -25,7 +25,10 @@ import {
   normalizeOptionalEmail,
   normalizeTurkishPhone,
 } from "@/lib/installment/validation";
-import { resolvePaymentPlanSnapshot } from "@/lib/payment-plan/server";
+import {
+  resolveDownPaymentTimingOption,
+  resolvePaymentPlanSnapshot,
+} from "@/lib/payment-plan/server";
 import { isInstallmentDownPaymentTiming } from "@/lib/installment/types";
 
 export const runtime = "nodejs";
@@ -133,6 +136,20 @@ export async function POST(request: Request) {
     variantId,
   );
   if (!resolved.data) return error(resolved.error);
+  const timingOption = await resolveDownPaymentTimingOption(
+    service,
+    {
+      offerToken: paymentPlanOfferToken,
+      product: resolved.data,
+      timingId: downPaymentTiming,
+    },
+    secret,
+  );
+  if (!timingOption)
+    return error(
+      "Seçtiğiniz peşinat ödeme zamanı artık kullanılamıyor. Lütfen sayfayı yenileyin.",
+      409,
+    );
   const [sessionUser, draftToken] = await Promise.all([
     getOptionalSessionUser(),
     Promise.resolve(createDraftToken()),
@@ -162,6 +179,7 @@ export async function POST(request: Request) {
       request_ip_hash: clientIpHash(request, secret),
       user_agent_summary: safeUserAgent(request),
       down_payment_timing: downPaymentTiming,
+      down_payment_timing_label: timingOption.label,
       down_payment_timing_date: currentIstanbulDate(),
       down_payment_timing_selected_at: new Date().toISOString(),
     })
@@ -239,6 +257,7 @@ export async function POST(request: Request) {
       payment_config_revision: paymentSnapshot.plan.configRevision,
       installment_count: paymentSnapshot.plan.installmentCount,
       down_payment_timing: downPaymentTiming,
+      down_payment_timing_label: timingOption.label,
     },
   });
   if (event.error) {

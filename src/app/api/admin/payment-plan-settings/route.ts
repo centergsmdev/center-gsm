@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/installment/server";
 import { sameOriginRequest } from "@/lib/installment/server-security";
 import {
+  createDownPaymentTimingOptions,
   normalizeInstallmentCounts,
   validInstallmentCounts,
 } from "@/lib/payment-plan/engine";
@@ -47,6 +48,9 @@ export async function POST(request: Request) {
   const cardCounts = normalizeInstallmentCounts(
     body.creditCardInstallmentCounts,
   );
+  const timingOptions = createDownPaymentTimingOptions(
+    body.downPaymentTimingLabels,
+  );
   const rates = [aboveBps, belowBps, financeBps, cardFinanceBps];
   if (
     !Number.isSafeInteger(thresholdMinor) ||
@@ -58,19 +62,22 @@ export async function POST(request: Request) {
     ) ||
     !installmentCounts ||
     !cardCounts ||
+    !timingOptions ||
     !validInstallmentCounts(installmentCounts) ||
     !validInstallmentCounts(cardCounts)
   )
     return error("Ödeme planı değerlerini kontrol edin.");
 
-  const result = await context.session.rpc(
+  const result = await context.service.rpc(
     "admin_create_payment_plan_configuration",
     {
+      p_actor_user_id: context.user.id,
       p_threshold_minor: thresholdMinor,
       p_above_threshold_down_payment_bps: aboveBps,
       p_below_threshold_down_payment_bps: belowBps,
       p_installment_finance_charge_bps: financeBps,
       p_installment_counts: installmentCounts,
+      p_down_payment_timing_options: timingOptions,
       p_credit_card_finance_charge_bps: cardFinanceBps,
       p_credit_card_installment_counts: cardCounts,
     },

@@ -5,7 +5,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   calculatePaymentPlan,
   liraToMinor,
+  normalizeDownPaymentTimingOptions,
   validatePaymentPlanConfig,
+  type DownPaymentTimingOption,
   type PaymentPlan,
   type PaymentPlanConfig,
 } from "./engine";
@@ -49,10 +51,76 @@ export function mapPaymentPlanConfig(
     belowThresholdDownPaymentBps: row.below_threshold_down_payment_bps,
     installmentFinanceChargeBps: row.installment_finance_charge_bps,
     installmentCounts: row.installment_counts,
+    downPaymentTimingOptions:
+      normalizeDownPaymentTimingOptions(row.down_payment_timing_options) ?? [],
     creditCardFinanceChargeBps: row.credit_card_finance_charge_bps,
     creditCardInstallmentCounts: row.credit_card_installment_counts,
     createdAt: row.created_at,
   };
+}
+
+export async function resolveDownPaymentTimingOption(
+  service: SupabaseClient<Database>,
+  input: {
+    offerToken: string;
+    product: InstallmentProductSummary;
+    timingId: unknown;
+  },
+  secret: string,
+): Promise<DownPaymentTimingOption | null> {
+  const offer = verifyPaymentPlanOfferToken(
+    input.offerToken,
+    {
+      productId: input.product.productId,
+      variantId: input.product.variantId,
+    },
+    secret,
+  );
+  if (!offer || typeof input.timingId !== "string") return null;
+  const result = await service
+    .from("payment_plan_configurations")
+    .select("*")
+    .eq("id", offer.configId)
+    .eq("revision", offer.configRevision)
+    .maybeSingle();
+  if (result.error || !result.data) return null;
+  const config = mapPaymentPlanConfig(result.data);
+  if (!validatePaymentPlanConfig(config)) return null;
+  return (
+    config.downPaymentTimingOptions.find(
+      (option) => option.id === input.timingId,
+    ) ?? null
+  );
+}
+
+export async function storedDownPaymentTimingIsValid(
+  service: SupabaseClient<Database>,
+  input: {
+    applicationId: string;
+    timingId: string | null;
+    timingLabel: string | null;
+  },
+) {
+  if (!input.timingId || !input.timingLabel) return false;
+  const payment = await service
+    .from("installment_application_payment_plans")
+    .select("payment_config_id, payment_config_revision")
+    .eq("application_id", input.applicationId)
+    .maybeSingle();
+  if (payment.error || !payment.data) return false;
+  const configResult = await service
+    .from("payment_plan_configurations")
+    .select("*")
+    .eq("id", payment.data.payment_config_id)
+    .eq("revision", payment.data.payment_config_revision)
+    .maybeSingle();
+  if (configResult.error || !configResult.data) return false;
+  const config = mapPaymentPlanConfig(configResult.data);
+  if (!validatePaymentPlanConfig(config)) return false;
+  return config.downPaymentTimingOptions.some(
+    (option) =>
+      option.id === input.timingId && option.label === input.timingLabel,
+  );
 }
 
 export async function getActivePaymentPlanConfig(
