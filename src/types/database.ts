@@ -578,6 +578,7 @@ type PaymentReceipt = Timestamps & {
   uploaded_at: string | null;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  superseded_at: string | null;
 };
 type PaymentProvider = Timestamps & {
   id: string;
@@ -1895,6 +1896,17 @@ export type Database = {
           p_actor_user_id: string;
         };
         Returns: undefined;
+      };
+      replace_installment_payment_receipt: {
+        Args: {
+          p_portal_id: string;
+          p_storage_path: string;
+          p_original_name: string;
+          p_mime_type: "image/webp" | "application/pdf";
+          p_size_bytes: number;
+          p_sha256: string;
+        };
+        Returns: string;
       };
       consume_live_chat_rate_limit: {
         Args: {

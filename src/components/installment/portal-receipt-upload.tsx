@@ -121,13 +121,14 @@ export function PortalReceiptUpload({
     }
   }
 
-  const locked =
-    receipt?.status === "pending_review" ||
-    receipt?.status === "approved" ||
+  const canUpload =
+    stage === "down_payment_pending" ||
+    stage === "payment_under_review" ||
+    stage === "payment_confirmed";
+  const paymentApproved =
     stage === "payment_confirmed" ||
     stage === "preparing_delivery" ||
-    stage === "completed" ||
-    stage === "cancelled";
+    stage === "completed";
 
   return (
     <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7">
@@ -145,81 +146,103 @@ export function PortalReceiptUpload({
         </div>
       </div>
 
-      {receipt?.status === "pending_review" ? (
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="sr-only"
+        onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
+      />
+
+      {stage === "payment_under_review" ? (
         <StatusBox
           icon={Clock3}
           tone="amber"
-          title="Dekontunuz inceleniyor"
-          description={`${receipt.originalName} başarıyla alındı. CENTER GSM ödeme kontrolünü tamamladığında bu ekran otomatik güncellenecek.`}
+          title="Peşinat kontrol ediliyor"
+          description={
+            receipt?.status === "pending_review"
+              ? `${receipt.originalName} başarıyla alındı. CENTER GSM ödeme kontrolünü tamamladığında bu ekran otomatik güncellenecek.`
+              : "Ödeme durumunuz yönetici tarafından yeniden incelemeye alındı. Bu ekran otomatik güncellenecek."
+          }
         />
-      ) : receipt?.status === "approved" ? (
+      ) : paymentApproved ? (
         <StatusBox
           icon={CheckCircle2}
           tone="emerald"
           title="Peşinat ödemeniz onaylandı"
           description="Dekont ve ödeme kontrolünüz tamamlandı. İşleminizin sonraki aşamasını bu sayfadan takip edebilirsiniz."
         />
+      ) : receipt?.status === "rejected" ? (
+        <StatusBox
+          icon={XCircle}
+          tone="red"
+          title="Dekont yeniden yüklenmeli"
+          description={
+            receipt.rejectionReason ||
+            "Dekont doğrulanamadı. Lütfen doğru dekontu yeniden yükleyin."
+          }
+        />
+      ) : receipt?.status === "pending_review" ? (
+        <StatusBox
+          icon={Clock3}
+          tone="amber"
+          title="Dekontunuz inceleniyor"
+          description={`${receipt.originalName} başarıyla alındı. CENTER GSM ödeme kontrolünü tamamladığında bu ekran otomatik güncellenecek.`}
+        />
       ) : (
-        <>
-          {receipt?.status === "rejected" ? (
-            <StatusBox
-              icon={XCircle}
-              tone="red"
-              title="Dekont yeniden yüklenmeli"
-              description={
-                receipt.rejectionReason ||
-                "Dekont doğrulanamadı. Lütfen doğru dekontu yeniden yükleyin."
-              }
-            />
-          ) : (
-            <p className="mt-4 text-sm leading-6 text-zinc-600">
-              Havale / EFT işlemini yaptıktan sonra dekontunuzu buradan
-              yükleyin. Dosyanız yalnız yetkili yöneticiler tarafından
-              görüntülenebilir.
-            </p>
-          )}
-
-          {!locked ? (
-            <div className="mt-5 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 sm:p-5">
-              <label className="block cursor-pointer">
-                <span className="flex items-center gap-3">
-                  <span className="grid size-10 place-items-center rounded-xl bg-white text-zinc-700 shadow-sm">
-                    <FileCheck2 className="size-5" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block font-black text-zinc-950">
-                      {file ? file.name : "Dekont dosyasını seçin"}
-                    </span>
-                    <span className="mt-1 block text-xs text-zinc-500">
-                      JPG, PNG, WebP veya PDF · en fazla 10 MB
-                    </span>
-                  </span>
-                </span>
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  className="sr-only"
-                  onChange={(event) =>
-                    selectFile(event.target.files?.[0] ?? null)
-                  }
-                />
-              </label>
-              <Button
-                type="button"
-                className="mt-4 w-full bg-emerald-600 text-white hover:bg-emerald-700"
-                disabled={!file || uploading}
-                onClick={() => void upload()}
-              >
-                <FileUp className="size-4" />
-                {uploading
-                  ? "Güvenli alana yükleniyor…"
-                  : "Dekontu Yükle ve Onaya Gönder"}
-              </Button>
-            </div>
-          ) : null}
-        </>
+        <p className="mt-4 text-sm leading-6 text-zinc-600">
+          Havale / EFT işlemini yaptıktan sonra dekontunuzu buradan yükleyin.
+          Dosyanız yalnız yetkili yöneticiler tarafından görüntülenebilir.
+        </p>
       )}
+
+      {canUpload && receipt && !file ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 h-9 rounded-full px-4 text-xs font-black"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          <FileUp className="size-4" />
+          Yeni Dekont Yükle
+        </Button>
+      ) : null}
+
+      {canUpload && (!receipt || file) ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 sm:p-5">
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 text-left"
+            onClick={() => inputRef.current?.click()}
+          >
+            <span className="grid size-10 place-items-center rounded-xl bg-white text-zinc-700 shadow-sm">
+              <FileCheck2 className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-black text-zinc-950">
+                {file ? file.name : "Dekont dosyasını seçin"}
+              </span>
+              <span className="mt-1 block text-xs text-zinc-500">
+                JPG, PNG, WebP veya PDF · en fazla 10 MB
+              </span>
+            </span>
+          </button>
+          <Button
+            type="button"
+            className="mt-4 w-full bg-emerald-600 text-white hover:bg-emerald-700"
+            disabled={!file || uploading}
+            onClick={() => void upload()}
+          >
+            <FileUp className="size-4" />
+            {uploading
+              ? "Güvenli alana yükleniyor…"
+              : receipt
+                ? "Yeni Dekontu Yükle ve Onaya Gönder"
+                : "Dekontu Yükle ve Onaya Gönder"}
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <p

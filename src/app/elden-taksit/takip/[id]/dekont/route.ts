@@ -69,6 +69,7 @@ export async function GET(
       "id,original_name,status,rejection_reason_public,uploaded_at,reviewed_at",
     )
     .eq("portal_id", id)
+    .is("superseded_at", null)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -90,7 +91,6 @@ export async function POST(
   if (!authorized) return error("Güvenli bağlantıya erişilemiyor.", 403);
   const { service, portal } = authorized;
   if (
-    portal.stage === "payment_confirmed" ||
     portal.stage === "preparing_delivery" ||
     portal.stage === "completed" ||
     portal.stage === "cancelled"
@@ -104,18 +104,6 @@ export async function POST(
       429,
     );
 
-  const existing = await service
-    .from("installment_payment_receipts")
-    .select("id,status")
-    .eq("portal_id", id)
-    .in("status", ["pending_review", "approved"])
-    .maybeSingle();
-  if (existing.error) return error("Dekont kaydı kontrol edilemedi.", 500);
-  if (existing.data?.status === "pending_review")
-    return error("Dekontunuz zaten inceleniyor.", 409);
-  if (existing.data?.status === "approved")
-    return error("Peşinat ödemeniz zaten onaylandı.", 409);
-
   let file: File | null = null;
   try {
     const form = await request.formData();
@@ -127,16 +115,7 @@ export async function POST(
   if (!file) return error("Lütfen bir dekont seçin.");
 
   try {
-    const [validated, paymentPlan] = await Promise.all([
-      validateInstallmentReceipt(file),
-      service
-        .from("installment_application_payment_plans")
-        .select("down_payment_amount_minor")
-        .eq("application_id", portal.application_id)
-        .maybeSingle(),
-    ]);
-    if (paymentPlan.error || !paymentPlan.data)
-      return error("Peşinat bilgisi doğrulanamadı.", 500);
+    const validated = await validateInstallmentReceipt(file);
 
     const path = `installment/${id}/${randomUUID()}.${validated.extension}`;
     const uploaded = await service.storage
@@ -148,55 +127,32 @@ export async function POST(
       });
     if (uploaded.error) return error("Dekont özel alana yüklenemedi.", 500);
 
-    const saved = await service
-      .from("installment_payment_receipts")
-      .insert({
-        portal_id: id,
-        application_id: portal.application_id,
-        payment_account_id: portal.payment_account_id,
-        amount_minor: Number(paymentPlan.data.down_payment_amount_minor),
-        storage_path: path,
-        original_name: sanitizeOriginalFileName(file.name),
-        mime_type: validated.storedMimeType,
-        size_bytes: validated.sizeBytes,
-        sha256: validated.sha256,
-      })
-      .select(
-        "id,original_name,status,rejection_reason_public,uploaded_at,reviewed_at",
-      )
-      .single();
-    if (saved.error) {
+    const replaced = await service.rpc("replace_installment_payment_receipt", {
+      p_portal_id: id,
+      p_storage_path: path,
+      p_original_name: sanitizeOriginalFileName(file.name),
+      p_mime_type: validated.storedMimeType,
+      p_size_bytes: validated.sizeBytes,
+      p_sha256: validated.sha256,
+    });
+    if (replaced.error || !replaced.data) {
       await service.storage.from(RECEIPT_BUCKET).remove([path]);
-      if (saved.error.code === "23505")
-        return error("Dekontunuz zaten inceleniyor.", 409);
+      if (replaced.error?.message.includes("receipt_upload_not_allowed"))
+        return error("Bu başvuru aşamasında yeni dekont yüklenemez.", 409);
       return error("Dekont başvuruyla ilişkilendirilemedi.", 500);
     }
 
-    const stage = await service
-      .from("installment_customer_portals")
-      .update({ stage: "payment_under_review" })
-      .eq("id", id)
-      .in("stage", ["down_payment_pending", "payment_under_review"]);
-    if (stage.error) {
-      await service
-        .from("installment_payment_receipts")
-        .delete()
-        .eq("id", saved.data.id);
-      await service.storage.from(RECEIPT_BUCKET).remove([path]);
-      return error("Başvuru aşaması güncellenemedi.", 500);
+    const saved = await service
+      .from("installment_payment_receipts")
+      .select(
+        "id,original_name,status,rejection_reason_public,uploaded_at,reviewed_at",
+      )
+      .eq("id", replaced.data)
+      .is("superseded_at", null)
+      .single();
+    if (saved.error) {
+      return error("Yeni dekont durumu yüklenemedi.", 500);
     }
-    await service.from("installment_application_events").insert({
-      application_id: portal.application_id,
-      event_type: "portal.receipt_uploaded",
-      actor_type: "customer",
-      metadata: {
-        portal_id: id,
-        receipt_id: saved.data.id,
-        amount_minor: Number(paymentPlan.data.down_payment_amount_minor),
-        mime_type: validated.storedMimeType,
-        size_bytes: validated.sizeBytes,
-      },
-    });
     return NextResponse.json(
       { receipt: mapReceipt(saved.data) },
       { status: 201, headers: { "Cache-Control": "no-store" } },

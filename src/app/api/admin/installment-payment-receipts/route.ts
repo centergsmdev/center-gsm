@@ -13,6 +13,7 @@ export async function GET() {
   const receipts = await context.service
     .from("installment_payment_receipts")
     .select("*")
+    .is("superseded_at", null)
     .order("created_at", { ascending: false });
   if (receipts.error) return error("Dekontlar yüklenemedi.", 500);
   const applicationIds = [

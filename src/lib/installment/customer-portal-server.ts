@@ -113,6 +113,7 @@ export async function getCustomerPortalData(
         .from("installment_payment_receipts")
         .select("*")
         .eq("portal_id", portal.id)
+        .is("superseded_at", null)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
