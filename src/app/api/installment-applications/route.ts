@@ -100,6 +100,31 @@ export async function POST(request: Request) {
   if (!phone) return error("Geçerli bir Türkiye cep telefonu girin.");
   if (email === undefined) return error("E-posta adresini kontrol edin.");
 
+  const [sessionUser, expired] = await Promise.all([
+    getOptionalSessionUser(),
+    service.rpc("expire_overdue_installment_portals", {
+      p_portal_id: null,
+      p_phone_e164: phone,
+    }),
+  ]);
+  if (expired.error)
+    return error("Başvuru uygunluğu şu anda kontrol edilemiyor.", 503);
+  let blockQuery = service
+    .from("installment_application_blocks")
+    .select("id")
+    .is("revoked_at", null);
+  blockQuery = sessionUser
+    ? blockQuery.or(`phone_e164.eq.${phone},user_id.eq.${sessionUser.id}`)
+    : blockQuery.eq("phone_e164", phone);
+  const activeBlock = await blockQuery.limit(1).maybeSingle();
+  if (activeBlock.error)
+    return error("Başvuru uygunluğu şu anda kontrol edilemiyor.", 503);
+  if (activeBlock.data)
+    return error(
+      "Daha önce size ayrılan ödeme süresi içinde ödeme yapılmadığı için yeni elden taksit başvurusu oluşturamazsınız.",
+      403,
+    );
+
   const idempotencyHash = hashText(idempotencyKey);
   const cookieStore = await cookies();
   const existing = await service
@@ -150,10 +175,7 @@ export async function POST(request: Request) {
       "Seçtiğiniz peşinat ödeme zamanı artık kullanılamıyor. Lütfen sayfayı yenileyin.",
       409,
     );
-  const [sessionUser, draftToken] = await Promise.all([
-    getOptionalSessionUser(),
-    Promise.resolve(createDraftToken()),
-  ]);
+  const draftToken = createDraftToken();
   const summary = resolved.data;
   const inserted = await service
     .from("installment_applications")

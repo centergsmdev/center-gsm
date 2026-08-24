@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { PortalPaymentAccount } from "@/components/installment/portal-payment-account";
+import { PortalPaymentCountdown } from "@/components/installment/portal-payment-countdown";
 import { PortalReceiptUpload } from "@/components/installment/portal-receipt-upload";
 import { Container } from "@/components/ui/container";
 import { portalAccessCookieName } from "@/lib/installment/customer-portal-security";
@@ -66,6 +67,21 @@ export default async function Page({
             </p>
           </section>
         </Container>
+      </main>
+    );
+
+  if (data.cancellationReason === "payment_deadline_expired")
+    return (
+      <main className="grid min-h-[65dvh] place-items-center bg-zinc-50 px-4 py-12 sm:py-20">
+        <section className="w-full max-w-2xl rounded-3xl border border-red-200 bg-white p-7 text-center shadow-xl sm:p-12">
+          <span className="mx-auto grid size-16 place-items-center rounded-full bg-red-50 text-red-600">
+            <XCircle className="size-8" aria-hidden="true" />
+          </span>
+          <p className="mt-6 text-lg font-black leading-8 text-zinc-950 sm:text-2xl sm:leading-10">
+            Size ayrılan süre içinde ödeme yapmadığınız için siparişiniz iptal
+            edilmiştir ve tekrar sipariş vermeniz engellenmiştir.
+          </p>
+        </section>
       </main>
     );
 
@@ -194,10 +210,11 @@ export default async function Page({
                   </p>
                 </div>
               </div>
-              {data.paymentDueAt ? (
-                <p className="mt-5 rounded-xl bg-white px-4 py-3 text-sm font-bold text-zinc-800">
-                  Son ödeme zamanı: {formatDateTime(data.paymentDueAt)}
-                </p>
+              {data.paymentDueAt && data.stage === "down_payment_pending" ? (
+                <PortalPaymentCountdown
+                  paymentDueAt={data.paymentDueAt}
+                  formattedDueAt={formatDateTime(data.paymentDueAt)}
+                />
               ) : null}
               <p className="mt-4 text-sm leading-6 text-zinc-700">
                 Ödeme açıklamasına başvuru numaranızı yazın:

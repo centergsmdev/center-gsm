@@ -18,6 +18,7 @@ export function mapAdminCustomerPortal(
   return {
     id: row.id,
     stage: row.stage,
+    cancellationReason: row.cancellation_reason,
     publicNote: row.public_note,
     paymentDueAt: row.payment_due_at,
     accessExpiresAt: row.access_expires_at,

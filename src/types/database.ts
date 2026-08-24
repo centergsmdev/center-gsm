@@ -1375,12 +1375,25 @@ export type InstallmentCustomerPortalRow = Timestamps & {
     | "preparing_delivery"
     | "completed"
     | "cancelled";
+  cancellation_reason: "payment_deadline_expired" | "admin_cancelled" | null;
+  cancelled_at: string | null;
   public_note: string | null;
   payment_due_at: string | null;
   access_version: number;
   access_expires_at: string;
   created_by: string | null;
   updated_by: string | null;
+};
+
+export type InstallmentApplicationBlockRow = {
+  id: string;
+  source_application_id: string;
+  user_id: string | null;
+  phone_e164: string;
+  reason: "payment_deadline_expired";
+  created_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
 };
 
 export type InstallmentPaymentReceiptRow = Timestamps & {
@@ -1448,6 +1461,15 @@ export type Database = {
             InstallmentCustomerPortalRow,
             "application_id" | "payment_account_snapshot" | "access_expires_at"
           >
+      >;
+      installment_application_blocks: Table<
+        InstallmentApplicationBlockRow,
+        Partial<InstallmentApplicationBlockRow> &
+          Pick<
+            InstallmentApplicationBlockRow,
+            "source_application_id" | "phone_e164" | "reason"
+          >,
+        Partial<InstallmentApplicationBlockRow>
       >;
       installment_payment_receipts: Table<
         InstallmentPaymentReceiptRow,
@@ -1858,6 +1880,13 @@ export type Database = {
       };
     };
     Functions: {
+      expire_overdue_installment_portals: {
+        Args: {
+          p_portal_id?: string | null;
+          p_phone_e164?: string | null;
+        };
+        Returns: number;
+      };
       admin_review_installment_payment_receipt: {
         Args: {
           p_receipt_id: string;

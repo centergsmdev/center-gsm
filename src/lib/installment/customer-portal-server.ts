@@ -23,6 +23,7 @@ export type InstallmentCustomerPortalData = {
   storageValue: number | null;
   storageUnit: "GB" | "TB" | null;
   stage: InstallmentPortalStage;
+  cancellationReason: "payment_deadline_expired" | "admin_cancelled" | null;
   publicNote: string | null;
   paymentDueAt: string | null;
   updatedAt: string;
@@ -66,7 +67,19 @@ export async function getAuthorizedCustomerPortal(
     )
   )
     return null;
-  return { service, portal: portal.data };
+  const expired = await service.rpc("expire_overdue_installment_portals", {
+    p_portal_id: portal.data.id,
+    p_phone_e164: null,
+  });
+  if (expired.error) return null;
+  if (Number(expired.data) < 1) return { service, portal: portal.data };
+  const refreshed = await service
+    .from("installment_customer_portals")
+    .select("*")
+    .eq("id", portalId)
+    .maybeSingle();
+  if (refreshed.error || !refreshed.data) return null;
+  return { service, portal: refreshed.data };
 }
 
 export async function getCustomerPortalData(
@@ -82,7 +95,6 @@ export async function getCustomerPortalData(
         .from("installment_applications")
         .select("*")
         .eq("id", portal.application_id)
-        .eq("status", "approved")
         .maybeSingle(),
       service
         .from("installment_application_payment_plans")
@@ -114,6 +126,11 @@ export async function getCustomerPortalData(
   )
     return null;
   const app = application.data;
+  const applicationCanBeShown =
+    app.status === "approved" ||
+    (app.status === "cancelled" &&
+      portal.cancellation_reason === "payment_deadline_expired");
+  if (!applicationCanBeShown) return null;
   const plan = paymentPlan.data;
   const account = currentPaymentAccount.data
     ? {
@@ -137,6 +154,7 @@ export async function getCustomerPortalData(
     storageValue: app.storage_value_snapshot,
     storageUnit: app.storage_unit_snapshot,
     stage: portal.stage,
+    cancellationReason: portal.cancellation_reason,
     publicNote: portal.public_note,
     paymentDueAt: portal.payment_due_at,
     updatedAt: portal.updated_at,

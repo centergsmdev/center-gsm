@@ -50,11 +50,13 @@ export async function POST(
     .select("id,application_number,status")
     .eq("id", id)
     .maybeSingle();
-  if (application.error)
-    return error("Başvuru kontrol edilemedi.", 500);
+  if (application.error) return error("Başvuru kontrol edilemedi.", 500);
   if (!application.data) return error("Başvuru bulunamadı.", 404);
   if (application.data.status !== "approved")
-    return error("Müşteri sayfası yalnız onaylı başvurular için hazırlanabilir.", 409);
+    return error(
+      "Müşteri sayfası yalnız onaylı başvurular için hazırlanabilir.",
+      409,
+    );
 
   const existing = await context.service
     .from("installment_customer_portals")
@@ -142,8 +144,7 @@ export async function POST(
     return NextResponse.json({ ok: true });
   }
 
-  if (!existing.data)
-    return error("Önce müşteri sayfasını hazırlayın.", 409);
+  if (!existing.data) return error("Önce müşteri sayfasını hazırlayın.", 409);
 
   if (action === "update_stage") {
     const stage = String(body.stage ?? "") as InstallmentPortalStage;
@@ -156,6 +157,8 @@ export async function POST(
       .from("installment_customer_portals")
       .update({
         stage,
+        cancellation_reason: stage === "cancelled" ? "admin_cancelled" : null,
+        cancelled_at: stage === "cancelled" ? new Date().toISOString() : null,
         public_note: publicNote || null,
         updated_by: context.user.id,
       })

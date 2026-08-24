@@ -132,8 +132,7 @@ export const INSTALLMENT_PORTAL_STAGES = [
   "cancelled",
 ] as const;
 
-export type InstallmentPortalStage =
-  (typeof INSTALLMENT_PORTAL_STAGES)[number];
+export type InstallmentPortalStage = (typeof INSTALLMENT_PORTAL_STAGES)[number];
 
 export type InstallmentPortalPaymentAccount = {
   id: string;
@@ -153,6 +152,7 @@ export type InstallmentPortalPaymentSnapshot = Omit<
 export type InstallmentAdminCustomerPortal = {
   id: string;
   stage: InstallmentPortalStage;
+  cancellationReason: "payment_deadline_expired" | "admin_cancelled" | null;
   publicNote: string | null;
   paymentDueAt: string | null;
   accessExpiresAt: string;
