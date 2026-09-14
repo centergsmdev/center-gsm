@@ -20,6 +20,21 @@ const receiptComponent = readFileSync(
   ),
   "utf8",
 );
+const adminReceiptRoute = readFileSync(
+  new URL(
+    "../../app/api/admin/installment-payment-receipts/route.ts",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const adminReceiptComponent = readFileSync(
+  new URL("../../components/admin/admin-payment-receipts.tsx", import.meta.url),
+  "utf8",
+);
+const databaseTypes = readFileSync(
+  new URL("../../types/database.ts", import.meta.url),
+  "utf8",
+);
 
 test("yeni dekont eski aktif dekontu silmeden arşivler", () => {
   assert.match(
@@ -61,5 +76,22 @@ test("müşteri ödeme aşamasında her durumdan yeni dekont seçebilir", () => 
   assert.match(
     receiptComponent,
     /stage === "payment_under_review"[\s\S]*title="Peşinat kontrol ediliyor"/,
+  );
+});
+
+test("admin her dekont yüklemesini ayrı satırda görür", () => {
+  assert.doesNotMatch(adminReceiptRoute, /\.is\("superseded_at", null\)/);
+  assert.match(
+    adminReceiptRoute,
+    /\.order\("created_at", \{ ascending: false \}\)/,
+  );
+  assert.match(adminReceiptComponent, /Önceki dekont ·/);
+  assert.match(
+    adminReceiptComponent,
+    /item\.status === "pending_review" &&[\s\S]*!item\.superseded_at/,
+  );
+  assert.match(
+    databaseTypes,
+    /export type InstallmentPaymentReceiptRow[\s\S]*?superseded_at: string \| null;[\s\S]*?};/,
   );
 });

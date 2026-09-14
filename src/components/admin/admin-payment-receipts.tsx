@@ -205,7 +205,9 @@ export function AdminPaymentReceipts() {
                   className={
                     unseenIds.has(item.id)
                       ? "bg-emerald-50 hover:bg-emerald-100"
-                      : "hover:bg-zinc-50"
+                      : item.superseded_at
+                        ? "bg-zinc-50/70 hover:bg-zinc-100"
+                        : "hover:bg-zinc-50"
                   }
                 >
                   <AdminTd>
@@ -224,7 +226,10 @@ export function AdminPaymentReceipts() {
                     {formatMinorCurrency(item.amount_minor)}
                   </AdminTd>
                   <AdminTd>
-                    <ReceiptStatus status={item.status} />
+                    <ReceiptStatus
+                      status={item.status}
+                      previous={Boolean(item.superseded_at)}
+                    />
                     {item.rejection_reason_public ? (
                       <p className="mt-2 max-w-56 text-xs leading-5 text-red-700">
                         {item.rejection_reason_public}
@@ -245,7 +250,8 @@ export function AdminPaymentReceipts() {
                         <ExternalLink className="size-4" />
                         {opening === item.id ? "Açılıyor…" : "Dekontu aç"}
                       </Button>
-                      {item.status === "pending_review" ? (
+                      {item.status === "pending_review" &&
+                      !item.superseded_at ? (
                         <>
                           <Button
                             size="sm"
@@ -344,8 +350,10 @@ export function AdminPaymentReceipts() {
 
 function ReceiptStatus({
   status,
+  previous,
 }: {
   status: AdminInstallmentPaymentReceipt["status"];
+  previous: boolean;
 }) {
   const labels = {
     pending_review: "İnceleniyor",
@@ -357,11 +365,14 @@ function ReceiptStatus({
     approved: "bg-emerald-50 text-emerald-700",
     rejected: "bg-red-50 text-red-700",
   };
+  const label = previous ? `Önceki dekont · ${labels[status]}` : labels[status];
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${colors[status]}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+        previous ? "bg-zinc-200 text-zinc-700" : colors[status]
+      }`}
     >
-      {labels[status]}
+      {label}
     </span>
   );
 }

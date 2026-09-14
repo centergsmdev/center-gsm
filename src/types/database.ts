@@ -578,7 +578,6 @@ type PaymentReceipt = Timestamps & {
   uploaded_at: string | null;
   reviewed_at: string | null;
   reviewed_by: string | null;
-  superseded_at: string | null;
 };
 type PaymentProvider = Timestamps & {
   id: string;
@@ -1413,6 +1412,7 @@ export type InstallmentPaymentReceiptRow = Timestamps & {
   uploaded_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  superseded_at: string | null;
 };
 
 export type Database = {
