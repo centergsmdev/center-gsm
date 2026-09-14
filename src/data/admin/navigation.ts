@@ -27,6 +27,7 @@ import {
   FileSignature,
   MessageSquareText,
   CircleHelp,
+  ContactRound,
   MessagesSquare,
   Users,
   Warehouse,
@@ -81,6 +82,11 @@ export const adminNavigation = [
   },
   { label: "Dekontlar", href: "/admin/dekontlar", icon: FileCheck2 },
   { label: "Canlı Destek", href: "/admin/canli-destek", icon: MessagesSquare },
+  {
+    label: "WhatsApp Temsilcileri",
+    href: "/admin/whatsapp-temsilcileri",
+    icon: ContactRound,
+  },
   {
     label: "Engellenen Kullanıcılar",
     href: "/admin/canli-destek/engellenenler",
@@ -240,6 +246,11 @@ export const adminPageTitles: Record<
   "/admin/canli-destek": {
     title: "Canlı Destek",
     description: "Müşteri sohbetlerini görüntüleyin ve yanıtlayın.",
+  },
+  "/admin/whatsapp-temsilcileri": {
+    title: "WhatsApp Temsilcileri",
+    description:
+      "Müşterilerin WhatsApp üzerinden ulaşabileceği temsilcileri yönetin.",
   },
   "/admin/yorumlar": {
     title: "Ürün Yorumları",

@@ -320,6 +320,17 @@ export type FaqItem = Timestamps & {
   is_published: boolean;
   updated_by: string | null;
 };
+export type WhatsAppRepresentative = Timestamps & {
+  id: string;
+  full_name: string;
+  title: string;
+  phone_e164: string;
+  photo_url: string | null;
+  photo_path: string | null;
+  sort_order: number;
+  is_active: boolean;
+  updated_by: string | null;
+};
 export type AdvertisementCenterSettings = {
   id: boolean;
   daily_budget: number;
@@ -1637,6 +1648,12 @@ export type Database = {
         FaqItem,
         Partial<FaqItem> & Pick<FaqItem, "category" | "question" | "answer">,
         Partial<FaqItem>
+      >;
+      whatsapp_representatives: Table<
+        WhatsAppRepresentative,
+        Partial<WhatsAppRepresentative> &
+          Pick<WhatsAppRepresentative, "full_name" | "title" | "phone_e164">,
+        Partial<WhatsAppRepresentative>
       >;
       advertisement_center_settings: Table<AdvertisementCenterSettings>;
       advertisement_product_settings: Table<
