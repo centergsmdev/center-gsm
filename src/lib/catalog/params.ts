@@ -34,6 +34,6 @@ export function catalogFiltersFromParams(
     discount: first(params.indirim) === "var",
     sort,
     page: Math.max(1, positiveNumber(first(params.sayfa)) ?? 1),
-    pageSize: 8,
+    pageSize: 15,
   };
 }

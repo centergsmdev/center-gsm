@@ -7,7 +7,6 @@ import { AnimatePresence, motion, useDragControls } from "motion/react";
 import { Check, SlidersHorizontal, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Divider } from "@/components/ui/divider";
 import { Input } from "@/components/ui/input";
 import type { BrandTaxonomy, CatalogTaxonomy } from "@/lib/catalog/types";
 import type { CatalogSearchParams } from "@/lib/catalog/params";
@@ -177,7 +176,7 @@ export function FilterPanel({
             )
           : null}
       </div>
-      <div className="hidden lg:sticky lg:top-44 lg:block lg:rounded-lg lg:border lg:border-border lg:bg-white lg:p-5 lg:shadow-xs">
+      <div className="hidden lg:sticky lg:top-44 lg:block lg:max-h-[calc(100vh-12rem)] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-zinc-200 lg:bg-white lg:shadow-[0_18px_55px_rgba(15,23,42,0.09)]">
         <FilterForm {...{ categories, brands, params, basePath }} />
       </div>
     </aside>
@@ -213,19 +212,33 @@ function FilterForm({
     <form
       action={basePath}
       method="get"
-      className={mobile ? "space-y-3" : undefined}
+      className={
+        mobile ? "space-y-3" : "flex max-h-[calc(100vh-12rem)] min-h-0 flex-col"
+      }
     >
-      <div
-        className={`items-center justify-between ${mobile ? "hidden" : "flex"}`}
-      >
-        <h2 className="font-bold">Filtreler</h2>
-        <Link
-          href={query ? `${basePath}?q=${encodeURIComponent(query)}` : basePath}
-          className="text-xs font-semibold text-primary hover:text-primary-hover"
-        >
-          Temizle
-        </Link>
-      </div>
+      {!mobile ? (
+        <div className="relative shrink-0 overflow-hidden bg-zinc-950 px-5 py-5 text-white">
+          <div className="absolute -right-8 -top-12 size-28 rounded-full bg-red-600/25 blur-3xl" />
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15">
+                <SlidersHorizontal className="size-4.5" />
+              </span>
+              <div>
+                <h2 className="text-sm font-black">Filtreler</h2>
+                <p className="mt-0.5 text-[11px] text-zinc-400">
+                  Sonuçları hızla daraltın
+                </p>
+              </div>
+            </div>
+            {getActiveFilterCount(params) > 0 ? (
+              <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-black">
+                {getActiveFilterCount(params)} aktif
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {query ? <input type="hidden" name="q" value={query} /> : null}
       <input
         type="hidden"
@@ -236,121 +249,132 @@ function FilterForm({
             : (params.sirala ?? "popular")
         }
       />
-      <Divider className={mobile ? "hidden" : "my-5"} />
-      <FilterGroup title="Fiyat Aralığı" mobile={mobile}>
-        <div className="grid grid-cols-2 gap-2">
-          <label>
-            <span className="sr-only">En düşük fiyat</span>
-            <Input
-              name="minFiyat"
-              inputMode="numeric"
-              placeholder="Min"
-              defaultValue={
-                Array.isArray(params.minFiyat)
-                  ? params.minFiyat[0]
-                  : params.minFiyat
-              }
-              className="h-10 px-3"
-            />
-          </label>
-          <label>
-            <span className="sr-only">En yüksek fiyat</span>
-            <Input
-              name="maxFiyat"
-              inputMode="numeric"
-              placeholder="Maks"
-              defaultValue={
-                Array.isArray(params.maxFiyat)
-                  ? params.maxFiyat[0]
-                  : params.maxFiyat
-              }
-              className="h-10 px-3"
-            />
-          </label>
-        </div>
-      </FilterGroup>
-      <FilterGroup title="Kategori" mobile={mobile}>
-        <Options
-          name="kategori"
-          options={categories}
-          selected={selectedCategories}
-          mobile={mobile}
-        />
-      </FilterGroup>
-      <FilterGroup title="Marka" mobile={mobile}>
-        <Options
-          name="brand"
-          options={brands}
-          selected={selectedBrands}
-          mobile={mobile}
-        />
-      </FilterGroup>
-      <FilterGroup title="Durum" mobile={mobile}>
-        <label
-          className={
-            mobile
-              ? "group flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm font-semibold text-zinc-700"
-              : "flex cursor-pointer items-center gap-3 text-sm text-zinc-600"
-          }
-        >
-          <input
-            name="stok"
-            value="var"
-            type="checkbox"
-            defaultChecked={params.stok === "var"}
-            className={mobile ? "peer sr-only" : "size-4 accent-red-600"}
-          />
-          {mobile ? (
-            <span className="grid size-5 place-items-center rounded-md border border-zinc-300 bg-white text-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
-              <Check className="size-3.5" />
-            </span>
-          ) : null}
-          Stokta olanlar
-        </label>
-        <label
-          className={
-            mobile
-              ? "group mt-2 flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm font-semibold text-zinc-700"
-              : "mt-3 flex cursor-pointer items-center gap-3 text-sm text-zinc-600"
-          }
-        >
-          <input
-            name="indirim"
-            value="var"
-            type="checkbox"
-            defaultChecked={params.indirim === "var"}
-            className={mobile ? "peer sr-only" : "size-4 accent-red-600"}
-          />
-          {mobile ? (
-            <span className="grid size-5 place-items-center rounded-md border border-zinc-300 bg-white text-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
-              <Check className="size-3.5" />
-            </span>
-          ) : null}
-          İndirimli ürünler
-        </label>
-      </FilterGroup>
-      <Button
-        type="submit"
+      <div
         className={
           mobile
-            ? "h-12 w-full rounded-2xl text-sm font-black shadow-lg shadow-red-600/15"
-            : "mt-5 w-full"
+            ? "space-y-3"
+            : "min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-color:#d4d4d8_transparent] [scrollbar-width:thin]"
         }
       >
-        {mobile ? <Sparkles className="mr-2 size-4" /> : null}
-        Filtreleri Uygula
-      </Button>
-      {mobile ? (
-        <Link
-          href={query ? `${basePath}?q=${encodeURIComponent(query)}` : basePath}
-          className="flex h-11 items-center justify-center rounded-2xl text-sm font-bold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950"
+        <FilterGroup title="Fiyat Aralığı" mobile={mobile}>
+          <div className="grid grid-cols-2 gap-2">
+            <label>
+              <span className="sr-only">En düşük fiyat</span>
+              <Input
+                name="minFiyat"
+                inputMode="numeric"
+                placeholder="En az"
+                defaultValue={
+                  Array.isArray(params.minFiyat)
+                    ? params.minFiyat[0]
+                    : params.minFiyat
+                }
+                className="h-10 rounded-xl border-zinc-200 bg-zinc-50 px-3 focus:bg-white"
+              />
+            </label>
+            <label>
+              <span className="sr-only">En yüksek fiyat</span>
+              <Input
+                name="maxFiyat"
+                inputMode="numeric"
+                placeholder="En çok"
+                defaultValue={
+                  Array.isArray(params.maxFiyat)
+                    ? params.maxFiyat[0]
+                    : params.maxFiyat
+                }
+                className="h-10 rounded-xl border-zinc-200 bg-zinc-50 px-3 focus:bg-white"
+              />
+            </label>
+          </div>
+        </FilterGroup>
+        <FilterGroup title="Kategori" mobile={mobile}>
+          <Options
+            name="kategori"
+            options={categories}
+            selected={selectedCategories}
+            mobile={mobile}
+          />
+        </FilterGroup>
+        <FilterGroup title="Marka" mobile={mobile}>
+          <Options
+            name="brand"
+            options={brands}
+            selected={selectedBrands}
+            mobile={mobile}
+          />
+        </FilterGroup>
+        <FilterGroup title="Durum" mobile={mobile}>
+          <FilterCheckbox
+            name="stok"
+            label="Stokta olanlar"
+            checked={params.stok === "var"}
+          />
+          <FilterCheckbox
+            name="indirim"
+            label="İndirimli ürünler"
+            checked={params.indirim === "var"}
+            className="mt-2"
+          />
+        </FilterGroup>
+        <div
+          className={
+            mobile
+              ? "sticky bottom-0 z-raised -mx-1 space-y-1 rounded-2xl border border-zinc-200/80 bg-white/95 p-2 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur"
+              : "sticky bottom-0 border-t border-zinc-100 bg-white/95 px-5 py-4 backdrop-blur"
+          }
         >
-          Tüm filtreleri temizle
-        </Link>
-      ) : null}
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-xl text-sm font-black shadow-lg shadow-red-600/15"
+          >
+            <Sparkles className="mr-2 size-4" />
+            Filtreleri Uygula
+          </Button>
+          <Link
+            href={
+              query ? `${basePath}?q=${encodeURIComponent(query)}` : basePath
+            }
+            className="flex h-9 items-center justify-center rounded-xl text-xs font-bold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950"
+          >
+            Tüm filtreleri temizle
+          </Link>
+        </div>
+      </div>
     </form>
   );
 }
+
+function FilterCheckbox({
+  name,
+  label,
+  checked,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+  className?: string;
+}) {
+  return (
+    <label
+      className={`group flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm font-semibold text-zinc-700 transition-all hover:border-zinc-300 hover:bg-white has-[:checked]:border-red-200 has-[:checked]:bg-red-50 has-[:checked]:text-zinc-950 ${className}`}
+    >
+      <input
+        name={name}
+        value="var"
+        type="checkbox"
+        defaultChecked={checked}
+        className="peer sr-only"
+      />
+      <span className="grid size-5 shrink-0 place-items-center rounded-md border border-zinc-300 bg-white text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+        <Check className="size-3.5" />
+      </span>
+      {label}
+    </label>
+  );
+}
+
 function Options({
   name,
   options,
@@ -363,28 +387,26 @@ function Options({
   mobile?: boolean;
 }) {
   return (
-    <div className={mobile ? "grid grid-cols-2 gap-2" : "space-y-3"}>
+    <div
+      className={
+        mobile ? "grid grid-cols-1 gap-2 min-[430px]:grid-cols-2" : "space-y-1"
+      }
+    >
       {options.map((option) => (
         <label
           key={option.id}
-          className={
-            mobile
-              ? "flex min-w-0 cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-300"
-              : "flex cursor-pointer items-center gap-3 text-sm text-zinc-600 hover:text-foreground"
-          }
+          className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-sm font-semibold text-zinc-600 transition-all hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 has-[:checked]:border-red-200 has-[:checked]:bg-red-50 has-[:checked]:text-zinc-950"
         >
           <input
             name={name}
             value={option.slug}
             type="checkbox"
             defaultChecked={selected.has(option.slug)}
-            className={mobile ? "peer sr-only" : "size-4 accent-red-600"}
+            className="peer sr-only"
           />
-          {mobile ? (
-            <span className="grid size-5 shrink-0 place-items-center rounded-md border border-zinc-300 bg-white text-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
-              <Check className="size-3.5" />
-            </span>
-          ) : null}
+          <span className="grid size-5 shrink-0 place-items-center rounded-md border border-zinc-300 bg-white text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
+            <Check className="size-3.5" />
+          </span>
           <span className="truncate">{option.name}</span>
         </label>
       ))}
@@ -405,10 +427,12 @@ function FilterGroup({
       className={
         mobile
           ? "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
-          : "border-b border-border py-5 first:pt-0 last:border-0 last:pb-0"
+          : "border-b border-zinc-100 px-5 py-5 last:border-0"
       }
     >
-      <h3 className="mb-4 text-sm font-bold">{title}</h3>
+      <h3 className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-zinc-950">
+        {title}
+      </h3>
       {children}
     </section>
   );

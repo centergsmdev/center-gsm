@@ -57,9 +57,9 @@ export default async function ProductsPage({
   const filters = catalogFiltersFromParams(params);
   const [result, tabletResult, desktopResult, categories, brands] =
     await Promise.all([
-      getProducts({ ...filters, pageSize: 16 }),
-      getProducts(filters),
-      getProducts({ ...filters, pageSize: 10 }),
+      getProducts({ ...filters, pageSize: 15 }),
+      getProducts({ ...filters, pageSize: 15 }),
+      getProducts({ ...filters, pageSize: 15 }),
       getCategories(),
       getBrands(),
     ]);
