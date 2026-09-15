@@ -23,9 +23,11 @@ export default function RootLayout({
             <ComparisonProvider>
               <CartProvider>
                 <SalesCampaignProvider>
-                  {children}
-                  <CampaignOverlays />
-                  <DeferredLiveChat />
+                  <div data-storefront-shell>
+                    {children}
+                    <CampaignOverlays />
+                    <DeferredLiveChat />
+                  </div>
                   <Suspense fallback={null}>
                     <MetaPixel />
                   </Suspense>
