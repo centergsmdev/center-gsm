@@ -359,18 +359,15 @@ export function InstallmentApplicationForm({
   if (!downPaymentWarningAcknowledged)
     return (
       <Card
-        className="mx-auto max-w-xl border-amber-300 bg-amber-50/70 shadow-lg"
+        className="relative mx-auto max-w-xl overflow-hidden rounded-3xl border-zinc-200 bg-white shadow-[0_24px_70px_-28px_rgba(0,0,0,0.35)] before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-zinc-950 before:via-red-600 before:to-zinc-950"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="down-payment-warning-title"
         aria-describedby="down-payment-warning-description down-payment-warning-acceptance"
       >
-        <CardContent className="py-8 text-center sm:px-10 sm:py-10">
-          <span className="mx-auto grid size-16 place-items-center rounded-full bg-amber-100 ring-8 ring-amber-50">
-            <AlertTriangle
-              className="size-8 text-amber-700"
-              aria-hidden="true"
-            />
+        <CardContent className="px-5 py-8 text-center sm:px-10 sm:py-10">
+          <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-red-50 shadow-sm ring-1 ring-red-100">
+            <AlertTriangle className="size-8 text-red-600" aria-hidden="true" />
           </span>
           <h1
             id="down-payment-warning-title"
@@ -393,11 +390,11 @@ export function InstallmentApplicationForm({
             yapacağımı okudum, anladım ve kabul ediyorum.
           </p>
           {selectedPaymentPlan ? (
-            <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-amber-300 bg-white px-5 py-4">
-              <p className="text-sm font-semibold text-zinc-600">
+            <div className="mx-auto mt-6 max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-5 shadow-lg shadow-zinc-950/10">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-400 sm:text-sm sm:normal-case sm:tracking-normal">
                 Ödenmesi gereken ilk peşinat
               </p>
-              <p className="mt-1 text-3xl font-black tracking-tight text-zinc-950">
+              <p className="mt-1 text-3xl font-black tracking-tight text-white">
                 {formatMinorCurrency(
                   selectedPaymentPlan.downPaymentAmountMinor,
                 )}
@@ -411,17 +408,19 @@ export function InstallmentApplicationForm({
           )}
           <fieldset className="mx-auto mt-6 max-w-md text-left">
             <legend className="flex items-center gap-2 text-sm font-black text-zinc-950 sm:text-base">
-              <Clock3 className="size-5 text-amber-700" aria-hidden="true" />
+              <span className="grid size-8 place-items-center rounded-full bg-red-50">
+                <Clock3 className="size-4 text-red-600" aria-hidden="true" />
+              </span>
               Ödemeyi ne zaman yapabilirsiniz?
             </legend>
-            <div className="mt-3 grid gap-2">
+            <div className="mt-3 grid gap-3">
               {paymentPlan?.config.downPaymentTimingOptions.map((option) => (
                 <label
                   key={option.id}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-4 text-sm font-bold transition-colors ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 text-sm font-bold shadow-sm transition-all duration-200 ${
                     downPaymentTiming === option.id
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-100"
-                      : "border-zinc-200 text-zinc-800 hover:border-amber-400"
+                      ? "border-zinc-950 bg-zinc-950 text-white shadow-md ring-2 ring-zinc-950/10"
+                      : "border-zinc-200 bg-white text-zinc-800 hover:-translate-y-0.5 hover:border-zinc-400 hover:shadow-md"
                   }`}
                 >
                   <input
@@ -430,17 +429,17 @@ export function InstallmentApplicationForm({
                     value={option.id}
                     checked={downPaymentTiming === option.id}
                     disabled={!selectedPaymentPlan}
-                    className="size-5 shrink-0 accent-emerald-600"
+                    className="size-5 shrink-0 accent-red-600"
                     onChange={() => setDownPaymentTiming(option.id)}
                   />
                   {option.label}
                 </label>
               ))}
               <label
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 text-sm font-bold transition-colors ${
+                className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 text-sm font-bold shadow-sm transition-all duration-200 ${
                   downPaymentTiming === "not_ready"
                     ? "border-red-400 bg-red-50 text-red-800 ring-2 ring-red-100"
-                    : "border-zinc-200 bg-white text-zinc-800 hover:border-red-300"
+                    : "border-zinc-200 bg-white text-zinc-800 hover:-translate-y-0.5 hover:border-red-300 hover:shadow-md"
                 }`}
               >
                 <input
@@ -467,10 +466,8 @@ export function InstallmentApplicationForm({
           ) : null}
           <Button
             size="lg"
-            className="mt-7 w-full sm:w-auto sm:min-w-64"
-            disabled={
-              !selectedPaymentPlan || !selectedDownPaymentTimingOption
-            }
+            className="mt-7 h-14 w-full bg-red-600 px-8 text-sm shadow-lg shadow-red-600/20 hover:bg-red-700 hover:shadow-red-600/30 disabled:bg-zinc-200 disabled:text-zinc-500 disabled:opacity-100 disabled:shadow-none sm:w-auto sm:min-w-72"
+            disabled={!selectedPaymentPlan || !selectedDownPaymentTimingOption}
             onClick={() => setDownPaymentWarningAcknowledged(true)}
           >
             Seçimimi Onayla ve Başvuruya Devam Et
