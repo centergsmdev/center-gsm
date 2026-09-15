@@ -16,19 +16,19 @@ export function PaymentPlanSummary({
   const last = plan.installmentSchedule.at(-1);
   const adjusted = last && last.amountMinor !== plan.monthlyInstallmentMinor;
   return (
-    <div className="min-w-0 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 sm:p-5">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-amber-800 shadow-sm">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-4 py-4 sm:px-5">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-950/20">
           <HandCoins className="size-5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="font-black text-zinc-950">{title}</h2>
-          <p className="mt-0.5 text-xs text-zinc-600">
+          <h2 className="font-black text-white">{title}</h2>
+          <p className="mt-0.5 text-xs text-zinc-400">
             Ayar revizyonu {plan.configRevision}
           </p>
         </div>
       </div>
-      <dl className="mt-4 grid gap-x-5 text-sm sm:grid-cols-2">
+      <dl className="grid gap-x-5 px-4 py-3 text-sm sm:grid-cols-2 sm:px-5">
         <PlanRow label="Ürün fiyatı" value={plan.productPriceMinor} />
         <PlanRow
           label={`Peşinat (%${formatBasisPoints(plan.downPaymentRateBps)})`}
@@ -54,11 +54,11 @@ export function PaymentPlanSummary({
           strong
         />
       </dl>
-      <ol className="mt-4 grid gap-2 border-t border-amber-200 pt-4 text-xs sm:grid-cols-2">
+      <ol className="grid gap-2 border-t border-zinc-200 bg-zinc-50 p-4 text-xs sm:grid-cols-2 sm:p-5">
         {plan.installmentSchedule.map((item) => (
           <li
             key={item.installment}
-            className="flex min-w-0 justify-between gap-3 rounded-lg bg-white/80 px-3 py-2"
+            className="flex min-w-0 justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm"
           >
             <span>{item.installment}. taksit</span>
             <strong className="break-words text-right">
@@ -83,7 +83,7 @@ function PlanRow({
   strong?: boolean;
 }) {
   return (
-    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-amber-100 py-2.5">
+    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-zinc-100 py-2.5">
       <dt className="text-zinc-600">{label}</dt>
       <dd
         className={`break-words text-right font-bold ${strong ? "text-red-700" : "text-zinc-950"}`}
