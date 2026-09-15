@@ -22,12 +22,7 @@ export function MobileNavigation({
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     const triggerButton = triggerButtonRef.current;
-    const storefrontShell = document.querySelector<HTMLElement>(
-      "[data-storefront-shell]",
-    );
-    const previousShellInert = storefrontShell?.inert ?? false;
     document.body.style.overflow = "hidden";
-    if (storefrontShell) storefrontShell.inert = true;
     closeButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -52,7 +47,6 @@ export function MobileNavigation({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      if (storefrontShell) storefrontShell.inert = previousShellInert;
       window.removeEventListener("keydown", handleKeyDown);
       if (triggerButton?.isConnected)
         triggerButton.focus({ preventScroll: true });
