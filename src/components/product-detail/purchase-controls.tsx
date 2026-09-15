@@ -128,30 +128,34 @@ export function PurchaseControls({
             className="w-full justify-center rounded-full"
           />
         </div>
-        <Button
-          size="lg"
-          variant="outline"
-          className="mt-2 w-full border-emerald-600 bg-emerald-600 text-white hover:border-emerald-700 hover:bg-emerald-700 focus-visible:ring-emerald-600"
-          disabled={purchaseDisabled || !paymentPlanAvailable}
-          onClick={() => {
-            const params = new URLSearchParams({
-              productId,
-              installmentCount: String(installmentCount),
-            });
-            if (variant?.id) params.set("variantId", variant.id);
-            router.push(`/elden-taksit/basvuru?${params.toString()}`);
-          }}
-        >
-          <FileSignature className="size-4" aria-hidden="true" />
-          Elden Taksit Başvurusu
-        </Button>
-        {!paymentPlanAvailable ? (
-          <p
-            className="mt-2 text-center text-xs font-semibold text-amber-700"
-            role="status"
-          >
-            Elden taksit ödeme planı şu anda kullanılamıyor.
-          </p>
+        {product.showInstallments === true ? (
+          <>
+            <Button
+              size="lg"
+              variant="outline"
+              className="mt-2 w-full border-emerald-600 bg-emerald-600 text-white hover:border-emerald-700 hover:bg-emerald-700 focus-visible:ring-emerald-600"
+              disabled={purchaseDisabled || !paymentPlanAvailable}
+              onClick={() => {
+                const params = new URLSearchParams({
+                  productId,
+                  installmentCount: String(installmentCount),
+                });
+                if (variant?.id) params.set("variantId", variant.id);
+                router.push(`/elden-taksit/basvuru?${params.toString()}`);
+              }}
+            >
+              <FileSignature className="size-4" aria-hidden="true" />
+              Elden Taksit Başvurusu
+            </Button>
+            {!paymentPlanAvailable ? (
+              <p
+                className="mt-2 text-center text-xs font-semibold text-amber-700"
+                role="status"
+              >
+                Elden taksit ödeme planı şu anda kullanılamıyor.
+              </p>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>

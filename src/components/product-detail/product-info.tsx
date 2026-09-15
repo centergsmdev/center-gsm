@@ -208,12 +208,14 @@ export function ProductInfo({
         </p>
       </div>
 
-      <PaymentOptionsCalculator
-        price={product.price}
-        config={paymentConfig}
-        selectedInstallmentCount={selectedInstallmentCount}
-        onInstallmentCountChange={onInstallmentCountChange}
-      />
+      {product.showInstallments === true ? (
+        <PaymentOptionsCalculator
+          price={product.price}
+          config={paymentConfig}
+          selectedInstallmentCount={selectedInstallmentCount}
+          onInstallmentCountChange={onInstallmentCountChange}
+        />
+      ) : null}
 
       <Card className="mt-3 grid gap-1.5 border-0 bg-zinc-50 p-2 shadow-inner sm:grid-cols-2">
         {product.sameDayShipping ? (

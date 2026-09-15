@@ -77,6 +77,11 @@ export async function resolveInstallmentProduct(
     !product
   )
     return { data: null, error: "Ürün bulunamadı." };
+  if (product.show_installments !== true)
+    return {
+      data: null,
+      error: "Bu ürün elden taksit başvurusuna açık değil.",
+    };
   const selectionError = validateProductVariantSelection(
     product,
     variantsResult.data,
