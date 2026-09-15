@@ -2,7 +2,6 @@ import { Benefits } from "@/components/home/benefits";
 import { Brands } from "@/components/home/brands";
 import { Categories } from "@/components/home/categories";
 import { CategoryProductShowcase } from "@/components/home/category-product-showcase";
-import { Deals } from "@/components/home/deals";
 import { FeaturedProducts } from "@/components/home/featured-products";
 import { WeeklyDeals } from "@/components/home/weekly-deals";
 import { Footer } from "@/components/layout/footer";
@@ -10,9 +9,7 @@ import { Header } from "@/components/layout/header";
 import { HomepageWhatsAppButton } from "@/components/layout/homepage-whatsapp-button";
 import { Hero } from "@/components/home/hero";
 import {
-  BrandShowcase,
   HomepageFooterCta,
-  PaymentAdvantages,
   WhyCenterGsm,
 } from "@/components/home/homepage-trust-sections";
 import { TrustSection } from "@/components/home/trust-section";
@@ -103,7 +100,6 @@ export default async function HomePage() {
             products={tablets.error ? [] : tablets.data}
             muted
           />
-          <Deals products={(featured.error ? [] : featured.data).slice(0, 5)} />
           <Brands />
           <Benefits />
           <TrustSection
@@ -111,8 +107,6 @@ export default async function HomePage() {
             paymentPartners={paymentPartners}
           />
           <WhyCenterGsm />
-          <PaymentAdvantages />
-          <BrandShowcase />
           <HomepageFooterCta />
         </main>
         <FadeIn>
