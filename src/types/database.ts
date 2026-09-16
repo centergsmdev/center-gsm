@@ -1426,9 +1426,103 @@ export type InstallmentPaymentReceiptRow = Timestamps & {
   superseded_at: string | null;
 };
 
+export type TradeInStatus =
+  | "new"
+  | "reviewing"
+  | "offer_sent"
+  | "accepted"
+  | "rejected"
+  | "completed"
+  | "cancelled";
+
+export type TradeInApplicationRow = Timestamps & {
+  id: string;
+  application_number: string;
+  customer_name: string;
+  phone_e164: string;
+  device_brand: string;
+  device_model: string;
+  storage_capacity: string | null;
+  screen_condition: "clean" | "scratched" | "cracked";
+  body_condition: "clean" | "used" | "damaged";
+  powers_on: boolean;
+  repair_status: "no" | "yes" | "unknown";
+  battery_health: number | null;
+  has_box: boolean;
+  desired_product: string | null;
+  customer_note: string | null;
+  status: TradeInStatus;
+  offer_amount_minor: number | null;
+  customer_response_note: string | null;
+  internal_note: string | null;
+  consented_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  request_ip_hash: string | null;
+  user_agent_summary: string | null;
+};
+
+export type TradeInPhotoRow = {
+  id: string;
+  application_id: string;
+  storage_path: string;
+  sort_order: number;
+  stored_mime_type: "image/webp";
+  size_bytes: number;
+  sha256: string;
+  width: number;
+  height: number;
+  created_at: string;
+};
+
+export type TradeInRateLimitRow = {
+  key_hash: string;
+  window_started_at: string;
+  request_count: number;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      trade_in_applications: Table<
+        TradeInApplicationRow,
+        Partial<TradeInApplicationRow> &
+          Pick<
+            TradeInApplicationRow,
+            | "application_number"
+            | "customer_name"
+            | "phone_e164"
+            | "device_brand"
+            | "device_model"
+            | "screen_condition"
+            | "body_condition"
+            | "powers_on"
+            | "repair_status"
+            | "consented_at"
+          >,
+        Partial<TradeInApplicationRow>
+      >;
+      trade_in_photos: Table<
+        TradeInPhotoRow,
+        Partial<TradeInPhotoRow> &
+          Pick<
+            TradeInPhotoRow,
+            | "application_id"
+            | "storage_path"
+            | "sort_order"
+            | "size_bytes"
+            | "sha256"
+            | "width"
+            | "height"
+          >,
+        Partial<TradeInPhotoRow>
+      >;
+      trade_in_rate_limits: Table<
+        TradeInRateLimitRow,
+        TradeInRateLimitRow,
+        Partial<TradeInRateLimitRow>
+      >;
       payment_plan_configurations: Table<
         PaymentPlanConfigurationRow,
         Partial<PaymentPlanConfigurationRow> &
@@ -1898,6 +1992,14 @@ export type Database = {
       };
     };
     Functions: {
+      consume_trade_in_rate_limit: {
+        Args: {
+          p_key_hash: string;
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: boolean;
+      };
       expire_overdue_installment_portals: {
         Args: {
           p_portal_id?: string | null;

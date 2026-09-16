@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FileSignature, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
+import {
+  ArrowLeftRight,
+  FileSignature,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Zap,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -157,6 +164,22 @@ export function PurchaseControls({
             ) : null}
           </>
         ) : null}
+        <Button
+          size="lg"
+          variant="outline"
+          className="mt-2 w-full border-zinc-300 bg-zinc-50 text-zinc-900 hover:border-zinc-950 hover:bg-white"
+          onClick={() =>
+            router.push(
+              `/telefonunu-takasa-ver?desiredProduct=${encodeURIComponent(productName)}`,
+            )
+          }
+        >
+          <ArrowLeftRight
+            className="size-4 text-emerald-600"
+            aria-hidden="true"
+          />
+          Eski Telefonunu Takasa Ver
+        </Button>
       </div>
     </div>
   );

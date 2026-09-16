@@ -21,12 +21,18 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
             title: "Sipariş detayı",
             description: "Sipariş akışını, ödemeyi ve iç notları yönetin.",
           }
-        : pathname.startsWith("/admin/iadeler/")
+        : pathname.startsWith("/admin/telefon-takas/")
           ? {
-              title: "RMA detayı",
-              description: "Talebi, mesajları ve durum geçmişini yönetin.",
+              title: "Telefon takas başvurusu",
+              description:
+                "Cihaz bilgilerini inceleyin, teklif ve başvuru durumunu yönetin.",
             }
-          : adminPageTitles["/admin"]);
+          : pathname.startsWith("/admin/iadeler/")
+            ? {
+                title: "RMA detayı",
+                description: "Talebi, mesajları ve durum geçmişini yönetin.",
+              }
+            : adminPageTitles["/admin"]);
   return (
     <header className="sticky top-0 z-sticky border-b border-zinc-200/80 bg-white/90 backdrop-blur-xl">
       <div className="flex min-h-20 items-center gap-3 px-4 sm:px-6 lg:px-8">

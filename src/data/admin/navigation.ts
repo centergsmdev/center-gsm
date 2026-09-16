@@ -32,6 +32,7 @@ import {
   Users,
   Warehouse,
   Webhook,
+  ArrowLeftRight,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -70,6 +71,11 @@ export const adminNavigation = [
   { label: "Stok", href: "/admin/stok", icon: Boxes },
   { label: "Depolar", href: "/admin/depolar", icon: Warehouse },
   { label: "Siparişler", href: "/admin/siparisler", icon: ShoppingBag },
+  {
+    label: "Telefon Takas Başvuruları",
+    href: "/admin/telefon-takas",
+    icon: ArrowLeftRight,
+  },
   {
     label: "Elden Taksit Başvuruları",
     href: "/admin/elden-taksit-basvurulari",
@@ -227,6 +233,11 @@ export const adminPageTitles: Record<
   "/admin/siparisler": {
     title: "Siparişler",
     description: "Sipariş akışını ve teslimat durumlarını izleyin.",
+  },
+  "/admin/telefon-takas": {
+    title: "Telefon Takas Başvuruları",
+    description:
+      "Müşterilerin eski telefonları için gönderdiği takas taleplerini değerlendirin.",
   },
   "/admin/elden-taksit-basvurulari": {
     title: "Elden Taksit Başvuruları",

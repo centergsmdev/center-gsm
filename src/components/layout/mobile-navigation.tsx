@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ChevronRight, Grid2X2, Menu, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronRight,
+  Grid2X2,
+  Menu,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
 
 type NavigationCategory = { name: string; slug: string };
@@ -170,6 +177,22 @@ export function MobileNavigation({
                   </div>
 
                   <div className="border-t border-zinc-100 bg-zinc-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                    <Link
+                      href="/telefonunu-takasa-ver"
+                      onClick={close}
+                      className="group mb-2 flex items-center gap-3 rounded-2xl bg-zinc-950 px-4 py-3.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <span className="grid size-9 place-items-center rounded-xl bg-emerald-500 text-zinc-950">
+                        <ArrowLeftRight className="size-4" />
+                      </span>
+                      <span className="flex-1">
+                        <span className="block">Telefonunu Takasa Ver</span>
+                        <span className="mt-0.5 block text-[10px] font-medium text-zinc-400">
+                          Eski telefonun için teklif al
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 text-emerald-400 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
                     <Link
                       href="/kampanyalar"
                       onClick={close}

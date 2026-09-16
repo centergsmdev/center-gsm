@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Grid2X2, Menu } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, Grid2X2, Menu } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Divider } from "@/components/ui/divider";
@@ -85,20 +85,18 @@ export function DesktopCategoryNavigation({
           </Link>
         ))}
 
-        {remainingCategories.length ? (
-          <button
-            type="button"
-            aria-expanded={openMenu === "more"}
-            aria-controls="more-categories-menu"
-            onClick={() =>
-              setOpenMenu((current) => (current === "more" ? null : "more"))
-            }
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-700 transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            Daha Fazla
-            <ChevronDown className="size-3.5" aria-hidden="true" />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          aria-expanded={openMenu === "more"}
+          aria-controls="more-categories-menu"
+          onClick={() =>
+            setOpenMenu((current) => (current === "more" ? null : "more"))
+          }
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-700 transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          Daha Fazla
+          <ChevronDown className="size-3.5" aria-hidden="true" />
+        </button>
 
         <Link
           href="/kampanyalar"
@@ -141,9 +139,19 @@ export function DesktopCategoryNavigation({
           className="absolute right-[max(1.5rem,calc((100vw-80rem)/2))] top-full w-72 rounded-b-2xl border border-zinc-100 bg-white p-3 shadow-2xl"
         >
           <p className="px-3 pb-2 pt-1 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400">
-            Diğer kategoriler
+            Diğer seçenekler
           </p>
-          <div className="grid">{remainingCategories.map(categoryLink)}</div>
+          <div className="grid">
+            <Link
+              href="/telefonunu-takasa-ver"
+              onClick={() => setOpenMenu(null)}
+              className="mb-2 flex items-center gap-3 rounded-xl bg-zinc-950 px-3 py-3 text-sm font-bold text-white transition-colors hover:bg-zinc-800"
+            >
+              <ArrowLeftRight className="size-4 text-emerald-400" />
+              Telefonunu Takasa Ver
+            </Link>
+            {remainingCategories.map(categoryLink)}
+          </div>
         </div>
       ) : null}
     </div>
