@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CENTER GSM e-posta doğrulama kodu</title>
+  </head>
+  <body style="margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#111111">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f5f5;padding:32px 16px">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden">
+            <tr>
+              <td style="background:#09090b;padding:24px 28px;color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.4px">
+                CENTER<span style="color:#ef1717">GSM</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 28px">
+                <h1 style="margin:0;font-size:24px;line-height:1.25">E-posta adresinizi doğrulayın</h1>
+                <p style="margin:14px 0 0;font-size:15px;line-height:1.7;color:#52525b">
+                  CENTER GSM üyeliğinizi tamamlamak için aşağıdaki 6 haneli doğrulama kodunu kayıt ekranına girin.
+                </p>
+                <div style="margin:26px 0;padding:18px 12px;border:1px solid #fecaca;border-radius:14px;background:#fff7f7;text-align:center;font-size:32px;font-weight:800;letter-spacing:10px;color:#dc2626">
+                  {{ .Token }}
+                </div>
+                <p style="margin:0;font-size:13px;line-height:1.65;color:#71717a">
+                  Bu kod kısa süre için geçerlidir ve yalnızca bir kez kullanılabilir. Bu üyelik işlemini siz başlatmadıysanız e-postayı dikkate almayın.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

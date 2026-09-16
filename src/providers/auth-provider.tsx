@@ -47,6 +47,8 @@ type AuthContextValue = {
     email: string,
     password: string,
   ) => Promise<Result>;
+  verifyRegistrationCode: (email: string, code: string) => Promise<Result>;
+  resendRegistrationCode: (email: string) => Promise<Result>;
   logout: () => Promise<void>;
   updateProfile: (profile: DemoUser) => Promise<Result>;
   addAddress: (
@@ -101,6 +103,19 @@ function registerError(error: NonNullable<AuthError>) {
     return "Çok fazla doğrulama e-postası gönderildi. Lütfen kısa süre sonra tekrar deneyin.";
   if (error.code === "weak_password") return "Daha güçlü bir şifre belirleyin.";
   return "Kayıt oluşturulamadı. Bilgilerinizi kontrol edip tekrar deneyin.";
+}
+
+function verificationError(error: NonNullable<AuthError>) {
+  if (error.code === "otp_expired")
+    return "Doğrulama kodunun süresi dolmuş. Yeni kod isteyin.";
+  if (error.code === "too_many_requests" || error.status === 429)
+    return "Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.";
+  if (
+    error.code === "otp_disabled" ||
+    error.message.toLocaleLowerCase("en-US").includes("invalid")
+  )
+    return "Doğrulama kodu hatalı. E-postanızdaki son kodu kontrol edin.";
+  return "Kod doğrulanamadı. E-postanızdaki son kodu kontrol edip tekrar deneyin.";
 }
 
 const normalizeEmail = (email: string) =>
@@ -255,6 +270,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [loadAccount],
   );
+  const verifyRegistrationCode = useCallback(
+    async (email: string, code: string): Promise<Result> => {
+      const client = createClient();
+      if (!client)
+        return { success: false, error: "Supabase Auth yapılandırılmamış." };
+      const result = await authApi(client).verifyOtp({
+        email: normalizeEmail(email),
+        token: code.replace(/\D/g, ""),
+        type: "email",
+      });
+      if (result.error) {
+        reportAuthFailure("registration verification", result.error);
+        return { success: false, error: verificationError(result.error) };
+      }
+      if (!result.data.user || !result.data.session)
+        return {
+          success: false,
+          error: "Üyelik doğrulandı ancak oturum açılamadı. Lütfen giriş yapın.",
+        };
+      await loadAccount(result.data.user);
+      return { success: true };
+    },
+    [loadAccount],
+  );
+  const resendRegistrationCode = useCallback(
+    async (email: string): Promise<Result> => {
+      const client = createClient();
+      if (!client)
+        return { success: false, error: "Supabase Auth yapılandırılmamış." };
+      const result = await authApi(client).resend({
+        type: "signup",
+        email: normalizeEmail(email),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup&next=/hesabim`,
+        },
+      });
+      if (result.error) {
+        reportAuthFailure("registration code resend", result.error);
+        return { success: false, error: registerError(result.error) };
+      }
+      return { success: true };
+    },
+    [],
+  );
   const logout = useCallback(async () => {
     const client = createClient();
     if (client) {
@@ -402,6 +461,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       preferences,
       login,
       register,
+      verifyRegistrationCode,
+      resendRegistrationCode,
       logout,
       updateProfile,
       addAddress,
@@ -420,10 +481,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       preferences,
       register,
+      resendRegistrationCode,
       setDefaultAddress,
       updateAddress,
       updateProfile,
       user,
+      verifyRegistrationCode,
     ],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

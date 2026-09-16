@@ -34,6 +34,19 @@ export type BrowserAuthApi = {
     data: { user: AuthUser | null; session: AuthSession };
     error: AuthError;
   }>;
+  verifyOtp: (credentials: {
+    email: string;
+    token: string;
+    type: "email";
+  }) => Promise<{
+    data: { user: AuthUser | null; session: AuthSession };
+    error: AuthError;
+  }>;
+  resend: (credentials: {
+    type: "signup";
+    email: string;
+    options?: { emailRedirectTo?: string };
+  }) => Promise<{ error: AuthError }>;
   signOut: () => Promise<{ error: AuthError }>;
   resetPasswordForEmail: (
     email: string,
