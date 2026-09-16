@@ -65,7 +65,7 @@ export function ProductCard({
           denseMobile && "max-sm:aspect-[1.4/1]",
         )}
       >
-        <ProductVisual product={product} />
+        <ProductVisual product={product} enlarged />
         {product.discountRate ? (
           <Badge
             variant="brand"
@@ -122,22 +122,13 @@ export function ProductCard({
             {productTitle}
           </Link>
         </h2>
-        <p
-          className={cn(
-            "leading-3.5 mt-0.5 line-clamp-2 min-h-7 min-w-0 max-w-full overflow-hidden break-words text-[10px] text-zinc-500 sm:mt-1 sm:min-h-8 sm:text-xs sm:leading-4",
-            denseMobile && "max-sm:leading-3.5 max-sm:mt-0.5 max-sm:min-h-7",
-          )}
-        >
-          {product.shortDescription ?? ""}
-        </p>
-
-        <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10px] sm:mt-1.5 sm:gap-2">
+        <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] sm:mt-1.5 sm:gap-2">
           <span
             className="flex items-center gap-1 font-bold text-zinc-800"
             aria-label={`${product.rating} puan`}
           >
             <Star
-              className="size-3.5 fill-amber-400 text-amber-400"
+              className="size-[15px] fill-amber-400 text-amber-400"
               aria-hidden="true"
             />
             {product.rating.toFixed(1)}

@@ -39,10 +39,12 @@ export function ProductVisual({
   product,
   imageUrl,
   performancePreset = "product-card",
+  enlarged = false,
 }: {
   product: CatalogProduct;
   imageUrl?: string;
   performancePreset?: ImagePerformancePreset;
+  enlarged?: boolean;
 }) {
   const Icon = icons[product.category] ?? Package;
   const resolvedImage = imageUrl ?? product.mainImageUrl;
@@ -67,7 +69,12 @@ export function ProductVisual({
           loading={imageProps.loading}
           decoding={imageProps.decoding}
           fetchPriority={imageProps.priority ? "high" : "auto"}
-          className="catalog-product-visual absolute inset-0 size-full object-contain object-center p-4 transition-transform duration-200 ease-premium group-hover:scale-[1.035] motion-reduce:transition-none"
+          className={cn(
+            "catalog-product-visual absolute inset-0 size-full object-contain object-center transition-transform duration-200 ease-premium motion-reduce:transition-none",
+            enlarged
+              ? "p-1 group-hover:scale-[1.035]"
+              : "p-4 group-hover:scale-[1.035]",
+          )}
         />
       ) : null}
       {!resolvedImage ? (
@@ -78,7 +85,12 @@ export function ProductVisual({
           />
           <Icon
             aria-hidden="true"
-            className="catalog-product-visual relative size-20 drop-shadow-xl transition-transform duration-200 ease-premium group-hover:scale-[1.035] motion-reduce:transition-none sm:size-24"
+            className={cn(
+              "catalog-product-visual relative drop-shadow-xl transition-transform duration-200 ease-premium motion-reduce:transition-none",
+              enlarged
+                ? "size-[5.5rem] group-hover:scale-[1.035] sm:size-[6.6rem]"
+                : "size-20 group-hover:scale-[1.035] sm:size-24",
+            )}
             strokeWidth={0.85}
           />
         </>
