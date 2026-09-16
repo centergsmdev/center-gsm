@@ -80,21 +80,21 @@ export async function Categories() {
 
             return (
               <AnimatedCard key={category.id} className="h-full">
-                <Card className="home-premium-surface group h-full overflow-hidden border-zinc-200/80 bg-white">
+                <Card className="category-premium-card home-premium-surface group h-full overflow-hidden border-zinc-200/80 bg-white">
                   <Link
                     href={`/kategori/${normalizeTaxonomySlug(category.slug)}`}
-                    className="flex h-full min-h-44 flex-col p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
+                    className="flex h-full min-h-44 flex-col p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-72 sm:p-4"
                   >
-                    <span className="relative block min-h-24 flex-1 overflow-hidden rounded-[calc(var(--home-premium-radius)-0.5rem)] bg-zinc-50 sm:min-h-44">
+                    <span className="category-premium-media relative block min-h-24 flex-1 overflow-hidden bg-white sm:min-h-44">
                       <Image
                         src={card.image}
                         alt={`${card.name} kategorisi`}
                         fill
                         sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 16vw"
-                        className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
+                        className="object-contain p-1 transition-transform duration-500 ease-premium group-hover:scale-[1.05] sm:p-2"
                       />
                     </span>
-                    <span className="px-1 pb-0.5 pt-2.5 sm:pb-1 sm:pt-4">
+                    <span className="mx-1 border-t border-zinc-100 pb-0.5 pt-2.5 sm:pb-1 sm:pt-4">
                       <span className="block text-sm font-black tracking-[-0.025em] text-zinc-950 sm:text-base">
                         {card.name}
                       </span>

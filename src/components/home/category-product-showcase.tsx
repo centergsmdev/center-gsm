@@ -5,7 +5,6 @@ import { ProductCard } from "@/components/catalog/product-card";
 import { AnimatedCard, RevealSection } from "@/components/motion/motion-system";
 import { Container } from "@/components/ui/container";
 import { SectionTitle } from "@/components/ui/section-title";
-import { cn } from "@/lib/utils";
 import type { CatalogProduct } from "@/types/product";
 import { HomepageProductCarousel } from "./mobile-showcase-carousel";
 
@@ -16,7 +15,6 @@ type CategoryProductShowcaseProps = {
   actionLabel: string;
   actionHref: string;
   products: CatalogProduct[];
-  muted?: boolean;
 };
 
 export function CategoryProductShowcase({
@@ -26,20 +24,12 @@ export function CategoryProductShowcase({
   actionLabel,
   actionHref,
   products,
-  muted = false,
 }: CategoryProductShowcaseProps) {
   const titleId = `${id}-title`;
   const visibleProducts = products.slice(0, 8);
 
   return (
-    <RevealSection
-      id={id}
-      aria-labelledby={titleId}
-      className={cn(
-        "py-8 sm:py-14",
-        muted && "border-y border-zinc-200/80 bg-zinc-50/70",
-      )}
-    >
+    <RevealSection id={id} aria-labelledby={titleId} className="py-8 sm:py-14">
       <Container>
         <SectionTitle
           id={titleId}

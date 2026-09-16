@@ -14,7 +14,7 @@ export function WeeklyDeals({ products }: { products: CatalogProduct[] }) {
   return (
     <RevealSection
       aria-labelledby="weekly-deals-title"
-      className="border-y border-zinc-200/80 bg-zinc-50/70 py-8 sm:py-14"
+      className="py-8 sm:py-14"
     >
       <Container>
         <SectionTitle

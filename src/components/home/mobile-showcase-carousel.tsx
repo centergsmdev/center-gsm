@@ -173,7 +173,7 @@ export function HomepageProductCarousel({ children }: { children: ReactNode }) {
           handleInteractionStart();
           scheduleAutoplayResume();
         }}
-        className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden"
+        className="homepage-product-carousel flex snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 sm:pb-2 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((item, index) => (
           <div

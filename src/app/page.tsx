@@ -81,7 +81,6 @@ export default async function HomePage() {
             actionLabel="Tüm Laptoplar"
             actionHref="/kategori/laptoplar"
             products={laptops.error ? [] : laptops.data}
-            muted
           />
           <CategoryProductShowcase
             id="smart-watches"
@@ -98,7 +97,6 @@ export default async function HomePage() {
             actionLabel="Tüm Tabletler"
             actionHref="/kategori/tablet"
             products={tablets.error ? [] : tablets.data}
-            muted
           />
           <Brands />
           <Benefits />

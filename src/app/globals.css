@@ -246,6 +246,31 @@
       border-color 200ms var(--ease-premium);
   }
 
+  /* Category visuals live directly on the card's white canvas. */
+  .category-premium-card {
+    box-shadow: 0 8px 28px rgb(15 23 42 / 0.055);
+  }
+
+  .category-premium-card.home-premium-surface:hover,
+  .category-premium-card.home-premium-surface:has(> a:hover) {
+    box-shadow: 0 16px 38px rgb(15 23 42 / 0.09);
+  }
+
+  .category-premium-media {
+    border-radius: calc(var(--home-premium-radius) - 0.6rem);
+  }
+
+  /* Keep carousel gutters transparent and prevent overlapping card shadows
+   * from forming a grey strip behind the product row. */
+  .homepage-product-carousel {
+    background: transparent;
+  }
+
+  .homepage-product-carousel .catalog-product-card,
+  .homepage-product-carousel .catalog-product-card:hover {
+    box-shadow: 0 2px 8px rgb(15 23 42 / 0.045);
+  }
+
   /*
    * A narrow compatibility path for physically verified Android Chrome
    * builds with corrupted catalog raster output. Activation is decided by
