@@ -100,6 +100,31 @@ export async function reviewAdminInstallmentPaymentReceipt(
   }
 }
 
+async function deleteReceipt(
+  endpoint: string,
+): Promise<AdminProductResult<{ warning: string | null }>> {
+  try {
+    const response = await fetch(endpoint, { method: "DELETE" });
+    const body = (await response.json()) as {
+      error?: string;
+      warning?: string | null;
+    };
+    return response.ok
+      ? { data: { warning: body.warning ?? null }, error: null }
+      : { data: null, error: body.error || "Dekont silinemedi." };
+  } catch {
+    return { data: null, error: "Dekont silinemedi." };
+  }
+}
+
+export const deleteAdminPaymentReceipt = (receiptId: string) =>
+  deleteReceipt(`/api/admin/payment-receipts/${encodeURIComponent(receiptId)}`);
+
+export const deleteAdminInstallmentPaymentReceipt = (receiptId: string) =>
+  deleteReceipt(
+    `/api/admin/installment-payment-receipts/${encodeURIComponent(receiptId)}`,
+  );
+
 export async function getPaymentReceiptUrl(
   path: string,
 ): Promise<AdminProductResult<string>> {

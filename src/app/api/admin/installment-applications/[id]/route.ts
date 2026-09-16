@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   getAdminContext,
   getInstallmentHashSecret,
+  INSTALLMENT_STORAGE_BUCKET,
   mapAdminApplication,
 } from "@/lib/installment/server";
 import { isUuid } from "@/lib/installment/validation";
@@ -12,6 +13,8 @@ import {
   mapAdminCustomerPortal,
 } from "@/lib/installment/customer-portal";
 import type { InstallmentAdminPaymentPlan } from "@/lib/installment/types";
+import { PAYMENT_RECEIPTS_BUCKET } from "@/lib/payment-receipts/client";
+import { sameOriginRequest } from "@/lib/installment/server-security";
 
 export const runtime = "nodejs";
 
@@ -33,41 +36,41 @@ export async function GET(
     );
   const [application, documents, contract, paymentPlan, portal, accounts] =
     await Promise.all([
-    context.service
-      .from("installment_applications")
-      .select("*")
-      .eq("id", id)
-      .neq("status", "draft")
-      .maybeSingle(),
-    context.service
-      .from("installment_application_documents")
-      .select(
-        "id,application_id,document_type,original_name,stored_mime_type,size_bytes,created_at",
-      )
-      .eq("application_id", id)
-      .order("created_at"),
-    context.service
-      .from("installment_application_contracts")
-      .select("*")
-      .eq("application_id", id)
-      .maybeSingle(),
-    context.service
-      .from("installment_application_payment_plans")
-      .select("*")
-      .eq("application_id", id)
-      .maybeSingle(),
-    context.service
-      .from("installment_customer_portals")
-      .select("*")
-      .eq("application_id", id)
-      .maybeSingle(),
-    context.service
-      .from("payment_accounts")
-      .select("*")
-      .eq("is_active", true)
-      .order("is_default", { ascending: false })
-      .order("created_at"),
-  ]);
+      context.service
+        .from("installment_applications")
+        .select("*")
+        .eq("id", id)
+        .neq("status", "draft")
+        .maybeSingle(),
+      context.service
+        .from("installment_application_documents")
+        .select(
+          "id,application_id,document_type,original_name,stored_mime_type,size_bytes,created_at",
+        )
+        .eq("application_id", id)
+        .order("created_at"),
+      context.service
+        .from("installment_application_contracts")
+        .select("*")
+        .eq("application_id", id)
+        .maybeSingle(),
+      context.service
+        .from("installment_application_payment_plans")
+        .select("*")
+        .eq("application_id", id)
+        .maybeSingle(),
+      context.service
+        .from("installment_customer_portals")
+        .select("*")
+        .eq("application_id", id)
+        .maybeSingle(),
+      context.service
+        .from("payment_accounts")
+        .select("*")
+        .eq("is_active", true)
+        .order("is_default", { ascending: false })
+        .order("created_at"),
+    ]);
   if (
     application.error ||
     documents.error ||
@@ -166,6 +169,86 @@ export async function GET(
           : null,
         portalHandoff,
       },
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!sameOriginRequest(request))
+    return NextResponse.json(
+      { error: "Geçersiz istek kaynağı." },
+      { status: 403 },
+    );
+  const { id } = await params;
+  if (!isUuid(id))
+    return NextResponse.json(
+      { error: "Başvuru kimliği geçersiz." },
+      { status: 400 },
+    );
+  const context = await getAdminContext();
+  if (!context)
+    return NextResponse.json(
+      { error: "Admin yetkisi gerekiyor." },
+      { status: 403 },
+    );
+
+  const [application, documents, receipts] = await Promise.all([
+    context.service
+      .from("installment_applications")
+      .select("id,application_number")
+      .eq("id", id)
+      .maybeSingle(),
+    context.service
+      .from("installment_application_documents")
+      .select("storage_path")
+      .eq("application_id", id),
+    context.service
+      .from("installment_payment_receipts")
+      .select("storage_path")
+      .eq("application_id", id),
+  ]);
+  if (application.error || documents.error || receipts.error)
+    return NextResponse.json(
+      { error: "Başvuruya bağlı kayıtlar okunamadı." },
+      { status: 500 },
+    );
+  if (!application.data)
+    return NextResponse.json({ error: "Başvuru bulunamadı." }, { status: 404 });
+
+  const removed = await context.service
+    .from("installment_applications")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (removed.error || !removed.data)
+    return NextResponse.json({ error: "Başvuru silinemedi." }, { status: 500 });
+
+  const documentPaths = documents.data.map((item) => item.storage_path);
+  const receiptPaths = receipts.data.map((item) => item.storage_path);
+  const cleanups = await Promise.all([
+    documentPaths.length
+      ? context.service.storage
+          .from(INSTALLMENT_STORAGE_BUCKET)
+          .remove(documentPaths)
+      : Promise.resolve({ error: null }),
+    receiptPaths.length
+      ? context.service.storage
+          .from(PAYMENT_RECEIPTS_BUCKET)
+          .remove(receiptPaths)
+      : Promise.resolve({ error: null }),
+  ]);
+
+  return NextResponse.json(
+    {
+      ok: true,
+      warning: cleanups.some((item) => item.error)
+        ? "Başvuru silindi ancak bazı özel dosyalar depodan temizlenemedi."
+        : null,
     },
     { headers: { "Cache-Control": "no-store" } },
   );

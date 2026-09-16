@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileSignature, Search } from "lucide-react";
+import { FileSignature, Search, Trash2 } from "lucide-react";
 
 import { AdminBadge } from "@/components/admin/admin-badge";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
@@ -48,6 +48,8 @@ export function AdminInstallmentApplications() {
   const [status, setStatus] = useState<(typeof filters)[number][0]>("pending");
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +80,45 @@ export function AdminInstallmentApplications() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
+  const removeApplication = async (item: InstallmentAdminListItem) => {
+    const confirmation = window.prompt(
+      `Bu işlem geri alınamaz. Başvuruyu tamamen silmek için ${item.applicationNumber} yazın.`,
+    );
+    if (confirmation !== item.applicationNumber) {
+      if (confirmation !== null) setNotice("Başvuru numarası eşleşmedi.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Başvuru; sözleşme, ödeme planı, müşteri portalı, yüklenen belgeler ve dekontlarla birlikte kalıcı olarak silinecek. Devam edilsin mi?",
+      )
+    )
+      return;
+    setDeletingId(item.id);
+    setNotice("");
+    try {
+      const response = await fetch(
+        `/api/admin/installment-applications/${encodeURIComponent(item.id)}`,
+        { method: "DELETE" },
+      );
+      const body = (await response.json()) as {
+        error?: string;
+        warning?: string | null;
+      };
+      if (!response.ok) throw new Error(body.error || "Başvuru silinemedi.");
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      setNotice(
+        body.warning || `${item.applicationNumber} kalıcı olarak silindi.`,
+      );
+    } catch (reason) {
+      setNotice(
+        reason instanceof Error ? reason.message : "Başvuru silinemedi.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <AdminCard>
       <AdminCardHeader
@@ -90,6 +131,11 @@ export function AdminInstallmentApplications() {
         }
       />
       <div className="space-y-4 p-4 sm:p-6">
+        {notice ? (
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-800">
+            {notice}
+          </div>
+        ) : null}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {filters.map(([value, label]) => (
@@ -135,6 +181,7 @@ export function AdminInstallmentApplications() {
                 <AdminTh>Tutar</AdminTh>
                 <AdminTh>Peşinat Zamanı</AdminTh>
                 <AdminTh>Durum</AdminTh>
+                <AdminTh>İşlem</AdminTh>
               </tr>
             </thead>
             <tbody>
@@ -181,6 +228,21 @@ export function AdminInstallmentApplications() {
                     <AdminBadge variant={badge[item.status]}>
                       {INSTALLMENT_STATUS_LABELS[item.status]}
                     </AdminBadge>
+                  </AdminTd>
+                  <AdminTd>
+                    <button
+                      type="button"
+                      disabled={deletingId !== null}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void removeApplication(item);
+                      }}
+                      className="grid size-9 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`${item.applicationNumber} başvurusunu kalıcı olarak sil`}
+                      title="Başvuruyu kalıcı olarak sil"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </AdminTd>
                 </tr>
               ))}

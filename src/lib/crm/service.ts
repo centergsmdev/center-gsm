@@ -58,3 +58,20 @@ export const logCustomerActivity = (input: ActivityInput) =>
     p_description: input.description,
     p_metadata: input.metadata ?? {},
   });
+
+export async function deleteCustomerAccount(
+  customerId: string,
+): Promise<CrmResult<true>> {
+  try {
+    const response = await fetch(
+      `/api/admin/customers/${encodeURIComponent(customerId)}`,
+      { method: "DELETE" },
+    );
+    const body = (await response.json()) as { error?: string };
+    return response.ok
+      ? { data: true, error: null }
+      : { data: null, error: body.error || "Müşteri kaydı silinemedi." };
+  } catch {
+    return { data: null, error: "Müşteri kaydı silinemedi." };
+  }
+}

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/installment/server";
 import { sameOriginRequest } from "@/lib/installment/server-security";
 import { isUuid } from "@/lib/installment/validation";
+import { PAYMENT_RECEIPTS_BUCKET } from "@/lib/payment-receipts/client";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,61 @@ export async function PATCH(
   }
   return NextResponse.json(
     { ok: true },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ receiptId: string }> },
+) {
+  if (!sameOriginRequest(request)) return error("Geçersiz istek kaynağı.", 403);
+  const { receiptId } = await params;
+  if (!isUuid(receiptId)) return error("Dekont kimliği geçersiz.");
+  const context = await getAdminContext();
+  if (!context) return error("Admin yetkisi gerekiyor.", 403);
+
+  const removed = await context.service
+    .from("installment_payment_receipts")
+    .delete()
+    .eq("id", receiptId)
+    .select("storage_path,portal_id")
+    .maybeSingle();
+  if (removed.error) return error("Dekont silinemedi.", 500);
+  if (!removed.data) return error("Dekont bulunamadı.", 404);
+
+  const storage = await context.service.storage
+    .from(PAYMENT_RECEIPTS_BUCKET)
+    .remove([removed.data.storage_path]);
+  const activeReceipt = await context.service
+    .from("installment_payment_receipts")
+    .select("status")
+    .eq("portal_id", removed.data.portal_id)
+    .is("superseded_at", null)
+    .in("status", ["pending_review", "approved"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const portalStage =
+    activeReceipt.data?.status === "approved"
+      ? "payment_confirmed"
+      : activeReceipt.data?.status === "pending_review"
+        ? "payment_under_review"
+        : "down_payment_pending";
+  const portal = activeReceipt.error
+    ? { error: activeReceipt.error }
+    : await context.service
+        .from("installment_customer_portals")
+        .update({ stage: portalStage, updated_by: context.user.id })
+        .eq("id", removed.data.portal_id);
+  return NextResponse.json(
+    {
+      ok: true,
+      warning:
+        storage.error || activeReceipt.error || portal.error
+          ? "Dekont silindi ancak bağlı portal veya özel dosya temizliği tamamlanamadı."
+          : null,
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

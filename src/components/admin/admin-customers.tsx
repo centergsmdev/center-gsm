@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminBadge } from "./admin-badge";
 import { AdminCard, AdminCardHeader } from "./admin-card";
@@ -18,6 +18,7 @@ import {
   SEGMENT_LABELS,
   formatCrmCurrency,
   formatCrmDate,
+  deleteCustomerAccount,
   getCustomerTags,
   getCustomers,
 } from "@/lib/crm";
@@ -43,6 +44,8 @@ export function AdminCustomers() {
   const [tags, setTags] = useState<CustomerTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
     const result = await getCustomers(filters);
@@ -57,6 +60,34 @@ export function AdminCustomers() {
   const update = (key: keyof CustomerFilters, value: string) =>
     setFilters((current) => ({ ...current, [key]: value, page: 1 }));
   const pages = Math.max(1, Math.ceil((data?.total ?? 0) / filters.pageSize));
+  const removeCustomer = async (item: CustomerListItem) => {
+    const identity = item.email || item.full_name;
+    const confirmation = window.prompt(
+      `Bu işlem müşterinin giriş hesabını kapatır ve CRM kaydını siler. Onaylamak için ${identity} yazın.`,
+    );
+    if (confirmation !== identity) {
+      if (confirmation !== null)
+        setError("Müşteri bilgisi eşleşmedi. Silme iptal edildi.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Müşteri hesabı kapatılacak ve müşteri listesinden kaldırılacak. Geçmiş siparişler muhasebe ve kayıt bütünlüğü için korunacaktır. Devam edilsin mi?",
+      )
+    )
+      return;
+    setDeletingId(item.id);
+    setError("");
+    setNotice("");
+    const result = await deleteCustomerAccount(item.id);
+    setDeletingId(null);
+    if (!result.data) {
+      setError(result.error ?? "Müşteri kaydı silinemedi.");
+      return;
+    }
+    setNotice(`${item.full_name || item.email} müşteri listesinden silindi.`);
+    await load();
+  };
   return (
     <AdminCard>
       <AdminCardHeader
@@ -120,6 +151,16 @@ export function AdminCustomers() {
           />
         </label>
       </div>
+      {notice ? (
+        <p className="border-b border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          {notice}
+        </p>
+      ) : null}
+      {error && !loading ? (
+        <p className="border-b border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+          {error}
+        </p>
+      ) : null}
       {loading ? (
         <AdminLoadingState />
       ) : error ? (
@@ -137,6 +178,7 @@ export function AdminCustomers() {
                 <AdminTh>Son sipariş</AdminTh>
                 <AdminTh>Son giriş</AdminTh>
                 <AdminTh>Durum</AdminTh>
+                <AdminTh>İşlem</AdminTh>
               </tr>
             </thead>
             <tbody>
@@ -199,6 +241,18 @@ export function AdminCustomers() {
                     >
                       {item.status}
                     </AdminBadge>
+                  </AdminTd>
+                  <AdminTd>
+                    <button
+                      type="button"
+                      disabled={deletingId !== null}
+                      onClick={() => void removeCustomer(item)}
+                      className="grid size-9 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`${item.full_name || item.email} müşteri kaydını sil`}
+                      title="Müşteri kaydını sil"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </AdminTd>
                 </tr>
               ))}

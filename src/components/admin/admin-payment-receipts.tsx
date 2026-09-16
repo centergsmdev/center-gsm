@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, ExternalLink, FileCheck2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  FileCheck2,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
 import {
@@ -14,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import {
   getAdminPaymentReceipts,
   getAdminInstallmentPaymentReceipts,
+  deleteAdminInstallmentPaymentReceipt,
+  deleteAdminPaymentReceipt,
   getPaymentReceiptUrl,
   reviewAdminInstallmentPaymentReceipt,
   type AdminInstallmentPaymentReceipt,
@@ -38,6 +46,7 @@ export function AdminPaymentReceipts() {
   const [error, setError] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set());
 
@@ -165,6 +174,38 @@ export function AdminPaymentReceipts() {
     await load();
   }
 
+  async function removeReceipt(
+    item: AdminPaymentReceipt | AdminInstallmentPaymentReceipt,
+    type: "transfer" | "installment",
+  ) {
+    const confirmation = window.prompt(
+      `Dekontu kalıcı olarak silmek için dosya adını yazın: ${item.original_name}`,
+    );
+    if (confirmation !== item.original_name) {
+      if (confirmation !== null) setNotice("Dosya adı eşleşmedi.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Dekont kaydı ve yüklenen özel dosya kalıcı olarak silinecek. Devam edilsin mi?",
+      )
+    )
+      return;
+    setDeleting(item.id);
+    setNotice(null);
+    const result =
+      type === "installment"
+        ? await deleteAdminInstallmentPaymentReceipt(item.id)
+        : await deleteAdminPaymentReceipt(item.id);
+    setDeleting(null);
+    if (!result.data) {
+      setNotice(result.error ?? "Dekont silinemedi.");
+      return;
+    }
+    setNotice(result.data.warning || "Dekont kalıcı olarak silindi.");
+    await load();
+  }
+
   if (loading) return <AdminLoadingState />;
   if (error) return <AdminErrorState retry={() => void load()} />;
 
@@ -272,6 +313,16 @@ export function AdminPaymentReceipts() {
                           </Button>
                         </>
                       ) : null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                        disabled={deleting !== null}
+                        onClick={() => void removeReceipt(item, "installment")}
+                      >
+                        <Trash2 className="size-4" />
+                        {deleting === item.id ? "Siliniyor…" : "Sil"}
+                      </Button>
                     </div>
                   </AdminTd>
                 </tr>
@@ -328,15 +379,27 @@ export function AdminPaymentReceipts() {
                     ).toLocaleString("tr-TR")}
                   </AdminTd>
                   <AdminTd>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={opening === item.id || !item.uploaded_at}
-                      onClick={() => void openReceipt(item)}
-                    >
-                      <ExternalLink className="size-4" />
-                      {opening === item.id ? "Açılıyor…" : "Dekontu aç"}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={opening === item.id || !item.uploaded_at}
+                        onClick={() => void openReceipt(item)}
+                      >
+                        <ExternalLink className="size-4" />
+                        {opening === item.id ? "Açılıyor…" : "Dekontu aç"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                        disabled={deleting !== null}
+                        onClick={() => void removeReceipt(item, "transfer")}
+                      >
+                        <Trash2 className="size-4" />
+                        {deleting === item.id ? "Siliniyor…" : "Sil"}
+                      </Button>
+                    </div>
                   </AdminTd>
                 </tr>
               ))}
