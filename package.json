@@ -11,8 +11,9 @@
     "test:live-chat": "node --experimental-strip-types --test src/lib/live-chat/*.test.mjs",
     "test:reviews": "node --experimental-strip-types --test src/lib/reviews/*.test.mjs",
     "test:contact": "node --experimental-strip-types --test src/lib/contact/*.test.mjs",
+    "test:admin": "node --experimental-strip-types --test src/lib/admin/*.test.mjs",
     "test:trade-in": "node --experimental-strip-types --test src/lib/trade-in/*.test.mjs",
-    "test": "npm run test:installment && npm run test:live-chat && npm run test:reviews && npm run test:contact && npm run test:trade-in",
+    "test": "npm run test:admin && npm run test:installment && npm run test:live-chat && npm run test:reviews && npm run test:contact && npm run test:trade-in",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
