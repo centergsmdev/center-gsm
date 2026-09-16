@@ -16,32 +16,32 @@ const categoryCards = [
   {
     name: "Telefon",
     subtitle: "En yeni modeller",
-    image: "/images/home/categories/phone.webp",
+    image: "/images/home/categories/phone-transparent.png",
   },
   {
     name: "Bilgisayar",
     subtitle: "Performans ve mobilite",
-    image: "/images/home/categories/computer.webp",
+    image: "/images/home/categories/computer-transparent.png",
   },
   {
     name: "Tablet",
     subtitle: "Her an üretken",
-    image: "/images/home/categories/tablet.webp",
+    image: "/images/home/categories/tablet-transparent.png",
   },
   {
     name: "Akıllı Saat",
     subtitle: "Günün sizinle",
-    image: "/images/home/categories/smartwatch.webp",
+    image: "/images/home/categories/smartwatch-transparent.png",
   },
   {
     name: "Kulaklık",
     subtitle: "Sesi yeniden keşfedin",
-    image: "/images/home/categories/headphones.webp",
+    image: "/images/home/categories/headphones-transparent.png",
   },
   {
     name: "Aksesuar",
     subtitle: "Tamamlayıcı ürünler",
-    image: "/images/home/categories/accessories.webp",
+    image: "/images/home/categories/accessories-transparent.png",
   },
 ] as const;
 
