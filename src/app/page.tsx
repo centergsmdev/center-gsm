@@ -55,6 +55,9 @@ export default async function HomePage() {
     : popular.error
       ? []
       : popular.data;
+  const heroProduct =
+    featuredProducts.find((product) => product.showInstallments) ??
+    featuredProducts[0];
   return (
     <div className="tech-atmosphere min-h-screen text-zinc-950">
       <JsonLd id="organization-schema" data={createOrganizationSchema()} />
@@ -62,7 +65,7 @@ export default async function HomePage() {
       <Header />
       <MotionProvider>
         <main>
-          <Hero />
+          <Hero product={heroProduct} />
           <Categories />
           <FeaturedProducts products={featuredProducts} />
           <WeeklyDeals products={weeklyDeals.error ? [] : weeklyDeals.data} />
