@@ -8,7 +8,6 @@ import {
   Truck,
 } from "lucide-react";
 
-import { ProductVisual } from "@/components/catalog/product-visual";
 import { Container } from "@/components/ui/container";
 import { productPath } from "@/lib/catalog/product-url";
 import { productDisplayName } from "@/lib/catalog/variants";
@@ -30,15 +29,39 @@ const trustItems = [
   },
 ] as const;
 
+function ProductImage({ product }: { product: CatalogProduct }) {
+  return product.mainImageUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={product.mainImageUrl}
+      alt={`${product.brand} ${product.model}`}
+      width={560}
+      height={560}
+      sizes="(max-width: 1023px) 96px, 340px"
+      loading="eager"
+      decoding="async"
+      fetchPriority="high"
+      className="absolute inset-0 size-full object-contain object-center p-1 mix-blend-darken drop-shadow-[0_24px_30px_rgba(0,0,0,0.3)] lg:p-8"
+    />
+  ) : (
+    <div className="grid size-full place-items-center">
+      <Sparkles className="size-12 text-red-400" aria-hidden="true" />
+    </div>
+  );
+}
+
 export function Hero({ product }: { product?: CatalogProduct }) {
   const productHref = product ? productPath(product.slug) : "/urunler";
   const stockLabel =
     product?.stockStatus === "limited" ? "Sınırlı stok" : "Stokta";
 
   return (
-    <section aria-labelledby="home-hero-title" className="py-2.5 sm:py-4">
+    <section
+      aria-label="CENTER GSM ana vitrini"
+      className="overflow-x-clip py-2 sm:py-4"
+    >
       <Container>
-        <div className="relative isolate overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#07090f] text-white shadow-[0_28px_80px_-44px_rgba(0,0,0,0.9)] sm:rounded-[2rem]">
+        <div className="relative isolate w-full min-w-0 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#07090f] text-white shadow-[0_28px_80px_-44px_rgba(0,0,0,0.9)] sm:rounded-[2rem]">
           <div
             aria-hidden="true"
             className="absolute inset-0 -z-20 opacity-30 [background-image:linear-gradient(rgba(255,255,255,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.06)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]"
@@ -52,7 +75,93 @@ export function Hero({ product }: { product?: CatalogProduct }) {
             className="absolute -right-20 top-0 -z-10 size-[26rem] rounded-full bg-blue-700/15 blur-[120px]"
           />
 
-          <div className="grid items-center gap-9 px-6 pb-8 pt-9 sm:px-10 sm:pb-10 sm:pt-11 lg:min-h-[31rem] lg:grid-cols-[0.92fr_1.08fr] lg:gap-14 lg:px-14 lg:py-12 xl:px-16">
+          <div className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:hidden">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1.5 text-[0.64rem] font-bold text-zinc-200">
+              <Sparkles className="size-3 text-red-400" aria-hidden="true" />
+              Seçkin teknoloji, güvenli alışveriş
+            </div>
+
+            <h1 className="mt-3 text-[2rem] font-black leading-[0.96] tracking-[-0.055em] sm:text-5xl">
+              Teknolojiye
+              <span className="block">güvenle ulaşın.</span>
+            </h1>
+            <p className="mt-2.5 max-w-lg text-xs leading-5 text-zinc-400 sm:text-sm">
+              Orijinal ürünleri avantajlı ödeme seçenekleriyle keşfedin.
+            </p>
+
+            {product ? (
+              <Link
+                href={productHref}
+                className="storefront-action mt-4 grid min-h-[7rem] grid-cols-[5.5rem_1fr] gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.055] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] sm:grid-cols-[7rem_1fr]"
+              >
+                <div className="relative min-h-[5.5rem] overflow-hidden rounded-xl bg-gradient-to-br from-[#d8dbe2] to-[#aeb4c0] sm:min-h-[7rem]">
+                  <ProductImage product={product} />
+                </div>
+                <div className="flex min-w-0 flex-col justify-center py-0.5 pr-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[0.58rem] font-black uppercase tracking-[0.18em] text-red-400">
+                      {product.brand}
+                    </span>
+                    {product.stockStatus !== "out-of-stock" ? (
+                      <span className="shrink-0 rounded-full bg-emerald-400/10 px-2 py-1 text-[0.58rem] font-bold text-emerald-300">
+                        {stockLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                  <h2 className="mt-1.5 line-clamp-2 text-sm font-black leading-[1.15] tracking-[-0.02em] text-white sm:text-base">
+                    {productDisplayName(product)}
+                  </h2>
+                  <div className="mt-2 flex flex-wrap items-end gap-x-2 gap-y-1">
+                    <span className="text-xl font-black tracking-[-0.04em] text-white">
+                      {formatCurrency(product.price)}
+                    </span>
+                    {product.showInstallments &&
+                    product.installmentCount > 1 ? (
+                      <span className="pb-0.5 text-[0.62rem] font-semibold text-zinc-400">
+                        {product.installmentCount} ay ×{" "}
+                        {formatCurrency(product.monthlyInstallment)}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </Link>
+            ) : null}
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <Link
+                href={productHref}
+                className="storefront-action inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-red-600 px-3 text-xs font-bold text-white shadow-[0_12px_28px_-16px_rgba(220,38,38,0.9)]"
+              >
+                Ürünü İncele
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/urunler"
+                className="storefront-action inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-3 text-xs font-bold text-white"
+              >
+                Tüm Ürünler
+              </Link>
+            </div>
+
+            <div className="mt-3 flex items-center justify-center gap-4 text-[0.6rem] font-semibold text-zinc-400">
+              <span className="inline-flex items-center gap-1.5">
+                <BadgeCheck
+                  className="size-3.5 text-red-400"
+                  aria-hidden="true"
+                />
+                Orijinal ürün
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck
+                  className="size-3.5 text-emerald-400"
+                  aria-hidden="true"
+                />
+                Güvenli alışveriş
+              </span>
+            </div>
+          </div>
+
+          <div className="hidden min-h-[31rem] grid-cols-[0.92fr_1.08fr] items-center gap-14 px-14 py-12 lg:grid xl:px-16">
             <div className="max-w-[38rem]">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold text-zinc-200 backdrop-blur-sm">
                 <Sparkles
@@ -62,22 +171,19 @@ export function Hero({ product }: { product?: CatalogProduct }) {
                 Seçkin teknoloji, güvenli alışveriş
               </div>
 
-              <h1
-                id="home-hero-title"
-                className="text-balance text-[2.45rem] font-black leading-[0.98] tracking-[-0.05em] sm:text-6xl lg:text-[4.35rem]"
-              >
+              <h1 className="text-balance text-[4.35rem] font-black leading-[0.98] tracking-[-0.05em]">
                 Teknolojiye
                 <span className="mt-1 block bg-gradient-to-r from-white via-zinc-200 to-zinc-500 bg-clip-text text-transparent">
                   güvenle ulaşın.
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-[34rem] text-pretty text-sm leading-7 text-zinc-300 sm:text-base">
+              <p className="mt-6 max-w-[34rem] text-pretty text-base leading-7 text-zinc-300">
                 Orijinal ürünler, avantajlı ödeme seçenekleri ve satış sonrası
                 destekle teknolojiyi güvenle keşfedin.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex gap-3">
                 <Link
                   href="/urunler"
                   className="storefront-action inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-red-600 px-6 text-sm font-bold text-white shadow-[0_14px_34px_-16px_rgba(220,38,38,0.9)] transition hover:bg-red-500"
@@ -107,57 +213,53 @@ export function Hero({ product }: { product?: CatalogProduct }) {
                 aria-hidden="true"
                 className="absolute inset-x-10 bottom-[-1.2rem] h-12 rounded-[50%] bg-black/70 blur-2xl"
               />
-              <article className="relative overflow-hidden rounded-[1.45rem] border border-white/70 bg-white text-zinc-950 shadow-[0_28px_80px_-32px_rgba(0,0,0,0.9)]">
+              <article className="relative overflow-hidden rounded-[1.45rem] border border-white/10 bg-white/[0.055] text-white shadow-[0_28px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-sm">
                 {product ? (
-                  <div className="grid min-h-[22rem] sm:grid-cols-[1.05fr_0.95fr]">
-                    <div className="relative min-h-[18rem] overflow-hidden bg-white sm:min-h-full">
-                      <div className="absolute left-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/90 px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-zinc-700 shadow-sm backdrop-blur">
-                        <span className="size-1.5 rounded-full bg-red-600" />
+                  <div className="grid min-h-[22rem] grid-cols-[1.05fr_0.95fr]">
+                    <div className="relative min-h-full overflow-hidden bg-gradient-to-br from-[#d8dbe2] via-[#c4c8d1] to-[#9ba2af]">
+                      <div className="absolute left-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-zinc-200 shadow-sm backdrop-blur-md">
+                        <span className="size-1.5 rounded-full bg-red-500" />
                         Öne çıkan ürün
                       </div>
-                      <ProductVisual
-                        product={product}
-                        performancePreset="hero"
-                        enlarged
-                      />
+                      <ProductImage product={product} />
                     </div>
 
-                    <div className="flex flex-col justify-center border-t border-zinc-100 bg-white p-6 sm:border-l sm:border-t-0 sm:p-7">
+                    <div className="flex flex-col justify-center border-l border-white/10 bg-black/10 p-7">
                       <div className="mb-4 flex items-center justify-between gap-3">
-                        <span className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-red-600">
+                        <span className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-red-400">
                           {product.brand}
                         </span>
                         {product.stockStatus !== "out-of-stock" ? (
-                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[0.68rem] font-bold text-emerald-700">
+                          <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-[0.68rem] font-bold text-emerald-300">
                             {stockLabel}
                           </span>
                         ) : (
-                          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[0.68rem] font-bold text-zinc-600">
+                          <span className="rounded-full bg-white/[0.07] px-2.5 py-1 text-[0.68rem] font-bold text-zinc-400">
                             Tükendi
                           </span>
                         )}
                       </div>
 
-                      <h2 className="line-clamp-3 text-xl font-black leading-tight tracking-[-0.025em] sm:text-2xl">
+                      <h2 className="line-clamp-3 text-2xl font-black leading-tight tracking-[-0.025em] text-white">
                         {productDisplayName(product)}
                       </h2>
 
                       <div className="mt-7">
                         {product.previousPrice &&
                         product.previousPrice > product.price ? (
-                          <p className="text-xs font-semibold text-zinc-400 line-through">
+                          <p className="text-xs font-semibold text-zinc-500 line-through">
                             {formatCurrency(product.previousPrice)}
                           </p>
                         ) : null}
-                        <p className="mt-1 text-3xl font-black tracking-[-0.04em]">
+                        <p className="mt-1 text-3xl font-black tracking-[-0.04em] text-white">
                           {formatCurrency(product.price)}
                         </p>
                       </div>
 
                       {product.showInstallments &&
                       product.installmentCount > 1 ? (
-                        <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-xs font-semibold text-zinc-600">
-                          <span className="font-black text-zinc-950">
+                        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 text-xs font-semibold text-zinc-400">
+                          <span className="font-black text-white">
                             {product.installmentCount} ay
                           </span>{" "}
                           × {formatCurrency(product.monthlyInstallment)}
@@ -166,7 +268,7 @@ export function Hero({ product }: { product?: CatalogProduct }) {
 
                       <Link
                         href={productHref}
-                        className="storefront-action mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-bold text-white transition hover:bg-red-600"
+                        className="storefront-action mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-500"
                       >
                         Ürünü incele
                         <ArrowRight className="size-4" aria-hidden="true" />
@@ -174,18 +276,15 @@ export function Hero({ product }: { product?: CatalogProduct }) {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid min-h-[22rem] place-items-center bg-white p-8 text-center">
+                  <div className="grid min-h-[22rem] place-items-center p-8 text-center">
                     <div>
                       <Sparkles
-                        className="mx-auto size-8 text-red-600"
+                        className="mx-auto size-8 text-red-400"
                         aria-hidden="true"
                       />
                       <h2 className="mt-4 text-2xl font-black">
                         Teknolojiyi keşfedin
                       </h2>
-                      <p className="mt-2 text-sm text-zinc-500">
-                        Size uygun ürünleri ve ödeme seçeneklerini inceleyin.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -193,11 +292,11 @@ export function Hero({ product }: { product?: CatalogProduct }) {
             </div>
           </div>
 
-          <div className="grid border-t border-white/10 bg-white/[0.035] sm:grid-cols-2 lg:grid-cols-4">
+          <div className="hidden border-t border-white/10 bg-white/[0.035] lg:grid lg:grid-cols-4">
             {trustItems.map(({ icon: Icon, label, detail }) => (
               <div
                 key={label}
-                className="flex items-center gap-3 border-white/10 px-5 py-4 lg:border-l lg:first:border-l-0 sm:[&:nth-child(even)]:border-l"
+                className="flex items-center gap-3 border-l border-white/10 px-5 py-4 first:border-l-0"
               >
                 <div className="grid size-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.06] text-red-400">
                   <Icon className="size-4" aria-hidden="true" />
