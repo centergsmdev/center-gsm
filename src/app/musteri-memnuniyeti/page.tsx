@@ -82,25 +82,12 @@ export default async function CustomerSatisfactionPage({
     <>
       <Header />
       <main className="overflow-hidden bg-zinc-50">
-        <section className="relative isolate overflow-hidden bg-zinc-950 py-12 text-white sm:py-16 lg:py-20">
+        <section className="relative isolate overflow-hidden bg-zinc-950 py-6 text-white sm:py-8 lg:py-10">
           <div
             className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_10%,rgba(239,68,68,0.28),transparent_35%),radial-gradient(circle_at_85%_80%,rgba(16,185,129,0.17),transparent_32%)]"
             aria-hidden="true"
           />
           <Container>
-            <div className="max-w-4xl">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-red-400">
-                CENTER GSM
-              </p>
-              <h1 className="mt-4 text-4xl font-black tracking-[-0.05em] sm:text-5xl lg:text-6xl">
-                Müşterilerimizin Deneyimleri
-              </h1>
-              <p className="mt-5 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-lg sm:leading-8">
-                CENTER GSM&apos;den alışveriş yapan müşterilerimizin ürünlerimiz
-                ve hizmetlerimiz hakkındaki gerçek değerlendirmelerini
-                inceleyin.
-              </p>
-            </div>
             <ReviewSummary summary={data.summary} />
           </Container>
         </section>
@@ -222,7 +209,7 @@ function ReviewSummary({
   const average = Number(summary.average_rating || 0);
   const ratings = [5, 4, 3, 2, 1] as const;
   return (
-    <div className="mt-9 grid gap-5 rounded-3xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur sm:p-7 lg:grid-cols-[0.8fr_1.2fr]">
+    <div className="grid gap-5 rounded-3xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur sm:p-7 lg:grid-cols-[0.8fr_1.2fr]">
       <div className="flex flex-col justify-center border-white/10 lg:border-r lg:pr-8">
         <div className="flex items-end gap-3">
           <span className="text-5xl font-black tracking-[-0.06em] sm:text-6xl">

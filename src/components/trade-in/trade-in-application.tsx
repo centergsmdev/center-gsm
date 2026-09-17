@@ -8,11 +8,9 @@ import {
   Camera,
   Check,
   CheckCircle2,
-  FileCheck2,
   LoaderCircle,
   LockKeyhole,
   ShieldCheck,
-  Smartphone,
   Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -330,62 +328,7 @@ export function TradeInApplication({
 
   return (
     <main className="bg-zinc-50">
-      <section className="overflow-hidden bg-zinc-950 text-white">
-        <Container className="relative grid gap-10 py-12 sm:py-16 lg:grid-cols-[1.15fr_.85fr] lg:items-center lg:py-20">
-          <div className="absolute -right-32 -top-32 size-96 rounded-full bg-red-600/20 blur-3xl" />
-          <div className="relative">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-red-400">
-              CENTER GSM Takas
-            </p>
-            <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-[-0.04em] sm:text-5xl">
-              Eski telefonunuzu değere dönüştürün.
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300">
-              Telefonunuzu birkaç kısa adımda anlatın. Uzman ekibimiz
-              fotoğrafları incelesin, size özel takas teklifini iletsin.
-            </p>
-          </div>
-          <div className="relative grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {[
-              [
-                Smartphone,
-                "Cihazını anlat",
-                "Marka, model ve gerçek durumu seç.",
-              ],
-              [
-                Camera,
-                "Fotoğrafları ekle",
-                "Ön ve arka yüzü net biçimde göster.",
-              ],
-              [
-                FileCheck2,
-                "Teklifini al",
-                "İnceleme sonrası sizinle iletişime geçelim.",
-              ],
-            ].map(([Icon, title, description]) => {
-              const ItemIcon = Icon as typeof Smartphone;
-              return (
-                <div
-                  key={String(title)}
-                  className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-zinc-950">
-                    <ItemIcon className="size-5" />
-                  </span>
-                  <span>
-                    <strong className="block text-sm">{String(title)}</strong>
-                    <span className="mt-1 block text-xs leading-5 text-zinc-400">
-                      {String(description)}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
-
-      <Container className="max-w-4xl py-10 sm:py-14">
+      <Container className="max-w-4xl py-6 sm:py-10">
         <div
           className="mb-7 grid grid-cols-3 gap-2"
           aria-label="Başvuru adımları"

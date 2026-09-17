@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ChevronRight,
-  HelpCircle,
   Home,
   MapPin,
   MessageCircle,
@@ -65,27 +64,6 @@ export default async function FrequentlyAskedQuestionsPage() {
               </li>
             </ol>
           </nav>
-
-          <header className="mt-6 overflow-hidden rounded-3xl bg-zinc-950 px-5 py-8 text-white shadow-xl sm:px-9 sm:py-12">
-            <div className="flex max-w-4xl items-start gap-4 sm:gap-5">
-              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-red-600 shadow-lg shadow-red-950/30 sm:size-14">
-                <HelpCircle className="size-6 sm:size-7" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-red-400 sm:text-xs">
-                  CENTER GSM bilgi merkezi
-                </p>
-                <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] sm:text-5xl">
-                  Sık Sorulan Sorular
-                </h1>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
-                  Elden taksit başvurusu, gerekli evraklar, peşinat, kredi kartı
-                  ve ödeme süreçleriyle ilgili kısa ve açık yanıtları burada
-                  bulabilirsiniz.
-                </p>
-              </div>
-            </div>
-          </header>
 
           <FaqExplorer items={items} />
 
