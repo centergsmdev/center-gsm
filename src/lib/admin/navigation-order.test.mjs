@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -13,6 +14,10 @@ import {
 } from "./activity-indicator.ts";
 
 const defaults = ["/admin", "/admin/urunler", "/admin/siparisler"];
+const adminSidebar = readFileSync(
+  new URL("../../components/admin/admin-sidebar.tsx", import.meta.url),
+  "utf8",
+);
 
 test("kaydedilen sıra doğrulanır ve yeni menü seçenekleri sona eklenir", () => {
   assert.deepEqual(
@@ -67,4 +72,15 @@ test("operasyon bildirimleri istenen altı yönetim bölümünü kapsar", () => 
     tradeIn: "/admin/telefon-takas",
     customer: "/admin/musteriler",
   });
+});
+
+test("canlı destek rozeti yalnız gerçekten okunmamış müşteri mesajlarını sayar", () => {
+  assert.match(
+    adminSidebar,
+    /from\("live_chat_messages"\)[\s\S]{0,220}\.eq\("sender", "customer"\)[\s\S]{0,100}\.is\("read_at", null\)/,
+  );
+  assert.doesNotMatch(
+    adminSidebar,
+    /from\("live_chat_messages"\)[\s\S]{0,260}\.gt\("created_at", since\("message"\)\)/,
+  );
 });

@@ -136,7 +136,7 @@ async function loadActivityCounts(
         .from("live_chat_messages")
         .select("id", { count: "exact", head: true })
         .eq("sender", "customer")
-        .gt("created_at", since("message")),
+        .is("read_at", null),
     ),
     countSince(
       client
