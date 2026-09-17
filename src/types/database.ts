@@ -918,6 +918,12 @@ type CustomerProfile = Timestamps & {
   last_login_at: string | null;
   marketing_opt_in: boolean;
 };
+export type AdminUiPreference = Timestamps & {
+  user_id: string;
+  menu_order: Json;
+  menu_presets: Json;
+  activity_seen_at: Json;
+};
 type CustomerNote = Timestamps & {
   id: string;
   customer_id: string;
@@ -1945,6 +1951,11 @@ export type Database = {
       notification_events: Table<NotificationEvent, never, never>;
       notification_queue: Table<NotificationQueue, never, never>;
       notification_logs: Table<NotificationLog, never, never>;
+      admin_ui_preferences: Table<
+        AdminUiPreference,
+        Partial<AdminUiPreference> & Pick<AdminUiPreference, "user_id">,
+        Partial<AdminUiPreference>
+      >;
       customer_profiles: Table<CustomerProfile, never, never>;
       customer_notes: Table<CustomerNote, never, never>;
       customer_tags: Table<CustomerTag, never, never>;

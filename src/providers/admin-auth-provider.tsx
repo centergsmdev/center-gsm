@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { authApi, type AuthUser } from "@/lib/supabase/auth-api";
 import { createAuditLog } from "@/lib/audit";
 
-type AdminUser = { name: string; email: string; initials: string };
+type AdminUser = { id: string; name: string; email: string; initials: string };
 type LoginResult = { success: boolean; error?: string };
 type Context = {
   user: AdminUser | null;
@@ -28,6 +28,7 @@ type Context = {
 const AdminAuthContext = createContext<Context | null>(null);
 const isAdmin = (user: AuthUser | null) => user?.app_metadata.role === "admin";
 const mapUser = (user: AuthUser): AdminUser => ({
+  id: user.id,
   name: String(
     user.user_metadata.name ??
       user.user_metadata.first_name ??
@@ -49,9 +50,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
     const auth = authApi(client);
     void auth.getUser().then(({ data }) => {
-      setUser(
-        data.user && isAdmin(data.user) ? mapUser(data.user) : null,
-      );
+      setUser(data.user && isAdmin(data.user) ? mapUser(data.user) : null);
       setIsReady(true);
     });
     const { data } = auth.onAuthStateChange((_event, session) => {
@@ -69,7 +68,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: "Supabase Auth yapılandırılmamış." };
       const auth = authApi(client);
       try {
-        const normalizedEmail = email.trim().toLocaleLowerCase("tr-TR");
+        const normalizedEmail = email.trim().toLowerCase();
         const result = await auth.signInWithPassword({
           email: normalizedEmail,
           password,

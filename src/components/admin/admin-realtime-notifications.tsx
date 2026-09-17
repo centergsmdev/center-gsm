@@ -1,11 +1,14 @@
 "use client";
 
 import {
+  ArrowLeftRight,
   Bell,
   Check,
   FileCheck2,
+  FileSignature,
   MessageCircle,
   PackageCheck,
+  Users,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -18,7 +21,7 @@ import {
   type AdminActivityKind,
 } from "@/lib/admin/activity-indicator";
 
-type NotificationKind = "order" | "receipt" | "message";
+type NotificationKind = AdminActivityKind;
 
 type AdminNotification = {
   id: string;
@@ -34,6 +37,9 @@ const kindIcon = {
   order: PackageCheck,
   receipt: FileCheck2,
   message: MessageCircle,
+  installment: FileSignature,
+  tradeIn: ArrowLeftRight,
+  customer: Users,
 };
 
 function notificationBody(value: unknown, fallback: string) {
@@ -186,6 +192,68 @@ export function AdminRealtimeNotifications() {
           });
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "installment_applications",
+        },
+        (payload) => {
+          const application = payload.new as Record<string, unknown>;
+          if (application.status !== "submitted" || !application.submitted_at)
+            return;
+          announce({
+            id: `installment:${String(application.id)}:${Date.now()}`,
+            entityId: String(application.id),
+            kind: "installment",
+            title: "Yeni elden taksit başvurusu",
+            body: `${notificationBody(application.applicant_name, "Müşteri")} başvurusunu tamamladı.`,
+            href: `/admin/elden-taksit-basvurulari/${String(application.id)}`,
+            createdAt: new Date(),
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "trade_in_applications",
+        },
+        (payload) => {
+          const application = payload.new as Record<string, unknown>;
+          announce({
+            id: `trade-in:${String(application.id)}:${Date.now()}`,
+            entityId: String(application.id),
+            kind: "tradeIn",
+            title: "Yeni telefon takas başvurusu",
+            body: `${notificationBody(application.customer_name, "Müşteri")} takas teklifi bekliyor.`,
+            href: `/admin/telefon-takas/${String(application.id)}`,
+            createdAt: new Date(),
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "customer_profiles",
+        },
+        (payload) => {
+          const customer = payload.new as Record<string, unknown>;
+          announce({
+            id: `customer:${String(customer.id)}:${Date.now()}`,
+            entityId: String(customer.id),
+            kind: "customer",
+            title: "Yeni müşteri kaydı",
+            body: `${notificationBody(customer.full_name, "Yeni müşteri")} üyeliğini oluşturdu.`,
+            href: `/admin/musteriler/${String(customer.id)}`,
+            createdAt: new Date(),
+          });
+        },
+      )
       .subscribe();
 
     return () => {
@@ -232,7 +300,7 @@ export function AdminRealtimeNotifications() {
               <div>
                 <p className="font-black text-zinc-950">Anlık bildirimler</p>
                 <p className="text-xs text-zinc-500">
-                  Sipariş, dekont ve mesajlar
+                  Siparişler, başvurular, dekontlar ve mesajlar
                 </p>
               </div>
               {permission === "granted" ? (

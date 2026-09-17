@@ -1,9 +1,15 @@
 export const ADMIN_NAVIGATION_ORDER_EVENT = "center-gsm:admin-navigation-order";
 const STORAGE_PREFIX = "center-gsm:admin-navigation-order:v1";
+const PRESET_STORAGE_PREFIX = "center-gsm:admin-navigation-preset:v1";
 
 export function adminNavigationStorageKey(email?: string | null) {
-  const identity = email?.trim().toLocaleLowerCase("tr-TR") || "default";
+  const identity = email?.trim().toLowerCase() || "default";
   return `${STORAGE_PREFIX}:${identity}`;
+}
+
+export function adminNavigationPresetStorageKey(email?: string | null) {
+  const identity = email?.trim().toLowerCase() || "default";
+  return `${PRESET_STORAGE_PREFIX}:${identity}:layout-1`;
 }
 
 export function normalizeAdminNavigationOrder(

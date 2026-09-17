@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronUp,
   GripVertical,
+  LayoutTemplate,
   ListRestart,
   LogOut,
   PencilLine,
@@ -19,14 +20,18 @@ import { useAdminAuth } from "@/providers/admin-auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import {
   ADMIN_ACTIVITY_EVENT,
+  ADMIN_ACTIVITY_STATE_EVENT,
   ADMIN_ACTIVITY_STORAGE_KEY,
   adminActivityRoutes,
+  createAdminActivityBaseline,
   emptyAdminActivityState,
   type AdminActivityKind,
+  type AdminActivitySeenAt,
   type AdminActivityState,
 } from "@/lib/admin/activity-indicator";
 import {
   ADMIN_NAVIGATION_ORDER_EVENT,
+  adminNavigationPresetStorageKey,
   adminNavigationStorageKey,
   moveAdminNavigationItem,
   moveAdminNavigationItemByOffset,
@@ -35,6 +40,7 @@ import {
 
 const defaultNavigationOrder = adminNavigation.map((item) => item.href);
 type AdminNavigationItem = (typeof adminNavigation)[number];
+type SupabaseBrowserClient = NonNullable<ReturnType<typeof createClient>>;
 
 const activityKindByRoute = Object.fromEntries(
   Object.entries(adminActivityRoutes).map(([kind, route]) => [route, kind]),
@@ -55,6 +61,118 @@ function writeActivityState(state: AdminActivityState) {
     ADMIN_ACTIVITY_STORAGE_KEY,
     JSON.stringify(state),
   );
+  window.dispatchEvent(
+    new CustomEvent<AdminActivityState>(ADMIN_ACTIVITY_STATE_EVENT, {
+      detail: state,
+    }),
+  );
+}
+
+function readStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function readMenuPreset(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return readStringArray((value as { layout1?: unknown }).layout1);
+}
+
+function readActivitySeenAt(value: unknown): AdminActivitySeenAt {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([kind, timestamp]) =>
+        kind in emptyAdminActivityState && typeof timestamp === "string",
+    ),
+  ) as AdminActivitySeenAt;
+}
+
+async function countSince(
+  query: PromiseLike<{ count: number | null; error: unknown }>,
+) {
+  const result = await query;
+  return result.error ? null : (result.count ?? 0);
+}
+
+async function loadActivityCounts(
+  client: SupabaseBrowserClient,
+  seenAt: AdminActivitySeenAt,
+) {
+  const baseline = createAdminActivityBaseline();
+  const since = (kind: AdminActivityKind) => seenAt[kind] ?? baseline[kind];
+  const [
+    order,
+    bankReceipt,
+    installmentReceipt,
+    message,
+    installment,
+    tradeIn,
+    customer,
+  ] = await Promise.all([
+    countSince(
+      client
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", since("order")),
+    ),
+    countSince(
+      client
+        .from("payment_receipts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending_review")
+        .gt("uploaded_at", since("receipt")),
+    ),
+    countSince(
+      client
+        .from("installment_payment_receipts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending_review")
+        .gt("uploaded_at", since("receipt")),
+    ),
+    countSince(
+      client
+        .from("live_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("sender", "customer")
+        .gt("created_at", since("message")),
+    ),
+    countSince(
+      client
+        .from("installment_applications")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["submitted", "under_review"])
+        .gt("submitted_at", since("installment")),
+    ),
+    countSince(
+      client
+        .from("trade_in_applications")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", since("tradeIn")),
+    ),
+    countSince(
+      client
+        .from("customer_profiles")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", since("customer")),
+    ),
+  ]);
+
+  return {
+    activity: {
+      order: order === null ? null : order > 0,
+      receipt:
+        bankReceipt === null && installmentReceipt === null
+          ? null
+          : (bankReceipt ?? 0) + (installmentReceipt ?? 0) > 0,
+      message: message === null ? null : message > 0,
+      installment: installment === null ? null : installment > 0,
+      tradeIn: tradeIn === null ? null : tradeIn > 0,
+      customer: customer === null ? null : customer > 0,
+    },
+    messageCount: message,
+  };
 }
 
 export function AdminSidebar({
@@ -75,11 +193,15 @@ export function AdminSidebar({
   const [navigationOrder, setNavigationOrder] = useState<string[]>(
     defaultNavigationOrder,
   );
+  const [menuPresetOrder, setMenuPresetOrder] = useState<string[] | null>(null);
+  const [activitySeenAt, setActivitySeenAt] = useState<AdminActivitySeenAt>({});
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [editingNavigation, setEditingNavigation] = useState(false);
   const [draggedHref, setDraggedHref] = useState<string | null>(null);
   const [dropTargetHref, setDropTargetHref] = useState<string | null>(null);
   const [orderSaved, setOrderSaved] = useState(false);
   const navigationStorageKey = adminNavigationStorageKey(user?.email);
+  const presetStorageKey = adminNavigationPresetStorageKey(user?.email);
   const orderedNavigation = useMemo(() => {
     const byHref = new Map<string, AdminNavigationItem>();
     adminNavigation.forEach((item) => byHref.set(item.href, item));
@@ -102,8 +224,16 @@ export function AdminSidebar({
             defaultNavigationOrder,
           ),
         );
+        const storedPreset = window.localStorage.getItem(presetStorageKey);
+        setMenuPresetOrder(
+          normalizeAdminNavigationOrder(
+            storedPreset ? JSON.parse(storedPreset) : null,
+            defaultNavigationOrder,
+          ),
+        );
       } catch {
         setNavigationOrder([...defaultNavigationOrder]);
+        setMenuPresetOrder([...defaultNavigationOrder]);
       }
     };
 
@@ -124,9 +254,88 @@ export function AdminSidebar({
         handleOrderChange,
       );
     };
-  }, [navigationStorageKey]);
+  }, [navigationStorageKey, presetStorageKey]);
 
-  function persistNavigationOrder(order: string[]) {
+  useEffect(() => {
+    if (!user?.id) {
+      setPreferencesLoaded(false);
+      return;
+    }
+    const client = createClient();
+    if (!client) {
+      setPreferencesLoaded(true);
+      return;
+    }
+    const userId = user.id;
+    const supabase = client;
+    let cancelled = false;
+
+    async function loadPreferences() {
+      const result = await supabase
+        .from("admin_ui_preferences")
+        .select("menu_order,menu_presets,activity_seen_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+
+      const storedOrder = (() => {
+        try {
+          return JSON.parse(
+            window.localStorage.getItem(navigationStorageKey) ?? "[]",
+          );
+        } catch {
+          return [];
+        }
+      })();
+      const localOrder = normalizeAdminNavigationOrder(
+        storedOrder,
+        defaultNavigationOrder,
+      );
+      const remoteOrder = readStringArray(result.data?.menu_order);
+      const nextOrder = normalizeAdminNavigationOrder(
+        remoteOrder.length ? remoteOrder : localOrder,
+        defaultNavigationOrder,
+      );
+      const remotePreset = readMenuPreset(result.data?.menu_presets);
+      const nextPreset = normalizeAdminNavigationOrder(
+        remotePreset.length ? remotePreset : nextOrder,
+        defaultNavigationOrder,
+      );
+      const remoteSeenAt = readActivitySeenAt(result.data?.activity_seen_at);
+      const nextSeenAt = Object.keys(remoteSeenAt).length
+        ? remoteSeenAt
+        : createAdminActivityBaseline();
+
+      setNavigationOrder(nextOrder);
+      setMenuPresetOrder(nextPreset);
+      setActivitySeenAt(nextSeenAt);
+      setPreferencesLoaded(true);
+      window.localStorage.setItem(
+        navigationStorageKey,
+        JSON.stringify(nextOrder),
+      );
+      window.localStorage.setItem(presetStorageKey, JSON.stringify(nextPreset));
+
+      if (!result.data || !remoteOrder.length || !remotePreset.length) {
+        await supabase.from("admin_ui_preferences").upsert(
+          {
+            user_id: userId,
+            menu_order: nextOrder,
+            menu_presets: { layout1: nextPreset },
+            activity_seen_at: nextSeenAt,
+          },
+          { onConflict: "user_id" },
+        );
+      }
+    }
+
+    void loadPreferences();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigationStorageKey, presetStorageKey, user?.id]);
+
+  function persistNavigationOrder(order: string[], saveAsPreset = true) {
     const normalized = normalizeAdminNavigationOrder(
       order,
       defaultNavigationOrder,
@@ -136,6 +345,12 @@ export function AdminSidebar({
         navigationStorageKey,
         JSON.stringify(normalized),
       );
+      if (saveAsPreset) {
+        window.localStorage.setItem(
+          presetStorageKey,
+          JSON.stringify(normalized),
+        );
+      }
       window.dispatchEvent(
         new CustomEvent(ADMIN_NAVIGATION_ORDER_EVENT, {
           detail: { key: navigationStorageKey },
@@ -145,13 +360,36 @@ export function AdminSidebar({
       // The reordered menu remains available for the current session.
     }
     setNavigationOrder(normalized);
+    if (saveAsPreset) setMenuPresetOrder(normalized);
+    const client = createClient();
+    if (client && user?.id) {
+      void client.from("admin_ui_preferences").upsert(
+        {
+          user_id: user.id,
+          menu_order: normalized,
+          menu_presets: {
+            layout1: saveAsPreset
+              ? normalized
+              : (menuPresetOrder ?? normalized),
+          },
+        },
+        { onConflict: "user_id" },
+      );
+    }
     setEditingNavigation(false);
     setOrderSaved(true);
     window.setTimeout(() => setOrderSaved(false), 2200);
   }
 
   function resetNavigationOrder() {
-    persistNavigationOrder([...defaultNavigationOrder]);
+    setNavigationOrder([...defaultNavigationOrder]);
+  }
+
+  function applyMenuPreset() {
+    persistNavigationOrder(
+      menuPresetOrder ?? [...defaultNavigationOrder],
+      false,
+    );
   }
 
   function handleDragStart(event: DragEvent<HTMLDivElement>, href: string) {
@@ -181,6 +419,10 @@ export function AdminSidebar({
         ?.kind;
       if (!kind || pathname.startsWith(adminActivityRoutes[kind])) return;
 
+      if (kind === "message") {
+        setUnreadChats((current) => current + 1);
+      }
+
       setActivity((current) => {
         const next = { ...current, [kind]: true };
         writeActivityState(next);
@@ -194,52 +436,93 @@ export function AdminSidebar({
       }
     }
 
+    function handleStateChange(event: Event) {
+      if (!mobile) return;
+      const next = (event as CustomEvent<AdminActivityState>).detail;
+      if (next) setActivity({ ...emptyAdminActivityState, ...next });
+    }
+
     window.addEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+    window.addEventListener(ADMIN_ACTIVITY_STATE_EVENT, handleStateChange);
     window.addEventListener("storage", handleStorage);
     return () => {
       window.removeEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
+      window.removeEventListener(
+        ADMIN_ACTIVITY_STATE_EVENT,
+        handleStateChange,
+      );
       window.removeEventListener("storage", handleStorage);
     };
-  }, [pathname]);
+  }, [mobile, pathname]);
 
   useEffect(() => {
+    if (mobile || !preferencesLoaded || !user?.id) return;
     const currentKind = Object.entries(adminActivityRoutes).find(([, route]) =>
       pathname.startsWith(route),
     )?.[0] as AdminActivityKind | undefined;
     if (!currentKind) return;
 
+    const timestamp = new Date().toISOString();
+    setActivitySeenAt((current) => {
+      const next = { ...current, [currentKind]: timestamp };
+      const client = createClient();
+      if (client) {
+        void client
+          .from("admin_ui_preferences")
+          .update({ activity_seen_at: next })
+          .eq("user_id", user.id);
+      }
+      return next;
+    });
+    if (currentKind === "message") setUnreadChats(0);
+
     setActivity((current) => {
-      if (!current[currentKind]) return current;
       const next = { ...current, [currentKind]: false };
       writeActivityState(next);
       return next;
     });
-  }, [pathname]);
+  }, [mobile, pathname, preferencesLoaded, user?.id]);
 
   useEffect(() => {
+    if (mobile || !preferencesLoaded || !user?.id) return;
     const client = createClient();
     if (!client) return;
-    const loadUnread = async () => {
-      const result = await client
-        .from("live_chat_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("sender", "customer")
-        .is("read_at", null);
-      if (!result.error) setUnreadChats(result.count ?? 0);
+    let cancelled = false;
+
+    const refreshActivity = async () => {
+      const snapshot = await loadActivityCounts(client, activitySeenAt);
+      if (cancelled) return;
+      setActivity((current) => {
+        const next = { ...current };
+        for (const kind of Object.keys(
+          emptyAdminActivityState,
+        ) as AdminActivityKind[]) {
+          const value = snapshot.activity[kind];
+          if (
+            value !== null &&
+            !pathname.startsWith(adminActivityRoutes[kind])
+          ) {
+            next[kind] = value;
+          }
+        }
+        writeActivityState(next);
+        return next;
+      });
+      if (
+        snapshot.messageCount !== null &&
+        !pathname.startsWith(adminActivityRoutes.message)
+      ) {
+        setUnreadChats(snapshot.messageCount);
+      }
     };
-    void loadUnread();
-    const channel = client
-      .channel(`admin-live-chat-badge:${mobile ? "mobile" : "desktop"}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "live_chat_messages" },
-        () => void loadUnread(),
-      )
-      .subscribe();
+
+    void refreshActivity();
+    const interval = window.setInterval(() => void refreshActivity(), 30000);
     return () => {
-      void client.removeChannel(channel);
+      cancelled = true;
+      window.clearInterval(interval);
     };
-  }, [mobile]);
+  }, [activitySeenAt, mobile, pathname, preferencesLoaded, user?.id]);
   const content = (
     <aside
       className={cn(
@@ -290,7 +573,7 @@ export function AdminSidebar({
               onClick={() => persistNavigationOrder(navigationOrder)}
               className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-white font-bold text-zinc-950 transition hover:bg-zinc-100"
             >
-              <Check className="size-4" /> Sırayı kaydet
+              <Check className="size-4" /> 1. düzeni kaydet
             </button>
             <button
               type="button"
@@ -303,24 +586,33 @@ export function AdminSidebar({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setOrderSaved(false);
-              setEditingNavigation(true);
-            }}
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-white/15 text-xs font-bold text-zinc-300 transition hover:bg-white/10 hover:text-white"
-          >
-            <PencilLine className="size-4" /> Menüyü düzenle
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOrderSaved(false);
+                setEditingNavigation(true);
+              }}
+              className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-white/15 px-2 text-[11px] font-bold text-zinc-300 transition hover:bg-white/10 hover:text-white"
+            >
+              <PencilLine className="size-3.5" /> Düzenle
+            </button>
+            <button
+              type="button"
+              onClick={applyMenuPreset}
+              className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-2 text-[11px] font-black text-white transition hover:bg-emerald-400"
+            >
+              <LayoutTemplate className="size-3.5" /> 1. Menü Düzeni
+            </button>
+          </div>
         )}
         {orderSaved ? (
           <p className="mt-2 text-center text-[11px] font-bold text-emerald-400">
-            Menü sırası kaydedildi
+            1. Menü Düzeni kalıcı olarak kaydedildi
           </p>
         ) : editingNavigation ? (
           <p className="mt-2 text-center text-[11px] text-zinc-500">
-            Sürükleyin veya okları kullanın
+            Sürükleyin veya okları kullanın; kayıt hesaba bağlanır
           </p>
         ) : null}
       </div>

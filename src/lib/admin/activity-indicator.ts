@@ -1,6 +1,8 @@
-export type AdminActivityKind = "order" | "receipt" | "message";
+export type AdminActivityKind =
+  "order" | "receipt" | "message" | "installment" | "tradeIn" | "customer";
 
 export const ADMIN_ACTIVITY_EVENT = "center-gsm:admin-activity";
+export const ADMIN_ACTIVITY_STATE_EVENT = "center-gsm:admin-activity-state";
 
 export const ADMIN_ACTIVITY_STORAGE_KEY = "center-gsm:admin-activity-state";
 
@@ -11,6 +13,9 @@ export const adminActivityRoutes: Record<AdminActivityKind, string> = {
   order: "/admin/siparisler",
   receipt: "/admin/dekontlar",
   message: "/admin/canli-destek",
+  installment: "/admin/elden-taksit-basvurulari",
+  tradeIn: "/admin/telefon-takas",
+  customer: "/admin/musteriler",
 };
 
 export type AdminActivityState = Record<AdminActivityKind, boolean>;
@@ -19,7 +24,20 @@ export const emptyAdminActivityState: AdminActivityState = {
   order: false,
   receipt: false,
   message: false,
+  installment: false,
+  tradeIn: false,
+  customer: false,
 };
+
+export type AdminActivitySeenAt = Partial<Record<AdminActivityKind, string>>;
+
+export function createAdminActivityBaseline(
+  timestamp = new Date().toISOString(),
+) {
+  return Object.fromEntries(
+    Object.keys(emptyAdminActivityState).map((kind) => [kind, timestamp]),
+  ) as Record<AdminActivityKind, string>;
+}
 
 export type AdminRecordActivityKind = Extract<
   AdminActivityKind,
