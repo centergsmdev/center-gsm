@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { adminPageTitles } from "@/data/admin/navigation";
 import { useAdminAuth } from "@/providers/admin-auth-provider";
@@ -52,21 +52,8 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
             {meta.description}
           </p>
         </div>
-        <label className="hidden h-10 w-full max-w-xs items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 xl:flex">
-          <Search className="size-4 text-zinc-400" />
-          <span className="sr-only">Yönetim panelinde ara</span>
-          <input
-            type="search"
-            placeholder="Panelde ara…"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
-          />
-        </label>
         <AdminRealtimeNotifications />
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-xl p-1.5 text-left hover:bg-zinc-50"
-          aria-label="Kullanıcı menüsünü aç"
-        >
+        <div className="flex items-center gap-2 rounded-xl p-1.5">
           <span className="grid size-9 place-items-center rounded-xl bg-zinc-950 text-xs font-bold text-white">
             {user?.initials ?? "CG"}
           </span>
@@ -78,8 +65,7 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
               Yönetici
             </span>
           </span>
-          <ChevronDown className="hidden size-4 text-zinc-400 lg:block" />
-        </button>
+        </div>
       </div>
     </header>
   );

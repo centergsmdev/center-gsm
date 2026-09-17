@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.centergsm.com.tr" }],
+        destination: "https://centergsm.com.tr/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

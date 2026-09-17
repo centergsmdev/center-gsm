@@ -1,14 +1,14 @@
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 import { footerPages } from "@/lib/footer/content";
-import { createClient } from "@/lib/supabase/server";
+import { CACHE_TAGS } from "@/lib/performance/constants";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export type FooterPageSlug = keyof typeof footerPages;
 
-export async function getManagedFooterPage(slug: FooterPageSlug) {
-  noStore();
+const getCachedManagedFooterPage = unstable_cache(async (slug: FooterPageSlug) => {
   const fallback = footerPages[slug];
-  const client = await createClient();
+  const client = createPublicClient();
   if (!client) return fallback;
   const { data } = await client
     .from("content_pages")
@@ -24,4 +24,8 @@ export async function getManagedFooterPage(slug: FooterPageSlug) {
     sections: fallback.sections,
     bodyHtml: data.body_html || undefined,
   };
+}, ["managed-footer-page"], { revalidate: 300, tags: [CACHE_TAGS.settings] });
+
+export async function getManagedFooterPage(slug: FooterPageSlug) {
+  return getCachedManagedFooterPage(slug);
 }

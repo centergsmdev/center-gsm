@@ -23,6 +23,8 @@ import { metaItemId } from "@/lib/meta/item-id";
 import { productDisplayName } from "@/lib/catalog/variants";
 
 const STORAGE_KEY = "center-gsm-cart-v1";
+const developmentCatalogProducts =
+  process.env.NODE_ENV === "development" ? catalogProducts : [];
 const initialItems: CartItem[] = [];
 type CouponResult = { success: boolean; error?: string };
 const itemKey = (productId: string, variantId?: string) =>
@@ -72,7 +74,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             parsed.flatMap((item) =>
               item.product
                 ? [item.product]
-                : catalogProducts.filter(
+                : developmentCatalogProducts.filter(
                     (product) => product.id === item.productId,
                   ),
             ),
@@ -116,7 +118,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       items.flatMap((item) => {
         const product =
           item.product ??
-          catalogProducts.find((candidate) => candidate.id === item.productId);
+          developmentCatalogProducts.find(
+            (candidate) => candidate.id === item.productId,
+          );
         return product
           ? [
               {

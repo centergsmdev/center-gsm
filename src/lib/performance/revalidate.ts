@@ -1,1 +1,0 @@
-import{revalidatePath,revalidateTag}from"next/cache";import type{CacheTag}from"./constants";export function revalidateCacheTag(tag:CacheTag){revalidateTag(tag)}export function revalidateCacheTags(tags:readonly CacheTag[]){for(const tag of tags)revalidateTag(tag)}export function revalidatePublicPath(path:string,type?:"page"|"layout"){revalidatePath(path,type)}

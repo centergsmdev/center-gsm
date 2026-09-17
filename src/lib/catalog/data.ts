@@ -21,6 +21,8 @@ import type { Tables } from "@/types/database";
 import type { CatalogProduct } from "@/types/product";
 
 const DEFAULT_PAGE_SIZE = 8;
+const developmentCatalogProducts =
+  process.env.NODE_ENV === "development" ? catalogProducts : [];
 type CatalogClient = NonNullable<ReturnType<typeof createClient>>;
 
 function resolveProductSlug(slug: string) {
@@ -32,7 +34,7 @@ function resolveProductSlug(slug: string) {
 }
 
 function fallbackProducts(filters: CatalogFilters): CatalogListResult {
-  let data = [...catalogProducts];
+  let data = [...developmentCatalogProducts];
   const query = normalizeSearchTerm(filters.query ?? "");
   if (query)
     data = data.filter((product) =>
@@ -233,7 +235,17 @@ export async function getProducts(
   filters: CatalogFilters = {},
 ): Promise<CatalogListResult> {
   const client = createClient();
-  if (!client) return fallbackProducts(filters);
+  if (!client) {
+    if (process.env.NODE_ENV === "development") return fallbackProducts(filters);
+    return {
+      data: [],
+      total: 0,
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? DEFAULT_PAGE_SIZE,
+      error: true,
+      source: "supabase",
+    };
+  }
   try {
     const categoryIds = await taxonomyIds(
       client,
@@ -375,7 +387,17 @@ export async function getCampaignProducts({
   const client = createClient();
 
   if (!client) {
-    const eligibleProducts = catalogProducts
+    if (process.env.NODE_ENV !== "development") {
+      return {
+        data: [],
+        total: 0,
+        page: safePage,
+        pageSize: safePageSize,
+        error: true,
+        source: "supabase",
+      };
+    }
+    const eligibleProducts = developmentCatalogProducts
       .map((product) => applyDefaultVariantPresentation(product))
       .filter(
         (product) =>
@@ -479,10 +501,12 @@ export async function getProductBySlug(
   if (!client)
     return {
       data:
-        catalogProducts.find((product) => product.slug === resolvedSlug) ??
-        null,
-      error: false,
-      source: "fallback",
+        developmentCatalogProducts.find(
+          (product) => product.slug === resolvedSlug,
+        ) ?? null,
+      error: process.env.NODE_ENV !== "development",
+      source:
+        process.env.NODE_ENV === "development" ? "fallback" : "supabase",
     };
   try {
     const exactResult = await client
@@ -536,7 +560,7 @@ export async function getCategories(): Promise<
   const client = createClient();
   if (!client) {
     const names = [
-      ...new Set(catalogProducts.map((product) => product.category)),
+      ...new Set(developmentCatalogProducts.map((product) => product.category)),
     ];
     return {
       data: names.map((name, index) => ({
@@ -548,8 +572,9 @@ export async function getCategories(): Promise<
           .replaceAll("ı", "i")
           .replaceAll(" ", "-"),
       })),
-      error: false,
-      source: "fallback",
+      error: process.env.NODE_ENV !== "development",
+      source:
+        process.env.NODE_ENV === "development" ? "fallback" : "supabase",
     };
   }
   try {
@@ -572,15 +597,18 @@ export async function getBrands(): Promise<
 > {
   const client = createClient();
   if (!client) {
-    const names = [...new Set(catalogProducts.map((product) => product.brand))];
+    const names = [
+      ...new Set(developmentCatalogProducts.map((product) => product.brand)),
+    ];
     return {
       data: names.map((name, index) => ({
         id: `fallback-brand-${index}`,
         name,
         slug: name.toLocaleLowerCase("tr-TR"),
       })),
-      error: false,
-      source: "fallback",
+      error: process.env.NODE_ENV !== "development",
+      source:
+        process.env.NODE_ENV === "development" ? "fallback" : "supabase",
     };
   }
   try {

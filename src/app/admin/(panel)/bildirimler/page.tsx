@@ -1,4 +1,5 @@
-import { AdminNotificationDashboard } from "@/components/admin/admin-notification-dashboard";
+import { redirect } from "next/navigation";
+
 export default function NotificationsPage() {
-  return <AdminNotificationDashboard />;
+  redirect("/admin/favori-alarmlari");
 }

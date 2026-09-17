@@ -1,6 +1,7 @@
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { CACHE_TAGS } from "@/lib/performance/constants";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { SiteSettings } from "@/types/database";
 
 export const defaultSiteSettings: SiteSettings = {
@@ -22,9 +23,8 @@ export const defaultSiteSettings: SiteSettings = {
   updated_by: null,
 };
 
-export async function getSiteSettings() {
-  noStore();
-  const client = await createClient();
+const getCachedSiteSettings = unstable_cache(async () => {
+  const client = createPublicClient();
   if (!client) return defaultSiteSettings;
   const { data } = await client
     .from("site_settings")
@@ -32,4 +32,8 @@ export async function getSiteSettings() {
     .eq("id", true)
     .maybeSingle();
   return data ?? defaultSiteSettings;
+}, ["public-site-settings"], { revalidate: 300, tags: [CACHE_TAGS.settings] });
+
+export async function getSiteSettings() {
+  return getCachedSiteSettings();
 }

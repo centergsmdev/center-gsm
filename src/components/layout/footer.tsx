@@ -19,15 +19,15 @@ const socialLogos = {
 
 export async function Footer() {
   const settings = await getSiteSettings();
-  const configuredSocialLinks = socialLinks.map((social) => ({
-    ...social,
-    href:
+  const configuredSocialLinks = socialLinks.flatMap((social) => {
+    const href =
       social.id === "instagram"
         ? settings.instagram_url
         : social.id === "youtube"
           ? settings.youtube_url
-          : null,
-  }));
+          : null;
+    return href ? [{ ...social, href }] : [];
+  });
   return (
     <footer className="bg-zinc-950 text-white">
       <Container className="py-10 sm:py-16">
@@ -94,25 +94,15 @@ export async function Footer() {
               Güvenli ödeme altyapısı • Distribütör garantili ürünler
             </p>
           </div>
-          <div
-            className="flex items-center gap-2"
-            aria-label="Sosyal medya bağlantıları"
-          >
+          {configuredSocialLinks.length ? (
+            <div
+              className="flex items-center gap-2"
+              aria-label="Sosyal medya bağlantıları"
+            >
             {configuredSocialLinks.map((social) => {
               const Logo = socialLogos[social.id];
               const className =
                 "grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition duration-300 motion-reduce:transition-none";
-              if (!social.href)
-                return (
-                  <span
-                    key={social.id}
-                    aria-label={`${social.label} bağlantısı yakında`}
-                    role="img"
-                    className={`${className} cursor-not-allowed opacity-60`}
-                  >
-                    <Logo className="size-5" />
-                  </span>
-                );
               return (
                 <a
                   key={social.id}
@@ -126,7 +116,8 @@ export async function Footer() {
                 </a>
               );
             })}
-          </div>
+            </div>
+          ) : null}
         </div>
       </Container>
     </footer>

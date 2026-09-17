@@ -1,11 +1,5 @@
-import { AdminNotificationQueue } from "@/components/admin/admin-notification-queue";
-export default async function NotificationQueuePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string }>;
-}) {
-  const { view } = await searchParams;
-  return (
-    <AdminNotificationQueue initialView={view === "logs" ? "logs" : "queue"} />
-  );
+import { redirect } from "next/navigation";
+
+export default function NotificationQueuePage() {
+  redirect("/admin/favori-alarmlari");
 }

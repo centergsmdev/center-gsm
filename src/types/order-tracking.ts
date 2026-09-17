@@ -1,10 +1,17 @@
 export type OrderStage =
   "received" | "paid" | "preparing" | "shipped" | "delivered" | "cancelled";
 
+export type OrderTimelineItem = {
+  stage: Exclude<OrderStage, "cancelled">;
+  label: string;
+  at: string | null;
+};
+
 export type TrackedOrder = {
   orderNumber: string;
   orderDate: string;
   stage: OrderStage;
+  timeline: OrderTimelineItem[];
   paymentStatus: string;
   paymentStatusLabel: string;
   paymentMethod: string;

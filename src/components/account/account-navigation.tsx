@@ -29,7 +29,7 @@ const links = [
   { href: "/favoriler", label: "Favorilerim", icon: Heart },
   { href: "/hesabim/bilgilerim", label: "Kişisel Bilgilerim", icon: UserRound },
   { href: "/hesabim/guvenlik", label: "Şifre ve Güvenlik", icon: LockKeyhole },
-  { href: "/hesabim/bildirimler", label: "Bildirim Tercihleri", icon: Bell },
+  { href: "/hesabim/bildirimler", label: "Favori Alarmları", icon: Bell },
 ];
 
 export function AccountNavigation() {

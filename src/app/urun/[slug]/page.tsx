@@ -48,7 +48,9 @@ const ProductRecommendations = dynamic(
   },
 );
 export function generateStaticParams() {
-  return catalogProducts.map((product) => ({ slug: product.slug }));
+  return process.env.NODE_ENV === "development"
+    ? catalogProducts.map((product) => ({ slug: product.slug }))
+    : [];
 }
 export async function generateMetadata({
   params,

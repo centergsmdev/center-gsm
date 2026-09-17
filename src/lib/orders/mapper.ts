@@ -1,5 +1,9 @@
 import type { OrderDetail } from "@/types/order-management";
-import type { TrackedOrder, OrderStage } from "@/types/order-tracking";
+import type {
+  TrackedOrder,
+  OrderStage,
+  OrderTimelineItem,
+} from "@/types/order-tracking";
 import type { Json } from "@/types/database";
 
 const record = (value: Json): Record<string, Json | undefined> =>
@@ -15,6 +19,25 @@ const paymentStatusLabels: Record<string, string> = {
   cancelled: "Ödeme iptal edildi",
   refunded: "Ödeme iade edildi",
 };
+
+const timelineLabels: Record<OrderTimelineItem["stage"], string> = {
+  received: "Sipariş alındı",
+  paid: "Ödeme onaylandı",
+  preparing: "Hazırlanıyor",
+  shipped: "Kargoya verildi",
+  delivered: "Teslim edildi",
+};
+
+function orderHistory(value: Json) {
+  return Array.isArray(value)
+    ? value.flatMap((entry) => {
+        const item = record(entry);
+        return typeof item.status === "string" && typeof item.at === "string"
+          ? [{ status: item.status, at: item.at }]
+          : [];
+      })
+    : [];
+}
 
 export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
   const delivery = record(detail.order.delivery_address);
@@ -37,6 +60,52 @@ export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
   const couponSnapshot = detail.order.coupon_snapshot
     ? record(detail.order.coupon_snapshot)
     : {};
+  const shipments = (detail.shipments ?? []).map((shipment) => {
+    const carrier = record(shipment.carrier_snapshot);
+    return {
+      id: shipment.id,
+      number: shipment.shipment_number,
+      carrier: String(carrier.name ?? "Kargo"),
+      trackingNumber: shipment.tracking_number,
+      trackingUrl: shipment.tracking_url,
+      status: shipment.status,
+      shippedAt: shipment.shipped_at,
+      estimatedAt: shipment.estimated_delivery_at,
+      deliveredAt: shipment.delivered_at,
+      items: shipment.items.map((item) => ({
+        name: item.product_name ?? "Ürün",
+        quantity: item.quantity,
+      })),
+      events: shipment.events.map((event) => ({
+        date: event.event_time,
+        location: event.location ?? "",
+        description: event.title,
+      })),
+    };
+  });
+  const history = orderHistory(detail.order.status_history);
+  const firstHistoryDate = (...statuses: string[]) =>
+    history.find((entry) => statuses.includes(entry.status))?.at ?? null;
+  const timeline: OrderTimelineItem[] = (
+    Object.keys(timelineLabels) as OrderTimelineItem["stage"][]
+  ).map((timelineStage) => ({
+    stage: timelineStage,
+    label: timelineLabels[timelineStage],
+    at:
+      timelineStage === "received"
+        ? firstHistoryDate("received") ?? detail.order.created_at
+        : timelineStage === "paid"
+          ? firstHistoryDate("paid", "payment:paid")
+          : timelineStage === "shipped"
+            ? firstHistoryDate("shipped") ??
+              shipments.find((shipment) => shipment.shippedAt)?.shippedAt ??
+              null
+            : timelineStage === "delivered"
+              ? firstHistoryDate("delivered") ??
+                shipments.find((shipment) => shipment.deliveredAt)?.deliveredAt ??
+                null
+              : firstHistoryDate(timelineStage),
+  }));
   return {
     orderNumber: detail.order.order_number,
     orderDate: new Intl.DateTimeFormat("tr-TR", {
@@ -44,6 +113,7 @@ export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
       timeStyle: "short",
     }).format(new Date(detail.order.created_at)),
     stage,
+    timeline,
     paymentStatus: detail.order.payment_status,
     paymentStatusLabel:
       paymentStatusLabels[detail.order.payment_status] ?? "Ödeme bekleniyor",
@@ -120,28 +190,6 @@ export function mapOrderDetail(detail: OrderDetail): TrackedOrder {
         : "Sipariş durumuna göre güncellenecek",
       events: [],
     },
-    shipments: (detail.shipments ?? []).map((shipment) => {
-      const carrier = record(shipment.carrier_snapshot);
-      return {
-        id: shipment.id,
-        number: shipment.shipment_number,
-        carrier: String(carrier.name ?? "Kargo"),
-        trackingNumber: shipment.tracking_number,
-        trackingUrl: shipment.tracking_url,
-        status: shipment.status,
-        shippedAt: shipment.shipped_at,
-        estimatedAt: shipment.estimated_delivery_at,
-        deliveredAt: shipment.delivered_at,
-        items: shipment.items.map((item) => ({
-          name: item.product_name ?? "Ürün",
-          quantity: item.quantity,
-        })),
-        events: shipment.events.map((event) => ({
-          date: event.event_time,
-          location: event.location ?? "",
-          description: event.title,
-        })),
-      };
-    }),
+    shipments,
   };
 }

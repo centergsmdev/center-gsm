@@ -1,4 +1,3 @@
-import { catalogProducts } from "@/data/catalog-products";
 import type { SupabaseCatalogRow } from "@/lib/catalog/types";
 import { calculateMonthlyInstallment } from "@/lib/catalog/installments";
 import { applyDefaultVariantPresentation } from "@/lib/catalog/variants";
@@ -30,7 +29,6 @@ function attributes(value: Json): CatalogProductVariant["attributes"] {
 }
 
 export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
-  const fallback = catalogProducts.find((product) => product.slug === row.slug);
   const sortedImages = row.images
     .filter((image) => image.color_id == null)
     .sort(
@@ -77,7 +75,7 @@ export function mapSupabaseProduct(row: SupabaseCatalogRow): CatalogProduct {
     freeShipping: price >= 2500,
     rating: Number(row.rating),
     reviewCount: row.review_count,
-    accent: fallback?.accent ?? accents[row.slug.length % accents.length],
+    accent: accents[row.slug.length % accents.length],
     sku: row.sku,
     warrantyMonths: row.warranty_months,
     mainImageUrl: sortedImages[0]?.url,

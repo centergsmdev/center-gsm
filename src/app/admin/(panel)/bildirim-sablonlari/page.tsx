@@ -1,4 +1,5 @@
-import { AdminNotificationTemplates } from "@/components/admin/admin-notification-templates";
+import { redirect } from "next/navigation";
+
 export default function NotificationTemplatesPage() {
-  return <AdminNotificationTemplates />;
+  redirect("/admin/favori-alarmlari");
 }

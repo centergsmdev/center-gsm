@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Download, FileText, MapPin } from "lucide-react";
+import { FileText, MapPin } from "lucide-react";
 
 import { CargoTracking } from "@/components/order-tracking/cargo-tracking";
 import { OrderDetailNotFound } from "@/components/order-tracking/order-detail-not-found";
 import { OrderTimeline } from "@/components/order-tracking/order-timeline";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -71,7 +71,7 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
         </span>
       </div>
       <Card className="mt-5 max-w-full p-4 shadow-sm sm:mt-7 sm:p-7">
-        <OrderTimeline currentStage={order.stage} />
+        <OrderTimeline currentStage={order.stage} timeline={order.timeline} />
       </Card>
       <Card className="mt-5 max-w-full p-4 shadow-sm sm:p-5">
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
@@ -108,21 +108,21 @@ export function OrderDetails({ orderNumber }: { orderNumber: string }) {
           <Card className="p-5">
             <h2 className="font-black">Sipariş İşlemleri</h2>
             <div className="mt-4 grid gap-2">
-              <Button variant="outline" className="w-full" disabled>
-                <Download className="size-4" aria-hidden="true" />
-                Faturayı İndir
-              </Button>
-              <Button variant="ghost" className="w-full" disabled>
-                İptal Talebi Oluştur
-              </Button>
-              <Button variant="ghost" className="w-full" disabled>
-                İade Talebi Oluştur
-              </Button>
+              {order.stage === "delivered" ? (
+                <Link
+                  href="/hesabim/iadeler/yeni"
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  İade Talebi Oluştur
+                </Link>
+              ) : null}
+              <Link
+                href="/iletisim"
+                className={buttonVariants({ variant: "ghost" })}
+              >
+                Destek Al
+              </Link>
             </div>
-            <p className="mt-3 text-[11px] leading-5 text-muted">
-              Fatura, iptal ve iade işlemleri çevrimiçi olarak henüz
-              kullanılamıyor.
-            </p>
           </Card>
         </aside>
       </div>

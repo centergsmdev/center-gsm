@@ -50,8 +50,8 @@ const shortcuts = [
   },
   {
     href: "/hesabim/bildirimler",
-    label: "Bildirim Tercihleri",
-    description: "İletişim izinlerinizi yönetin",
+    label: "Favori Alarmları",
+    description: "Fiyat ve stok alarmlarınızı yönetin",
     icon: Bell,
   },
 ];

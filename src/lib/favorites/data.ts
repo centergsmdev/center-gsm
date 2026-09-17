@@ -13,7 +13,10 @@ async function resolveProductId(
   client: BrowserClient,
   productId: string,
 ): Promise<string | null> {
-  const fallback = catalogProducts.find((product) => product.id === productId);
+  const fallback =
+    process.env.NODE_ENV === "development"
+      ? catalogProducts.find((product) => product.id === productId)
+      : undefined;
   const query = client.from("products").select("*").eq("is_active", true);
   const result = fallback
     ? await query.eq("slug", fallback.slug).maybeSingle()

@@ -161,14 +161,7 @@ export const adminNavigation = [
     href: "/admin/denetim-kayitlari",
     icon: ShieldCheck,
   },
-  { label: "Bildirimler", href: "/admin/bildirimler", icon: Bell },
   { label: "Favori Alarmları", href: "/admin/favori-alarmlari", icon: Bell },
-  {
-    label: "Bildirim Şablonları",
-    href: "/admin/bildirim-sablonlari",
-    icon: Bell,
-  },
-  { label: "Bildirim Kuyruğu", href: "/admin/bildirim-kuyrugu", icon: Bell },
   { label: "Analitik", href: "/admin/analitik", icon: BarChart3 },
 ] as const;
 
@@ -349,21 +342,9 @@ export const adminPageTitles: Record<
     title: "Kargo Senkronizasyonları",
     description: "Gateway işlerini ve güvenli tekrar denemeleri izleyin.",
   },
-  "/admin/bildirimler": {
-    title: "Bildirimler",
-    description: "Kanal, şablon ve gönderim durumlarını yönetin.",
-  },
   "/admin/favori-alarmlari": {
     title: "Favori Alarmları",
     description: "Fiyat, stok ve kampanya alarm teslimatlarını izleyin.",
-  },
-  "/admin/bildirim-sablonlari": {
-    title: "Bildirim Şablonları",
-    description: "Kanal içeriklerini ve değişkenlerini yönetin.",
-  },
-  "/admin/bildirim-kuyrugu": {
-    title: "Bildirim Kuyruğu",
-    description: "Bekleyen, başarılı ve başarısız gönderimleri izleyin.",
   },
   "/admin/analitik": {
     title: "Analitik",

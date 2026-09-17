@@ -1,13 +1,13 @@
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { CACHE_TAGS } from "@/lib/performance/constants";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { WhatsAppRepresentative } from "@/types/database";
 
-export async function getActiveWhatsAppRepresentatives(): Promise<
+const getCachedRepresentatives = unstable_cache(async (): Promise<
   WhatsAppRepresentative[]
-> {
-  noStore();
-  const client = await createClient();
+> => {
+  const client = createPublicClient();
   if (!client) return [];
 
   const result = await client
@@ -19,4 +19,8 @@ export async function getActiveWhatsAppRepresentatives(): Promise<
     .order("id");
 
   return result.data ?? [];
+}, ["public-whatsapp-representatives"], { revalidate: 300, tags: [CACHE_TAGS.settings] });
+
+export async function getActiveWhatsAppRepresentatives() {
+  return getCachedRepresentatives();
 }

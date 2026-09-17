@@ -1,17 +1,11 @@
-import { Benefits } from "@/components/home/benefits";
-import { Brands } from "@/components/home/brands";
 import { Categories } from "@/components/home/categories";
 import { CategoryProductShowcase } from "@/components/home/category-product-showcase";
 import { FeaturedProducts } from "@/components/home/featured-products";
-import { WeeklyDeals } from "@/components/home/weekly-deals";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { HomepageWhatsAppButton } from "@/components/layout/homepage-whatsapp-button";
 import { Hero } from "@/components/home/hero";
-import {
-  HomepageFooterCta,
-  WhyCenterGsm,
-} from "@/components/home/homepage-trust-sections";
+import { HomepageFooterCta } from "@/components/home/homepage-trust-sections";
 import { TrustSection } from "@/components/home/trust-section";
 import { FadeIn, MotionProvider } from "@/components/motion/motion-system";
 import { getFeaturedProducts, getProducts } from "@/lib/catalog/data";
@@ -28,25 +22,15 @@ export default async function HomePage() {
   const [
     featured,
     popular,
-    weeklyDeals,
     phones,
     laptops,
-    watches,
-    tablets,
     shippingCarriers,
     paymentPartners,
   ] = await Promise.all([
     getFeaturedProducts(8),
     getProducts({ sort: "popular", pageSize: 8 }),
-    getProducts({ weeklyDeal: true, sort: "popular", pageSize: 8 }),
-    getProducts({ latestPhone: true, sort: "newest", pageSize: 8 }),
-    getProducts({ categories: ["laptoplar"], sort: "newest", pageSize: 8 }),
-    getProducts({
-      categories: ["akilli-saat"],
-      sort: "newest",
-      pageSize: 8,
-    }),
-    getProducts({ categories: ["tablet"], sort: "newest", pageSize: 8 }),
+    getProducts({ latestPhone: true, sort: "newest", pageSize: 6 }),
+    getProducts({ categories: ["laptoplar"], sort: "newest", pageSize: 6 }),
     getPublicShippingCarriers(),
     getPublicPaymentPartners(),
   ]);
@@ -68,7 +52,6 @@ export default async function HomePage() {
           <Hero product={heroProduct} />
           <Categories />
           <FeaturedProducts products={featuredProducts} />
-          <WeeklyDeals products={weeklyDeals.error ? [] : weeklyDeals.data} />
           <CategoryProductShowcase
             id="latest-phones"
             title="En Yeni Telefonlar"
@@ -85,29 +68,10 @@ export default async function HomePage() {
             actionHref="/kategori/laptoplar"
             products={laptops.error ? [] : laptops.data}
           />
-          <CategoryProductShowcase
-            id="smart-watches"
-            title="Akıllı Saatler"
-            description="Günlük hayatınızı kolaylaştıran akıllı saat modelleri."
-            actionLabel="Tüm Saatler"
-            actionHref="/kategori/akilli-saat"
-            products={watches.error ? [] : watches.data}
-          />
-          <CategoryProductShowcase
-            id="tablet-world"
-            title="Tablet Dünyası"
-            description="Eğitim, iş ve eğlence için tablet seçenekleri."
-            actionLabel="Tüm Tabletler"
-            actionHref="/kategori/tablet"
-            products={tablets.error ? [] : tablets.data}
-          />
-          <Brands />
-          <Benefits />
           <TrustSection
             carriers={shippingCarriers}
             paymentPartners={paymentPartners}
           />
-          <WhyCenterGsm />
           <HomepageFooterCta />
         </main>
         <FadeIn>
