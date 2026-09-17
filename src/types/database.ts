@@ -1488,9 +1488,21 @@ export type TradeInRateLimitRow = {
   updated_at: string;
 };
 
+export type AdminDeletionSecurityRow = Timestamps & {
+  id: boolean;
+  password_hash: string;
+  failed_attempts: number;
+  locked_until: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
+      admin_deletion_security: Table<
+        AdminDeletionSecurityRow,
+        Partial<AdminDeletionSecurityRow> &
+          Pick<AdminDeletionSecurityRow, "id" | "password_hash">
+      >;
       trade_in_applications: Table<
         TradeInApplicationRow,
         Partial<TradeInApplicationRow> &

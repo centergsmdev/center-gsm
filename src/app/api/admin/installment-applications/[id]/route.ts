@@ -15,6 +15,7 @@ import {
 import type { InstallmentAdminPaymentPlan } from "@/lib/installment/types";
 import { PAYMENT_RECEIPTS_BUCKET } from "@/lib/payment-receipts/client";
 import { sameOriginRequest } from "@/lib/installment/server-security";
+import { requireAdminDeletionPassword } from "@/lib/admin/deletion-password";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,7 @@ export async function GET(
       { error: "Admin yetkisi gerekiyor." },
       { status: 403 },
     );
+
   const [application, documents, contract, paymentPlan, portal, accounts] =
     await Promise.all([
       context.service
@@ -196,6 +198,21 @@ export async function DELETE(
       { status: 403 },
     );
 
+  let body: { password?: unknown };
+  try {
+    body = (await request.json()) as { password?: unknown };
+  } catch {
+    return NextResponse.json(
+      { error: "Silme şifresi okunamadı." },
+      { status: 400 },
+    );
+  }
+  const passwordError = await requireAdminDeletionPassword(
+    context.service,
+    body.password,
+  );
+  if (passwordError) return passwordError;
+
   const [application, documents, receipts] = await Promise.all([
     context.service
       .from("installment_applications")
@@ -222,11 +239,25 @@ export async function DELETE(
   const removed = await context.service
     .from("installment_applications")
     .delete()
-    .eq("id", id)
-    .select("id")
-    .maybeSingle();
-  if (removed.error || !removed.data)
+    .eq("id", id);
+  if (removed.error) {
+    console.error("Installment application delete failed", {
+      code: removed.error.code,
+      message: removed.error.message,
+    });
     return NextResponse.json({ error: "Başvuru silinemedi." }, { status: 500 });
+  }
+
+  const remaining = await context.service
+    .from("installment_applications")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  if (remaining.error || remaining.data)
+    return NextResponse.json(
+      { error: "Başvuru silme işlemi doğrulanamadı." },
+      { status: 500 },
+    );
 
   const documentPaths = documents.data.map((item) => item.storage_path);
   const receiptPaths = receipts.data.map((item) => item.storage_path);

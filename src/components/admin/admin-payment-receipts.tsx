@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { AdminDeletionPasswordDialog } from "@/components/admin/admin-deletion-password-dialog";
 import {
   AdminEmptyState,
   AdminErrorState,
@@ -47,6 +48,10 @@ export function AdminPaymentReceipts() {
   const [opening, setOpening] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deletionTarget, setDeletionTarget] = useState<{
+    item: AdminPaymentReceipt | AdminInstallmentPaymentReceipt;
+    type: "transfer" | "installment";
+  } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set());
 
@@ -177,33 +182,21 @@ export function AdminPaymentReceipts() {
   async function removeReceipt(
     item: AdminPaymentReceipt | AdminInstallmentPaymentReceipt,
     type: "transfer" | "installment",
-  ) {
-    const confirmation = window.prompt(
-      `Dekontu kalıcı olarak silmek için dosya adını yazın: ${item.original_name}`,
-    );
-    if (confirmation !== item.original_name) {
-      if (confirmation !== null) setNotice("Dosya adı eşleşmedi.");
-      return;
-    }
-    if (
-      !window.confirm(
-        "Dekont kaydı ve yüklenen özel dosya kalıcı olarak silinecek. Devam edilsin mi?",
-      )
-    )
-      return;
+    password: string,
+  ): Promise<string | null> {
     setDeleting(item.id);
     setNotice(null);
     const result =
       type === "installment"
-        ? await deleteAdminInstallmentPaymentReceipt(item.id)
-        : await deleteAdminPaymentReceipt(item.id);
+        ? await deleteAdminInstallmentPaymentReceipt(item.id, password)
+        : await deleteAdminPaymentReceipt(item.id, password);
     setDeleting(null);
     if (!result.data) {
-      setNotice(result.error ?? "Dekont silinemedi.");
-      return;
+      return result.error ?? "Dekont silinemedi.";
     }
     setNotice(result.data.warning || "Dekont kalıcı olarak silindi.");
     await load();
+    return null;
   }
 
   if (loading) return <AdminLoadingState />;
@@ -318,7 +311,9 @@ export function AdminPaymentReceipts() {
                         variant="outline"
                         className="border-red-200 text-red-700 hover:bg-red-50"
                         disabled={deleting !== null}
-                        onClick={() => void removeReceipt(item, "installment")}
+                        onClick={() =>
+                          setDeletionTarget({ item, type: "installment" })
+                        }
                       >
                         <Trash2 className="size-4" />
                         {deleting === item.id ? "Siliniyor…" : "Sil"}
@@ -394,7 +389,9 @@ export function AdminPaymentReceipts() {
                         variant="outline"
                         className="border-red-200 text-red-700 hover:bg-red-50"
                         disabled={deleting !== null}
-                        onClick={() => void removeReceipt(item, "transfer")}
+                        onClick={() =>
+                          setDeletionTarget({ item, type: "transfer" })
+                        }
                       >
                         <Trash2 className="size-4" />
                         {deleting === item.id ? "Siliniyor…" : "Sil"}
@@ -407,6 +404,21 @@ export function AdminPaymentReceipts() {
           </AdminTable>
         )}
       </AdminCard>
+      <AdminDeletionPasswordDialog
+        open={Boolean(deletionTarget)}
+        title="Dekontu kalıcı olarak sil"
+        description={
+          deletionTarget
+            ? `${deletionTarget.item.original_name} adlı dekont kaydı ve yüklenen özel dosya kalıcı olarak silinecek.`
+            : ""
+        }
+        onClose={() => setDeletionTarget(null)}
+        onConfirm={(password) =>
+          deletionTarget
+            ? removeReceipt(deletionTarget.item, deletionTarget.type, password)
+            : Promise.resolve("Dekont bulunamadı.")
+        }
+      />
     </div>
   );
 }

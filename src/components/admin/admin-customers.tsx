@@ -4,6 +4,7 @@ import { Search, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminBadge } from "./admin-badge";
 import { AdminCard, AdminCardHeader } from "./admin-card";
+import { AdminDeletionPasswordDialog } from "./admin-deletion-password-dialog";
 import {
   AdminEmptyState,
   AdminErrorState,
@@ -46,6 +47,9 @@ export function AdminCustomers() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletionTarget, setDeletionTarget] = useState<CustomerListItem | null>(
+    null,
+  );
   const load = useCallback(async () => {
     setLoading(true);
     const result = await getCustomers(filters);
@@ -60,33 +64,21 @@ export function AdminCustomers() {
   const update = (key: keyof CustomerFilters, value: string) =>
     setFilters((current) => ({ ...current, [key]: value, page: 1 }));
   const pages = Math.max(1, Math.ceil((data?.total ?? 0) / filters.pageSize));
-  const removeCustomer = async (item: CustomerListItem) => {
-    const identity = item.email || item.full_name;
-    const confirmation = window.prompt(
-      `Bu işlem müşterinin giriş hesabını kapatır ve CRM kaydını siler. Onaylamak için ${identity} yazın.`,
-    );
-    if (confirmation !== identity) {
-      if (confirmation !== null)
-        setError("Müşteri bilgisi eşleşmedi. Silme iptal edildi.");
-      return;
-    }
-    if (
-      !window.confirm(
-        "Müşteri hesabı kapatılacak ve müşteri listesinden kaldırılacak. Geçmiş siparişler muhasebe ve kayıt bütünlüğü için korunacaktır. Devam edilsin mi?",
-      )
-    )
-      return;
+  const removeCustomer = async (
+    item: CustomerListItem,
+    password: string,
+  ): Promise<string | null> => {
     setDeletingId(item.id);
     setError("");
     setNotice("");
-    const result = await deleteCustomerAccount(item.id);
+    const result = await deleteCustomerAccount(item.id, password);
     setDeletingId(null);
     if (!result.data) {
-      setError(result.error ?? "Müşteri kaydı silinemedi.");
-      return;
+      return result.error ?? "Müşteri kaydı silinemedi.";
     }
     setNotice(`${item.full_name || item.email} müşteri listesinden silindi.`);
     await load();
+    return null;
   };
   return (
     <AdminCard>
@@ -246,7 +238,7 @@ export function AdminCustomers() {
                     <button
                       type="button"
                       disabled={deletingId !== null}
-                      onClick={() => void removeCustomer(item)}
+                      onClick={() => setDeletionTarget(item)}
                       className="grid size-9 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`${item.full_name || item.email} müşteri kaydını sil`}
                       title="Müşteri kaydını sil"
@@ -295,6 +287,21 @@ export function AdminCustomers() {
       ) : (
         <AdminEmptyState title="Müşteri bulunamadı" />
       )}
+      <AdminDeletionPasswordDialog
+        open={Boolean(deletionTarget)}
+        title="Müşteri kaydını sil"
+        description={
+          deletionTarget
+            ? `${deletionTarget.full_name || deletionTarget.email} hesabı kapatılacak ve müşteri listesinden kaldırılacak. Geçmiş siparişler kayıt bütünlüğü için korunacaktır.`
+            : ""
+        }
+        onClose={() => setDeletionTarget(null)}
+        onConfirm={(password) =>
+          deletionTarget
+            ? removeCustomer(deletionTarget, password)
+            : Promise.resolve("Müşteri bulunamadı.")
+        }
+      />
     </AdminCard>
   );
 }

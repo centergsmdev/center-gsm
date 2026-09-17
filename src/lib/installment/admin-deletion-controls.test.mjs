@@ -17,6 +17,13 @@ const transferReceiptRoute = read(
 const customerRoute = read(
   "../../app/api/admin/customers/[customerId]/route.ts",
 );
+const orderRoute = read("../../app/api/admin/orders/[orderId]/route.ts");
+const applicationUi = read(
+  "../../components/admin/admin-installment-applications.tsx",
+);
+const customerUi = read("../../components/admin/admin-customers.tsx");
+const orderUi = read("../../components/admin/admin-orders.tsx");
+const receiptUi = read("../../components/admin/admin-payment-receipts.tsx");
 const migration = read(
   "../../../supabase/migrations/20260916193538_cascade_installment_application_deletion.sql",
 );
@@ -26,6 +33,28 @@ test("admin silme istekleri yetki ve kaynak kontrolünden geçer", () => {
   assert.match(installmentReceiptRoute, /sameOriginRequest\(request\)/);
   assert.match(transferReceiptRoute, /requireAdmin\(request\)/);
   assert.match(customerRoute, /requireAdmin\(request\)/);
+  assert.match(orderRoute, /requireAdmin\(request\)/);
+});
+
+test("kritik silme işlemleri sunucu tarafında özel şifre ister", () => {
+  for (const route of [
+    applicationRoute,
+    installmentReceiptRoute,
+    transferReceiptRoute,
+    customerRoute,
+    orderRoute,
+  ]) {
+    assert.match(route, /requireAdminDeletionPassword/);
+    assert.match(route, /body\.password/);
+  }
+
+  for (const ui of [applicationUi, customerUi, orderUi, receiptUi]) {
+    assert.match(ui, /AdminDeletionPasswordDialog/);
+    assert.doesNotMatch(
+      ui,
+      /kalıcı olarak silmek için[\s\S]{0,160}window\.prompt|window\.prompt[\s\S]{0,160}kalıcı olarak silmek için/i,
+    );
+  }
 });
 
 test("elden taksit başvurusu silinince iki özel dosya alanı da temizlenir", () => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
+import { requireAdminDeletionPassword } from "@/lib/admin/deletion-password";
 import { isUuid } from "@/lib/installment/validation";
 
 export const runtime = "nodejs";
@@ -18,6 +19,21 @@ export async function DELETE(
 
   const admin = await requireAdmin(request);
   if (admin.error) return admin.error;
+
+  let body: { password?: unknown };
+  try {
+    body = (await request.json()) as { password?: unknown };
+  } catch {
+    return NextResponse.json(
+      { error: "Silme şifresi okunamadı." },
+      { status: 400 },
+    );
+  }
+  const passwordError = await requireAdminDeletionPassword(
+    admin.service,
+    body.password,
+  );
+  if (passwordError) return passwordError;
 
   const profile = await admin.service
     .from("customer_profiles")

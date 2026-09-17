@@ -4,6 +4,7 @@ import { getAdminContext } from "@/lib/installment/server";
 import { sameOriginRequest } from "@/lib/installment/server-security";
 import { isUuid } from "@/lib/installment/validation";
 import { PAYMENT_RECEIPTS_BUCKET } from "@/lib/payment-receipts/client";
+import { requireAdminDeletionPassword } from "@/lib/admin/deletion-password";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,18 @@ export async function DELETE(
   if (!isUuid(receiptId)) return error("Dekont kimliği geçersiz.");
   const context = await getAdminContext();
   if (!context) return error("Admin yetkisi gerekiyor.", 403);
+
+  let body: { password?: unknown };
+  try {
+    body = (await request.json()) as { password?: unknown };
+  } catch {
+    return error("Silme şifresi okunamadı.");
+  }
+  const passwordError = await requireAdminDeletionPassword(
+    context.service,
+    body.password,
+  );
+  if (passwordError) return passwordError;
 
   const removed = await context.service
     .from("installment_payment_receipts")

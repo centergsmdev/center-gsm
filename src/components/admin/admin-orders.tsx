@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "./admin-badge";
 import { AdminCard, AdminCardHeader } from "./admin-card";
+import { AdminDeletionPasswordDialog } from "./admin-deletion-password-dialog";
 import { AdminTable, AdminTd, AdminTh } from "./admin-table";
 import {
   AdminEmptyState,
@@ -40,6 +41,7 @@ export function AdminOrders() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletionTarget, setDeletionTarget] = useState<AdminOrder | null>(null);
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set());
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,32 +93,25 @@ export function AdminOrders() {
       ),
     [orders, query],
   );
-  const removeOrder = async (order: AdminOrder) => {
-    const confirmation = window.prompt(
-      `Bu işlem geri alınamaz. Siparişi her yerden silmek için ${order.order_number} yazın.`,
-    );
-    if (confirmation !== order.order_number) {
-      if (confirmation !== null)
-        setError("Sipariş numarası eşleşmedi. Silme iptal edildi.");
-      return;
-    }
-    if (
-      !window.confirm(
-        "Sipariş ve bağlantılı tüm kayıtlar kalıcı olarak silinecek. Devam edilsin mi?",
-      )
-    )
-      return;
+  const removeOrder = async (
+    order: AdminOrder,
+    password: string,
+  ): Promise<string | null> => {
     setDeletingId(order.id);
     setError("");
     setNotice("");
-    const result = await deleteAdminOrder(order.id, order.order_number);
+    const result = await deleteAdminOrder(
+      order.id,
+      order.order_number,
+      password,
+    );
     setDeletingId(null);
     if (!result.data) {
-      setError(result.error ?? "Sipariş silinemedi.");
-      return;
+      return result.error ?? "Sipariş silinemedi.";
     }
     setOrders((current) => current.filter((item) => item.id !== order.id));
     setNotice(result.error ?? `${order.order_number} kalıcı olarak silindi.`);
+    return null;
   };
   return (
     <AdminCard>
@@ -251,7 +246,7 @@ export function AdminOrders() {
                     <button
                       type="button"
                       disabled={deletingId !== null}
-                      onClick={() => void removeOrder(order)}
+                      onClick={() => setDeletionTarget(order)}
                       className="grid size-9 place-items-center rounded-lg text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`${order.order_number} siparişini kalıcı olarak sil`}
                     >
@@ -269,6 +264,21 @@ export function AdminOrders() {
           description="Arama kriterinize uyan sipariş kaydı yok."
         />
       )}
+      <AdminDeletionPasswordDialog
+        open={Boolean(deletionTarget)}
+        title="Siparişi kalıcı olarak sil"
+        description={
+          deletionTarget
+            ? `${deletionTarget.order_number} numaralı sipariş ve bağlantılı kayıtlar kalıcı olarak silinecek.`
+            : ""
+        }
+        onClose={() => setDeletionTarget(null)}
+        onConfirm={(password) =>
+          deletionTarget
+            ? removeOrder(deletionTarget, password)
+            : Promise.resolve("Sipariş bulunamadı.")
+        }
+      />
     </AdminCard>
   );
 }

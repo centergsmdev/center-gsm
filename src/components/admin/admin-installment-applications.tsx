@@ -6,6 +6,7 @@ import { FileSignature, Search, Trash2 } from "lucide-react";
 
 import { AdminBadge } from "@/components/admin/admin-badge";
 import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
+import { AdminDeletionPasswordDialog } from "@/components/admin/admin-deletion-password-dialog";
 import {
   AdminEmptyState,
   AdminErrorState,
@@ -49,6 +50,8 @@ export function AdminInstallmentApplications() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletionTarget, setDeletionTarget] =
+    useState<InstallmentAdminListItem | null>(null);
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
@@ -80,40 +83,33 @@ export function AdminInstallmentApplications() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  const removeApplication = async (item: InstallmentAdminListItem) => {
-    const confirmation = window.prompt(
-      `Bu işlem geri alınamaz. Başvuruyu tamamen silmek için ${item.applicationNumber} yazın.`,
-    );
-    if (confirmation !== item.applicationNumber) {
-      if (confirmation !== null) setNotice("Başvuru numarası eşleşmedi.");
-      return;
-    }
-    if (
-      !window.confirm(
-        "Başvuru; sözleşme, ödeme planı, müşteri portalı, yüklenen belgeler ve dekontlarla birlikte kalıcı olarak silinecek. Devam edilsin mi?",
-      )
-    )
-      return;
+  const removeApplication = async (
+    item: InstallmentAdminListItem,
+    password: string,
+  ): Promise<string | null> => {
     setDeletingId(item.id);
     setNotice("");
     try {
       const response = await fetch(
         `/api/admin/installment-applications/${encodeURIComponent(item.id)}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        },
       );
       const body = (await response.json()) as {
         error?: string;
         warning?: string | null;
       };
-      if (!response.ok) throw new Error(body.error || "Başvuru silinemedi.");
+      if (!response.ok) return body.error || "Başvuru silinemedi.";
       setItems((current) => current.filter((entry) => entry.id !== item.id));
       setNotice(
         body.warning || `${item.applicationNumber} kalıcı olarak silindi.`,
       );
-    } catch (reason) {
-      setNotice(
-        reason instanceof Error ? reason.message : "Başvuru silinemedi.",
-      );
+      return null;
+    } catch {
+      return "Başvuru silinemedi.";
     } finally {
       setDeletingId(null);
     }
@@ -235,7 +231,7 @@ export function AdminInstallmentApplications() {
                       disabled={deletingId !== null}
                       onClick={(event) => {
                         event.stopPropagation();
-                        void removeApplication(item);
+                        setDeletionTarget(item);
                       }}
                       className="grid size-9 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`${item.applicationNumber} başvurusunu kalıcı olarak sil`}
@@ -250,6 +246,21 @@ export function AdminInstallmentApplications() {
           </AdminTable>
         )}
       </div>
+      <AdminDeletionPasswordDialog
+        open={Boolean(deletionTarget)}
+        title="Elden taksit başvurusunu sil"
+        description={
+          deletionTarget
+            ? `${deletionTarget.applicationNumber} numaralı başvuru; sözleşme, ödeme planı, müşteri portalı, yüklenen belgeler ve dekontlarla birlikte kalıcı olarak silinecek.`
+            : ""
+        }
+        onClose={() => setDeletionTarget(null)}
+        onConfirm={(password) =>
+          deletionTarget
+            ? removeApplication(deletionTarget, password)
+            : Promise.resolve("Başvuru bulunamadı.")
+        }
+      />
     </AdminCard>
   );
 }

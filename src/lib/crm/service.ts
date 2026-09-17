@@ -61,11 +61,16 @@ export const logCustomerActivity = (input: ActivityInput) =>
 
 export async function deleteCustomerAccount(
   customerId: string,
+  password: string,
 ): Promise<CrmResult<true>> {
   try {
     const response = await fetch(
       `/api/admin/customers/${encodeURIComponent(customerId)}`,
-      { method: "DELETE" },
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      },
     );
     const body = (await response.json()) as { error?: string };
     return response.ok

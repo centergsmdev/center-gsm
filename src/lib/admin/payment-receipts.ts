@@ -102,9 +102,14 @@ export async function reviewAdminInstallmentPaymentReceipt(
 
 async function deleteReceipt(
   endpoint: string,
+  password: string,
 ): Promise<AdminProductResult<{ warning: string | null }>> {
   try {
-    const response = await fetch(endpoint, { method: "DELETE" });
+    const response = await fetch(endpoint, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
     const body = (await response.json()) as {
       error?: string;
       warning?: string | null;
@@ -117,12 +122,22 @@ async function deleteReceipt(
   }
 }
 
-export const deleteAdminPaymentReceipt = (receiptId: string) =>
-  deleteReceipt(`/api/admin/payment-receipts/${encodeURIComponent(receiptId)}`);
+export const deleteAdminPaymentReceipt = (
+  receiptId: string,
+  password: string,
+) =>
+  deleteReceipt(
+    `/api/admin/payment-receipts/${encodeURIComponent(receiptId)}`,
+    password,
+  );
 
-export const deleteAdminInstallmentPaymentReceipt = (receiptId: string) =>
+export const deleteAdminInstallmentPaymentReceipt = (
+  receiptId: string,
+  password: string,
+) =>
   deleteReceipt(
     `/api/admin/installment-payment-receipts/${encodeURIComponent(receiptId)}`,
+    password,
   );
 
 export async function getPaymentReceiptUrl(
