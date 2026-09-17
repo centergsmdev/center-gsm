@@ -27,6 +27,9 @@ const receiptUi = read("../../components/admin/admin-payment-receipts.tsx");
 const migration = read(
   "../../../supabase/migrations/20260916193538_cascade_installment_application_deletion.sql",
 );
+const paymentPlanCascadeMigration = read(
+  "../../../supabase/migrations/20260917193228_allow_installment_application_cascade_delete.sql",
+);
 
 test("admin silme istekleri yetki ve kaynak kontrolünden geçer", () => {
   assert.match(applicationRoute, /sameOriginRequest\(request\)/);
@@ -63,6 +66,15 @@ test("elden taksit başvurusu silinince iki özel dosya alanı da temizlenir", (
   assert.match(applicationRoute, /INSTALLMENT_STORAGE_BUCKET/);
   assert.match(applicationRoute, /PAYMENT_RECEIPTS_BUCKET/);
   assert.match(migration, /source_application_id[\s\S]*on delete cascade/i);
+  assert.match(paymentPlanCascadeMigration, /pg_trigger_depth\(\) > 1/i);
+  assert.match(
+    paymentPlanCascadeMigration,
+    /not exists[\s\S]*installment_applications[\s\S]*old\.application_id/i,
+  );
+  assert.match(
+    paymentPlanCascadeMigration,
+    /raise exception 'payment_snapshot_immutable'/i,
+  );
 });
 
 test("iki dekont türü de kayıt ve özel dosyayı siler", () => {
