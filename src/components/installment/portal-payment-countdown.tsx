@@ -43,7 +43,7 @@ export function PortalPaymentCountdown({
       className={`mt-5 overflow-hidden rounded-2xl border p-4 shadow-sm sm:p-5 ${
         urgent
           ? "border-red-300 bg-red-50 text-red-950"
-          : "border-amber-300 bg-amber-50 text-amber-950"
+          : "border-blue-200 bg-blue-50 text-blue-950"
       }`}
     >
       <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export function PortalPaymentCountdown({
             aria-hidden="true"
           />
         ) : (
-          <Clock3 className="size-5 text-amber-700" aria-hidden="true" />
+          <Clock3 className="size-5 text-blue-700" aria-hidden="true" />
         )}
         <p className="text-xs font-black uppercase tracking-[0.16em]">
           Ödeme için kalan süre

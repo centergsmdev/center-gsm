@@ -88,13 +88,17 @@ export default async function Page({
   const plan = data.paymentPlan;
   const productTitle = data.variantTitle || data.productName;
   return (
-    <main className="min-h-screen bg-zinc-50 py-6 sm:py-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(239,68,68,0.06),transparent_28%),linear-gradient(to_bottom,#f8f8f8,#f4f4f5)] py-6 sm:py-10">
       <Container>
         <div className="mx-auto max-w-5xl space-y-5">
-          <section className="overflow-hidden rounded-3xl bg-zinc-950 text-white shadow-xl">
+          <section className="relative isolate overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(120deg,#09090b_0%,#18181b_58%,#09090b_100%)] text-white shadow-[0_24px_70px_rgba(9,9,11,0.18)]">
+            <div
+              className="absolute -right-20 -top-32 -z-10 size-80 rounded-full bg-red-600/20 blur-3xl"
+              aria-hidden="true"
+            />
             <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">
+                <p className="inline-flex rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-red-300">
                   Kişisel Başvuru Sayfanız
                 </p>
                 <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-4xl">
@@ -105,8 +109,10 @@ export default async function Page({
                   güncel aşamasını bu sayfadan takip edebilirsiniz.
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
-                <p className="text-xs text-zinc-400">Başvuru numarası</p>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.07] px-5 py-4 shadow-inner shadow-white/5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                  Başvuru numarası
+                </p>
                 <p className="mt-1 font-mono text-sm font-black sm:text-base">
                   {data.applicationNumber}
                 </p>
@@ -114,7 +120,7 @@ export default async function Page({
             </div>
           </section>
 
-          <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7">
+          <section className="rounded-3xl border border-zinc-200/80 bg-white p-5 shadow-[0_14px_45px_rgba(24,24,27,0.06)] sm:p-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
@@ -130,7 +136,7 @@ export default async function Page({
                     ? "bg-red-50 text-red-700"
                     : data.stage === "completed"
                       ? "bg-emerald-50 text-emerald-700"
-                      : "bg-amber-50 text-amber-800"
+                      : "bg-blue-50 text-blue-700"
                 }`}
               >
                 {data.stage === "cancelled" ? (
@@ -155,7 +161,7 @@ export default async function Page({
           </section>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7">
+            <section className="rounded-3xl border border-zinc-200/80 bg-white p-5 shadow-[0_14px_45px_rgba(24,24,27,0.05)] sm:p-7">
               <div className="flex items-center gap-3">
                 <span className="grid size-11 place-items-center rounded-2xl bg-zinc-100 text-zinc-800">
                   <Smartphone className="size-5" aria-hidden="true" />
@@ -196,7 +202,7 @@ export default async function Page({
               </div>
             </section>
 
-            <section className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm sm:p-7">
+            <section className="rounded-3xl border border-zinc-200/80 bg-white p-5 shadow-[0_14px_45px_rgba(24,24,27,0.05)] sm:p-7">
               <div className="flex items-center gap-3">
                 <span className="grid size-11 place-items-center rounded-2xl bg-emerald-600 text-white">
                   <Banknote className="size-5" aria-hidden="true" />
@@ -216,12 +222,6 @@ export default async function Page({
                   formattedDueAt={formatDateTime(data.paymentDueAt)}
                 />
               ) : null}
-              <p className="mt-4 text-sm leading-6 text-zinc-700">
-                Ödeme açıklamasına başvuru numaranızı yazın:
-                <strong className="ml-1 font-mono">
-                  {data.applicationNumber}
-                </strong>
-              </p>
             </section>
           </div>
 
@@ -236,13 +236,13 @@ export default async function Page({
             initialStage={data.stage}
           />
 
-          <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm sm:p-7">
+          <section className="rounded-3xl border border-zinc-200/80 bg-white p-5 shadow-[0_14px_45px_rgba(24,24,27,0.06)] sm:p-7">
             <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-white text-amber-800 shadow-sm">
+              <span className="grid size-11 place-items-center rounded-2xl bg-zinc-950 text-white shadow-sm">
                 <CreditCard className="size-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-amber-800">
+                <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
                   Değiştirilemez Ödeme Planınız
                 </p>
                 <h2 className="mt-1 text-lg font-black text-zinc-950">
@@ -274,7 +274,7 @@ export default async function Page({
                 strong
               />
             </dl>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-amber-200 bg-white">
+            <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
               <div className="grid grid-cols-[1fr_auto] bg-zinc-950 px-4 py-3 text-xs font-black uppercase tracking-wider text-white">
                 <span>Taksit</span>
                 <span>Tutar</span>
@@ -330,14 +330,20 @@ function PortalProgress({ stage }: { stage: InstallmentPortalStage }) {
             key={step.label}
             className={`rounded-2xl border p-3 ${
               active
-                ? "border-amber-300 bg-amber-50"
+                ? "border-red-200 bg-red-50"
                 : complete
                   ? "border-emerald-200 bg-emerald-50"
                   : "border-zinc-200 bg-zinc-50"
             }`}
           >
             <Icon
-              className={`size-5 ${complete ? "text-emerald-700" : "text-zinc-400"}`}
+              className={`size-5 ${
+                active
+                  ? "text-red-600"
+                  : complete
+                    ? "text-emerald-700"
+                    : "text-zinc-400"
+              }`}
               aria-hidden="true"
             />
             <p className="mt-2 text-xs font-bold leading-5 text-zinc-800">
@@ -371,7 +377,7 @@ function PlanRow({
   strong?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-amber-100 py-3 text-sm">
+    <div className="flex items-start justify-between gap-3 border-b border-zinc-100 py-3 text-sm">
       <dt className="text-zinc-600">{label}</dt>
       <dd className={strong ? "font-black text-red-700" : "font-black"}>
         {formatMinorCurrency(value)}

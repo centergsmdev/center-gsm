@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, CircleAlert } from "lucide-react";
 
 import { PortalCopyButton } from "@/components/installment/portal-copy-button";
 import { createClient } from "@/lib/supabase/client";
@@ -83,7 +83,7 @@ export function PortalPaymentAccount({
 
   const formattedIban = account.iban.replace(/(.{4})/g, "$1 ").trim();
   return (
-    <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7">
+    <section className="rounded-3xl border border-zinc-200/80 bg-white p-5 shadow-[0_14px_45px_rgba(24,24,27,0.06)] sm:p-7">
       <div className="flex items-center gap-3">
         <span className="grid size-11 place-items-center rounded-2xl bg-zinc-950 text-white">
           <Building2 className="size-5" aria-hidden="true" />
@@ -141,11 +141,16 @@ export function PortalPaymentAccount({
           </dd>
         </div>
       </dl>
-      {account.description ? (
-        <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-          {account.description}
+      <div className="mt-4 flex gap-3 rounded-2xl border border-red-100 bg-red-50/70 p-4 text-sm leading-6 text-zinc-800">
+        <CircleAlert
+          className="mt-0.5 size-5 shrink-0 text-red-600"
+          aria-hidden="true"
+        />
+        <p>
+          <strong>Bu ödeme tipi ticari ödemedir.</strong> Açıklama kısmını
+          yazmayı unutmayınız.
         </p>
-      ) : null}
+      </div>
     </section>
   );
 }
