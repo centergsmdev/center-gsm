@@ -22,9 +22,12 @@ import {
   ADMIN_ACTIVITY_EVENT,
   ADMIN_ACTIVITY_STATE_EVENT,
   ADMIN_ACTIVITY_STORAGE_KEY,
+  adminActivitySeenStorageKey,
   adminActivityRoutes,
   createAdminActivityBaseline,
   emptyAdminActivityState,
+  mergeAdminActivitySeenAt,
+  normalizeAdminActivitySeenAt,
   type AdminActivityKind,
   type AdminActivitySeenAt,
   type AdminActivityState,
@@ -77,16 +80,6 @@ function readStringArray(value: unknown) {
 function readMenuPreset(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return [];
   return readStringArray((value as { layout1?: unknown }).layout1);
-}
-
-function readActivitySeenAt(value: unknown): AdminActivitySeenAt {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return Object.fromEntries(
-    Object.entries(value).filter(
-      ([kind, timestamp]) =>
-        kind in emptyAdminActivityState && typeof timestamp === "string",
-    ),
-  ) as AdminActivitySeenAt;
 }
 
 async function countSince(
@@ -202,6 +195,7 @@ export function AdminSidebar({
   const [orderSaved, setOrderSaved] = useState(false);
   const navigationStorageKey = adminNavigationStorageKey(user?.email);
   const presetStorageKey = adminNavigationPresetStorageKey(user?.email);
+  const activitySeenStorageKey = adminActivitySeenStorageKey(user?.email);
   const orderedNavigation = useMemo(() => {
     const byHref = new Map<string, AdminNavigationItem>();
     adminNavigation.forEach((item) => byHref.set(item.href, item));
@@ -301,22 +295,46 @@ export function AdminSidebar({
         remotePreset.length ? remotePreset : nextOrder,
         defaultNavigationOrder,
       );
-      const remoteSeenAt = readActivitySeenAt(result.data?.activity_seen_at);
-      const nextSeenAt = Object.keys(remoteSeenAt).length
-        ? remoteSeenAt
-        : createAdminActivityBaseline();
+      const remoteSeenAt = normalizeAdminActivitySeenAt(
+        result.data?.activity_seen_at,
+      );
+      const localSeenAt = (() => {
+        try {
+          return normalizeAdminActivitySeenAt(
+            JSON.parse(
+              window.localStorage.getItem(activitySeenStorageKey) ?? "{}",
+            ),
+          );
+        } catch {
+          return {};
+        }
+      })();
+      const nextSeenAt = mergeAdminActivitySeenAt(
+        Object.keys(remoteSeenAt).length
+          ? remoteSeenAt
+          : createAdminActivityBaseline(),
+        localSeenAt,
+      );
 
       setNavigationOrder(nextOrder);
       setMenuPresetOrder(nextPreset);
       setActivitySeenAt(nextSeenAt);
-      setPreferencesLoaded(true);
       window.localStorage.setItem(
         navigationStorageKey,
         JSON.stringify(nextOrder),
       );
       window.localStorage.setItem(presetStorageKey, JSON.stringify(nextPreset));
+      window.localStorage.setItem(
+        activitySeenStorageKey,
+        JSON.stringify(nextSeenAt),
+      );
 
-      if (!result.data || !remoteOrder.length || !remotePreset.length) {
+      if (
+        !result.data ||
+        !remoteOrder.length ||
+        !remotePreset.length ||
+        JSON.stringify(remoteSeenAt) !== JSON.stringify(nextSeenAt)
+      ) {
         await supabase.from("admin_ui_preferences").upsert(
           {
             user_id: userId,
@@ -327,13 +345,19 @@ export function AdminSidebar({
           { onConflict: "user_id" },
         );
       }
+      if (!cancelled) setPreferencesLoaded(true);
     }
 
     void loadPreferences();
     return () => {
       cancelled = true;
     };
-  }, [navigationStorageKey, presetStorageKey, user?.id]);
+  }, [
+    activitySeenStorageKey,
+    navigationStorageKey,
+    presetStorageKey,
+    user?.id,
+  ]);
 
   function persistNavigationOrder(order: string[], saveAsPreset = true) {
     const normalized = normalizeAdminNavigationOrder(
@@ -363,18 +387,20 @@ export function AdminSidebar({
     if (saveAsPreset) setMenuPresetOrder(normalized);
     const client = createClient();
     if (client && user?.id) {
-      void client.from("admin_ui_preferences").upsert(
-        {
-          user_id: user.id,
-          menu_order: normalized,
-          menu_presets: {
-            layout1: saveAsPreset
-              ? normalized
-              : (menuPresetOrder ?? normalized),
+      void (async () => {
+        await client.from("admin_ui_preferences").upsert(
+          {
+            user_id: user.id,
+            menu_order: normalized,
+            menu_presets: {
+              layout1: saveAsPreset
+                ? normalized
+                : (menuPresetOrder ?? normalized),
+            },
           },
-        },
-        { onConflict: "user_id" },
-      );
+          { onConflict: "user_id" },
+        );
+      })();
     }
     setEditingNavigation(false);
     setOrderSaved(true);
@@ -447,10 +473,7 @@ export function AdminSidebar({
     window.addEventListener("storage", handleStorage);
     return () => {
       window.removeEventListener(ADMIN_ACTIVITY_EVENT, handleActivity);
-      window.removeEventListener(
-        ADMIN_ACTIVITY_STATE_EVENT,
-        handleStateChange,
-      );
+      window.removeEventListener(ADMIN_ACTIVITY_STATE_EVENT, handleStateChange);
       window.removeEventListener("storage", handleStorage);
     };
   }, [mobile, pathname]);
@@ -465,12 +488,17 @@ export function AdminSidebar({
     const timestamp = new Date().toISOString();
     setActivitySeenAt((current) => {
       const next = { ...current, [currentKind]: timestamp };
+      window.localStorage.setItem(activitySeenStorageKey, JSON.stringify(next));
       const client = createClient();
       if (client) {
-        void client
-          .from("admin_ui_preferences")
-          .update({ activity_seen_at: next })
-          .eq("user_id", user.id);
+        void (async () => {
+          await client
+            .from("admin_ui_preferences")
+            .upsert(
+              { user_id: user.id, activity_seen_at: next },
+              { onConflict: "user_id" },
+            );
+        })();
       }
       return next;
     });
@@ -481,7 +509,7 @@ export function AdminSidebar({
       writeActivityState(next);
       return next;
     });
-  }, [mobile, pathname, preferencesLoaded, user?.id]);
+  }, [activitySeenStorageKey, mobile, pathname, preferencesLoaded, user?.id]);
 
   useEffect(() => {
     if (mobile || !preferencesLoaded || !user?.id) return;

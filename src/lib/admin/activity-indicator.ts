@@ -6,6 +6,9 @@ export const ADMIN_ACTIVITY_STATE_EVENT = "center-gsm:admin-activity-state";
 
 export const ADMIN_ACTIVITY_STORAGE_KEY = "center-gsm:admin-activity-state";
 
+export const ADMIN_ACTIVITY_SEEN_STORAGE_KEY_PREFIX =
+  "center-gsm:admin-activity-seen:v1";
+
 export const ADMIN_UNSEEN_RECORDS_STORAGE_KEY =
   "center-gsm:admin-unseen-records";
 
@@ -30,6 +33,47 @@ export const emptyAdminActivityState: AdminActivityState = {
 };
 
 export type AdminActivitySeenAt = Partial<Record<AdminActivityKind, string>>;
+
+export function adminActivitySeenStorageKey(identity?: string | null) {
+  return `${ADMIN_ACTIVITY_SEEN_STORAGE_KEY_PREFIX}:${identity?.trim().toLowerCase() || "anonymous"}`;
+}
+
+export function normalizeAdminActivitySeenAt(
+  value: unknown,
+): AdminActivitySeenAt {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([kind, timestamp]) =>
+        kind in emptyAdminActivityState &&
+        typeof timestamp === "string" &&
+        Number.isFinite(Date.parse(timestamp)),
+    ),
+  ) as AdminActivitySeenAt;
+}
+
+export function mergeAdminActivitySeenAt(
+  ...sources: unknown[]
+): AdminActivitySeenAt {
+  const merged: AdminActivitySeenAt = {};
+
+  for (const source of sources) {
+    const normalized = normalizeAdminActivitySeenAt(source);
+    for (const kind of Object.keys(normalized) as AdminActivityKind[]) {
+      const candidate = normalized[kind];
+      const current = merged[kind];
+      if (
+        candidate &&
+        (!current || Date.parse(candidate) > Date.parse(current))
+      ) {
+        merged[kind] = candidate;
+      }
+    }
+  }
+
+  return merged;
+}
 
 export function createAdminActivityBaseline(
   timestamp = new Date().toISOString(),
