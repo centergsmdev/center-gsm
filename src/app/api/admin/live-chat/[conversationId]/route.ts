@@ -1,31 +1,39 @@
 import { NextResponse } from "next/server";
 
-import { createServiceClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminDeletionPassword } from "@/lib/admin/deletion-password";
+import { requireAdmin } from "@/lib/admin/require-admin";
+import { isUuid } from "@/lib/installment/validation";
+
+export const runtime = "nodejs";
 
 function error(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ conversationId: string }> },
 ) {
-  const authClient = await createClient();
-  if (!authClient) return error("Sunucu bağlantısı kurulamadı.", 503);
-
-  const { data: authData, error: authError } = await authClient.auth.getUser();
-  if (authError || authData.user?.app_metadata.role !== "admin")
-    return error("Bu işlem için yetkiniz yok.", 403);
-
   const { conversationId } = await context.params;
   const id = conversationId.trim();
-  if (!id) return error("Geçersiz sohbet bilgisi.", 400);
+  if (!isUuid(id)) return error("Geçersiz sohbet bilgisi.", 400);
 
-  const serviceClient = createServiceClient();
-  if (!serviceClient) return error("Sunucu bağlantısı kurulamadı.", 503);
+  const admin = await requireAdmin(request);
+  if (admin.error) return admin.error;
 
-  const conversation = await serviceClient
+  let body: { password?: unknown };
+  try {
+    body = (await request.json()) as { password?: unknown };
+  } catch {
+    return error("Silme şifresi okunamadı.", 400);
+  }
+  const passwordError = await requireAdminDeletionPassword(
+    admin.service,
+    body.password,
+  );
+  if (passwordError) return passwordError;
+
+  const conversation = await admin.service
     .from("live_chat_conversations")
     .select("id, visitor_token")
     .eq("id", id)
@@ -33,7 +41,7 @@ export async function DELETE(
   if (conversation.error) return error("Sohbet bilgisi alınamadı.", 500);
   if (!conversation.data) return error("Sohbet bulunamadı.", 404);
 
-  const attachments = await serviceClient
+  const attachments = await admin.service
     .from("live_chat_messages")
     .select("attachment_path")
     .eq("conversation_id", id)
@@ -43,24 +51,32 @@ export async function DELETE(
   const paths = attachments.data
     .map((item) => item.attachment_path)
     .filter((path): path is string => Boolean(path));
-  if (paths.length) {
-    const removed = await serviceClient.storage
-      .from("live-chat-images")
-      .remove(paths);
-    if (removed.error) return error("Sohbet görselleri silinemedi.", 500);
-  }
-
-  const deleted = await serviceClient
+  const deleted = await admin.service
     .from("live_chat_conversations")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
   if (deleted.error) return error("Sohbet silinemedi.", 500);
+  if (!deleted.data) return error("Sohbet bulunamadı.", 404);
 
-  const channel = serviceClient.channel(
+  const removed = paths.length
+    ? await admin.service.storage.from("live-chat-images").remove(paths)
+    : { error: null };
+
+  const channel = admin.service.channel(
     `live-chat:${conversation.data.visitor_token}`,
   );
   await channel.httpSend("conversation_deleted", { conversationId: id });
-  await serviceClient.removeChannel(channel);
+  await admin.service.removeChannel(channel);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(
+    {
+      ok: true,
+      warning: removed.error
+        ? "Sohbet silindi ancak bazı görseller temizlenemedi."
+        : null,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

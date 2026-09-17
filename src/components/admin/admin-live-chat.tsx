@@ -8,10 +8,10 @@ import {
   Smile,
   Trash2,
   ShieldOff,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { AdminDeletionPasswordDialog } from "@/components/admin/admin-deletion-password-dialog";
 import { AdminVideoCalls } from "@/components/admin/admin-video-calls";
 import { AdminLiveChatSecurity } from "@/components/admin/admin-live-chat-security";
 import { CallHistoryCard } from "@/components/live-chat/call-history-card";
@@ -69,6 +69,9 @@ const QUICK_REPLIES = [
   },
 ] as const;
 type ChatMessage = LiveChatMessage & { attachment_url?: string | null };
+type DeleteTarget =
+  | { kind: "single"; id: string; customerName: string }
+  | { kind: "all"; count: number };
 
 export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [conversations, setConversations] = useState<LiveChatConversation[]>(
@@ -90,8 +93,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   );
   const [autoReplySaving, setAutoReplySaving] = useState(false);
   const [autoReplySaved, setAutoReplySaved] = useState(false);
-  const [deletePending, setDeletePending] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [blockedConversationIds, setBlockedConversationIds] = useState<
     Set<string>
   >(new Set());
@@ -500,33 +502,79 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     });
   }
 
-  async function deleteConversation() {
-    if (!selected || deletePending) return;
-    setDeletePending(true);
+  async function deleteConversation(
+    target: Extract<DeleteTarget, { kind: "single" }>,
+    password: string,
+  ): Promise<string | null> {
     setError("");
     try {
-      const response = await fetch(`/api/admin/live-chat/${selected.id}`, {
+      const response = await fetch(`/api/admin/live-chat/${target.id}`, {
         method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password }),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as {
+        error?: string;
+        warning?: string | null;
+      };
       if (!response.ok) throw new Error(data.error ?? "Sohbet silinemedi.");
       setConversations((current) =>
-        current.filter((item) => item.id !== selected.id),
+        current.filter((item) => item.id !== target.id),
       );
       setUnread((current) => {
         const next = { ...current };
-        delete next[selected.id];
+        delete next[target.id];
         return next;
       });
-      setMessages([]);
-      setSelectedId(null);
-      setDeleteConfirmOpen(false);
+      if (selectedId === target.id) {
+        messageLoadSequence.current += 1;
+        setMessages([]);
+        setCallHistory([]);
+        setSelectedId(null);
+      }
+      if (data.warning) setError(data.warning);
       await loadConversations();
+      return null;
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Sohbet silinemedi.");
-    } finally {
-      setDeletePending(false);
+      return reason instanceof Error ? reason.message : "Sohbet silinemedi.";
     }
+  }
+
+  async function deleteAllConversations(
+    password: string,
+  ): Promise<string | null> {
+    setError("");
+    try {
+      const response = await fetch("/api/admin/live-chat", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        warning?: string | null;
+      };
+      if (!response.ok) throw new Error(data.error ?? "Sohbetler silinemedi.");
+      messageLoadSequence.current += 1;
+      setConversations([]);
+      setUnread({});
+      setMessages([]);
+      setCallHistory([]);
+      setSelectedId(null);
+      if (data.warning) setError(data.warning);
+      await loadConversations();
+      return null;
+    } catch (reason) {
+      return reason instanceof Error ? reason.message : "Sohbetler silinemedi.";
+    }
+  }
+
+  async function confirmDeletion(password: string) {
+    const target = deleteTarget;
+    if (!target) return "Silinecek sohbet bulunamadı.";
+    return target.kind === "all"
+      ? deleteAllConversations(password)
+      : deleteConversation(target, password);
   }
 
   return (
@@ -580,6 +628,18 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
               </p>
             ) : null}
           </div>
+        </div>
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <button
+            type="button"
+            onClick={() =>
+              setDeleteTarget({ kind: "all", count: conversations.length })
+            }
+            disabled={!conversations.length}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400 disabled:hover:bg-transparent"
+          >
+            <Trash2 className="size-4" /> Tüm sohbetleri sil
+          </button>
         </div>
         <details className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
           <summary className="cursor-pointer text-xs font-black text-zinc-700">
@@ -667,7 +727,13 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
               <div className="flex shrink-0 items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setDeleteConfirmOpen(true)}
+                  onClick={() =>
+                    setDeleteTarget({
+                      kind: "single",
+                      id: selected.id,
+                      customerName: selected.customer_name,
+                    })
+                  }
                   className="grid size-9 place-items-center rounded-xl border border-red-200 text-red-600 transition hover:bg-red-50"
                   aria-label="Sohbeti sil"
                   title="Sohbeti sil"
@@ -861,56 +927,23 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
           </div>
         )}
       </section>
-      {deleteConfirmOpen && selected ? (
-        <div
-          className="fixed inset-0 z-modal grid place-items-center bg-zinc-950/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-chat-title"
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="delete-chat-title" className="text-lg font-black">
-                  Sohbet kalıcı olarak silinsin mi?
-                </h2>
-                <p className="mt-2 text-sm text-zinc-600">
-                  {selected.customer_name} ile yapılan görüşme, tüm mesajlar ve
-                  gönderilen görseller hem admin hem müşteri ekranından
-                  silinecek. Bu işlem geri alınamaz.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(false)}
-                disabled={deletePending}
-                className="grid size-9 shrink-0 place-items-center rounded-full bg-zinc-100"
-                aria-label="Silme penceresini kapat"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(false)}
-                disabled={deletePending}
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold"
-              >
-                Vazgeç
-              </button>
-              <button
-                type="button"
-                onClick={() => void deleteConversation()}
-                disabled={deletePending}
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
-              >
-                {deletePending ? "Siliniyor…" : "Sohbeti sil"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <AdminDeletionPasswordDialog
+        open={Boolean(deleteTarget)}
+        title={
+          deleteTarget?.kind === "all"
+            ? "Tüm sohbetleri kalıcı olarak sil"
+            : "Sohbeti kalıcı olarak sil"
+        }
+        description={
+          deleteTarget?.kind === "all"
+            ? `${deleteTarget.count} sohbet; tüm mesajları, görüşme kayıtları ve gönderilen görselleriyle birlikte silinecek.`
+            : deleteTarget?.kind === "single"
+              ? `${deleteTarget.customerName} ile yapılan görüşme; tüm mesajları, görüşme kayıtları ve gönderilen görselleriyle birlikte silinecek.`
+              : "Seçilen sohbet kalıcı olarak silinecek."
+        }
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeletion}
+      />
     </div>
   );
 }
