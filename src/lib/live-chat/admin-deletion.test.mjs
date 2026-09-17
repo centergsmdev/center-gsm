@@ -36,3 +36,11 @@ test("canlı destek arayüzü tekli ve toplu silmede şifre penceresini kullanı
   assert.match(adminUi, /JSON\.stringify\(\{ password \}\)/);
   assert.doesNotMatch(adminUi, /window\.prompt/);
 });
+
+test("canlı destek çalışma alanı gerçek tam ekran moduna girip çıkabilir", () => {
+  assert.match(adminUi, /requestFullscreen\(\)/);
+  assert.match(adminUi, /document\.exitFullscreen\(\)/);
+  assert.match(adminUi, /fullscreenchange/);
+  assert.match(adminUi, /Tam ekran/);
+  assert.match(adminUi, /Tam ekrandan çık/);
+});

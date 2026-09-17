@@ -2,8 +2,10 @@
 
 import {
   ChevronDown,
+  Maximize2,
   MessageCircle,
   MessageSquareText,
+  Minimize2,
   Send,
   Smile,
   Trash2,
@@ -93,6 +95,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   );
   const [autoReplySaving, setAutoReplySaving] = useState(false);
   const [autoReplySaved, setAutoReplySaved] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [blockedConversationIds, setBlockedConversationIds] = useState<
     Set<string>
@@ -106,6 +109,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   );
   const lastTypingSent = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement>(null);
+  const liveChatPanelRef = useRef<HTMLDivElement>(null);
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
   const previousSelectedId = useRef<string | null>(null);
@@ -143,6 +147,28 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  useEffect(() => {
+    const syncFullscreenState = () =>
+      setIsFullscreen(document.fullscreenElement === liveChatPanelRef.current);
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () =>
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+  }, []);
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      if (!liveChatPanelRef.current?.requestFullscreen)
+        throw new Error("fullscreen_not_supported");
+      await liveChatPanelRef.current.requestFullscreen();
+    } catch {
+      setError("Tam ekran modu bu tarayıcıda açılamadı.");
+    }
+  }
 
   useEffect(() => {
     void fetch("/api/admin/live-chat/blocks", { cache: "no-store" })
@@ -578,13 +604,46 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   }
 
   return (
-    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr]">
-      <div className="col-span-full px-4 pt-4">
-        <AdminVideoCalls
-          selectedConversationId={selectedId}
-          onHistoryChange={setCallHistory}
-          refreshKey={callTimelineRefresh}
-        />
+    <div
+      ref={liveChatPanelRef}
+      className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr]"
+      style={
+        isFullscreen
+          ? {
+              width: "100vw",
+              height: "100dvh",
+              minHeight: 0,
+              maxHeight: "none",
+              borderWidth: 0,
+              borderRadius: 0,
+            }
+          : undefined
+      }
+    >
+      <div className="col-span-full flex items-start gap-3 px-4 pt-4">
+        <div className="min-w-0 flex-1">
+          <AdminVideoCalls
+            selectedConversationId={selectedId}
+            onHistoryChange={setCallHistory}
+            refreshKey={callTimelineRefresh}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => void toggleFullscreen()}
+          aria-pressed={isFullscreen}
+          className="flex h-[47px] shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+          title={isFullscreen ? "Tam ekrandan çık" : "Tam ekran modu"}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="size-4" />
+          ) : (
+            <Maximize2 className="size-4" />
+          )}
+          <span className="hidden sm:inline">
+            {isFullscreen ? "Tam ekrandan çık" : "Tam ekran"}
+          </span>
+        </button>
       </div>
       <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:max-h-none lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
