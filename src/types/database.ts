@@ -142,6 +142,7 @@ export type LiveChatConversation = {
   customer_name: string;
   status: "open" | "closed";
   ai_active: boolean;
+  is_starred: boolean;
   last_message_at: string;
   created_at: string;
   updated_at: string;

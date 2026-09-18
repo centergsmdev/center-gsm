@@ -10,6 +10,10 @@ const singleRoute = read(
 );
 const allRoute = read("../../app/api/admin/live-chat/route.ts");
 const adminUi = read("../../components/admin/admin-live-chat.tsx");
+const adminUiStyles = read("../../components/admin/admin-live-chat.module.css");
+const starredMigration = read(
+  "../../../supabase/migrations/20260918130750_add_live_chat_starred_flag.sql",
+);
 
 test("tek sohbet silme özel şifre ve yönetici kaynak kontrolü ister", () => {
   assert.match(singleRoute, /requireAdmin\(request\)/);
@@ -43,4 +47,22 @@ test("canlı destek çalışma alanı gerçek tam ekran moduna girip çıkabilir
   assert.match(adminUi, /fullscreenchange/);
   assert.match(adminUi, /Tam ekran/);
   assert.match(adminUi, /Tam ekrandan çık/);
+});
+
+test("canlı destek koyu görünümü kalıcı olarak açıp kapatabilir", () => {
+  assert.match(adminUi, /LIVE_CHAT_THEME_STORAGE_KEY/);
+  assert.match(adminUi, /window\.localStorage\.setItem/);
+  assert.match(adminUi, /Koyu görünüm/);
+  assert.match(adminUi, /Açık görünüm/);
+  assert.match(adminUi, /styles\.darkPanel/);
+  assert.match(adminUiStyles, /\.darkPanel/);
+});
+
+test("önemli sohbet yıldızı veritabanında saklanır ve satırı sarı yapar", () => {
+  assert.match(starredMigration, /add column if not exists is_starred boolean/);
+  assert.match(adminUi, /update\(\{ is_starred: nextStarred \}\)/);
+  assert.match(adminUi, /styles\.starredConversation/);
+  assert.match(adminUi, /bg-amber-200/);
+  assert.match(adminUi, /Önemli sohbet/);
+  assert.match(adminUiStyles, /\.starredConversation/);
 });

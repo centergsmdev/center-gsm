@@ -6,8 +6,11 @@ import {
   MessageCircle,
   MessageSquareText,
   Minimize2,
+  Moon,
   Send,
   Smile,
+  Star,
+  Sun,
   Trash2,
   ShieldOff,
 } from "lucide-react";
@@ -16,6 +19,7 @@ import Link from "next/link";
 import { AdminDeletionPasswordDialog } from "@/components/admin/admin-deletion-password-dialog";
 import { AdminVideoCalls } from "@/components/admin/admin-video-calls";
 import { AdminLiveChatSecurity } from "@/components/admin/admin-live-chat-security";
+import styles from "@/components/admin/admin-live-chat.module.css";
 import { CallHistoryCard } from "@/components/live-chat/call-history-card";
 import { ChatMessageText } from "@/components/live-chat/chat-message-text";
 import { buildChatTimeline } from "@/lib/live-chat/call-history";
@@ -44,6 +48,7 @@ import type {
 const EMOJIS = ["😊", "👍", "🙏", "❤️", "📦", "✅"];
 const DEFAULT_AUTO_REPLY_MESSAGE =
   "Şu anda işlem yoğunluğu nedeniyle sizi kısa süre bekleteceğim. Birazdan yanıt alacaksınız.";
+const LIVE_CHAT_THEME_STORAGE_KEY = "center-gsm:admin-live-chat-theme:v1";
 const QUICK_REPLIES = [
   {
     label: "Başvuru süreci",
@@ -96,6 +101,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   const [autoReplySaving, setAutoReplySaving] = useState(false);
   const [autoReplySaved, setAutoReplySaved] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [blockedConversationIds, setBlockedConversationIds] = useState<
     Set<string>
@@ -155,6 +161,27 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
     return () =>
       document.removeEventListener("fullscreenchange", syncFullscreenState);
   }, []);
+
+  useEffect(() => {
+    const syncTheme = () =>
+      setIsDarkMode(
+        window.localStorage.getItem(LIVE_CHAT_THEME_STORAGE_KEY) === "dark",
+      );
+    syncTheme();
+    window.addEventListener("storage", syncTheme);
+    return () => window.removeEventListener("storage", syncTheme);
+  }, []);
+
+  function toggleDarkMode() {
+    setIsDarkMode((current) => {
+      const next = !current;
+      window.localStorage.setItem(
+        LIVE_CHAT_THEME_STORAGE_KEY,
+        next ? "dark" : "light",
+      );
+      return next;
+    });
+  }
 
   async function toggleFullscreen() {
     try {
@@ -266,6 +293,46 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
         item.id === selected.id ? { ...item, ai_active: enabled } : item,
       ),
     );
+  }
+
+  async function toggleConversationStar(conversation: LiveChatConversation) {
+    const nextStarred = !conversation.is_starred;
+    setError("");
+    setConversations((current) =>
+      current.map((item) =>
+        item.id === conversation.id
+          ? { ...item, is_starred: nextStarred }
+          : item,
+      ),
+    );
+
+    const client = createClient();
+    if (!client) {
+      setConversations((current) =>
+        current.map((item) =>
+          item.id === conversation.id
+            ? { ...item, is_starred: conversation.is_starred }
+            : item,
+        ),
+      );
+      setError("Supabase bağlantısı bulunamadı.");
+      return;
+    }
+
+    const result = await client
+      .from("live_chat_conversations")
+      .update({ is_starred: nextStarred })
+      .eq("id", conversation.id);
+    if (!result.error) return;
+
+    setConversations((current) =>
+      current.map((item) =>
+        item.id === conversation.id
+          ? { ...item, is_starred: conversation.is_starred }
+          : item,
+      ),
+    );
+    setError("Önemli sohbet işareti kaydedilemedi.");
   }
 
   const loadConversations = useCallback(async () => {
@@ -606,7 +673,7 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
   return (
     <div
       ref={liveChatPanelRef}
-      className="grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr]"
+      className={`grid min-h-[620px] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:h-[calc(100dvh-210px)] lg:max-h-[820px] lg:min-h-[560px] lg:grid-cols-[340px_1fr] lg:grid-rows-[auto_1fr] ${isDarkMode ? styles.darkPanel : ""}`}
       style={
         isFullscreen
           ? {
@@ -628,22 +695,40 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
             refreshKey={callTimelineRefresh}
           />
         </div>
-        <button
-          type="button"
-          onClick={() => void toggleFullscreen()}
-          aria-pressed={isFullscreen}
-          className="flex h-[47px] shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
-          title={isFullscreen ? "Tam ekrandan çık" : "Tam ekran modu"}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="size-4" />
-          ) : (
-            <Maximize2 className="size-4" />
-          )}
-          <span className="hidden sm:inline">
-            {isFullscreen ? "Tam ekrandan çık" : "Tam ekran"}
-          </span>
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            aria-pressed={isDarkMode}
+            className="flex h-[47px] shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+            title={isDarkMode ? "Açık görünüme geç" : "Koyu görünüme geç"}
+          >
+            {isDarkMode ? (
+              <Sun className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
+            <span className="hidden xl:inline">
+              {isDarkMode ? "Açık görünüm" : "Koyu görünüm"}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleFullscreen()}
+            aria-pressed={isFullscreen}
+            className="flex h-[47px] shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+            title={isFullscreen ? "Tam ekrandan çık" : "Tam ekran modu"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="size-4" />
+            ) : (
+              <Maximize2 className="size-4" />
+            )}
+            <span className="hidden xl:inline">
+              {isFullscreen ? "Tam ekrandan çık" : "Tam ekran"}
+            </span>
+          </button>
+        </div>
       </div>
       <aside className="max-h-72 border-b border-zinc-200 lg:flex lg:max-h-none lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-4">
@@ -739,32 +824,59 @@ export function AdminLiveChat({ aiConfigured }: { aiConfigured: boolean }) {
         </details>
         <div className="max-h-[220px] overflow-y-auto overscroll-contain p-2 lg:max-h-none lg:min-h-0 lg:flex-1">
           {conversations.map((item) => (
-            <button
+            <div
               key={item.id}
-              type="button"
-              onClick={() => setSelectedId(item.id)}
-              className={`mb-1 flex w-full items-center justify-between rounded-xl p-3 text-left ${item.id === selectedId ? "bg-zinc-950 text-white" : "hover:bg-zinc-50"}`}
+              className={`mb-1 flex w-full items-center rounded-xl transition ${item.is_starred ? `${styles.starredConversation} bg-amber-200 text-amber-950` : item.id === selectedId ? "bg-zinc-950 text-white" : "hover:bg-zinc-50"}`}
             >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">
-                  {item.customer_name}
+              <button
+                type="button"
+                onClick={() => setSelectedId(item.id)}
+                className="min-w-0 flex-1 p-3 text-left"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">
+                    {item.customer_name}
+                  </span>
+                  <span className="mt-1 block text-xs opacity-60">
+                    {formatChatDateTime(item.last_message_at)}
+                  </span>
+                  {blockedConversationIds.has(item.id) ||
+                  blockedVisitorTokens.has(item.visitor_token) ? (
+                    <span className="mt-1 inline-block rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black text-white">
+                      ENGELLENDİ
+                    </span>
+                  ) : null}
                 </span>
-                <span className="mt-1 block text-xs opacity-60">
-                  {formatChatDateTime(item.last_message_at)}
-                </span>
-                {blockedConversationIds.has(item.id) ||
-                blockedVisitorTokens.has(item.visitor_token) ? (
-                  <span className="mt-1 inline-block rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-black text-white">
-                    ENGELLENDİ
+              </button>
+              <div className="flex shrink-0 items-center gap-1 pr-2">
+                {unread[item.id] ? (
+                  <span className="grid size-6 place-items-center rounded-full bg-red-600 text-xs font-bold text-white">
+                    {unread[item.id]}
                   </span>
                 ) : null}
-              </span>
-              {unread[item.id] ? (
-                <span className="ml-2 grid size-6 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-bold text-white">
-                  {unread[item.id]}
-                </span>
-              ) : null}
-            </button>
+                <button
+                  type="button"
+                  onClick={() => void toggleConversationStar(item)}
+                  aria-pressed={item.is_starred}
+                  aria-label={
+                    item.is_starred
+                      ? `${item.customer_name} sohbetini önemli listesinden çıkar`
+                      : `${item.customer_name} sohbetini önemli olarak işaretle`
+                  }
+                  title={
+                    item.is_starred
+                      ? "Önemli işaretini kaldır"
+                      : "Önemli sohbet"
+                  }
+                  className={`grid size-8 place-items-center rounded-lg transition hover:bg-black/10 ${item.is_starred ? "text-amber-950" : "text-zinc-400 hover:text-amber-500"}`}
+                >
+                  <Star
+                    className="size-4"
+                    fill={item.is_starred ? "currentColor" : "none"}
+                  />
+                </button>
+              </div>
+            </div>
           ))}
           {!conversations.length ? (
             <p className="p-4 text-sm text-zinc-500">Henüz sohbet yok.</p>
