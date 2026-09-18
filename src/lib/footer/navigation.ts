@@ -12,6 +12,7 @@ export const footerLinkGroups = [
     title: "Müşteri Hizmetleri",
     links: [
       { label: "Sipariş Takibi", href: "/siparis-takip" },
+      { label: "Elden Taksit", href: "/elden-taksit" },
       { label: "Telefonunu Takasa Ver", href: "/telefonunu-takasa-ver" },
       { label: "İade ve Değişim", href: "/iade-ve-degisim" },
       { label: "Garanti", href: "/garanti" },

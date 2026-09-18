@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeftRight, ChevronDown, Grid2X2, Menu } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  Grid2X2,
+  Menu,
+  WalletCards,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Divider } from "@/components/ui/divider";
@@ -97,6 +103,14 @@ export function DesktopCategoryNavigation({
           Daha Fazla
           <ChevronDown className="size-3.5" aria-hidden="true" />
         </button>
+
+        <Link
+          href="/elden-taksit"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <WalletCards className="size-3.5 text-red-400" aria-hidden="true" />
+          Elden Taksit
+        </Link>
 
         <Link
           href="/kampanyalar"

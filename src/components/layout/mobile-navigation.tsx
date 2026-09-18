@@ -9,6 +9,7 @@ import {
   Grid2X2,
   Menu,
   Sparkles,
+  WalletCards,
   X,
 } from "lucide-react";
 import { normalizeTaxonomySlug } from "@/lib/catalog/taxonomy-slug";
@@ -157,6 +158,23 @@ export function MobileNavigation({
                       </span>
                       <span className="flex-1">Tüm Ürünler</span>
                       <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+
+                    <Link
+                      href="/elden-taksit"
+                      onClick={close}
+                      className="group mt-2 flex items-center gap-3 rounded-2xl bg-zinc-950 px-4 py-3.5 text-sm font-black text-white shadow-sm transition-colors hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <span className="grid size-9 place-items-center rounded-xl bg-red-600 text-white">
+                        <WalletCards className="size-4" />
+                      </span>
+                      <span className="flex-1">
+                        <span className="block">Elden Taksit</span>
+                        <span className="mt-0.5 block text-[10px] font-medium text-zinc-400">
+                          Süreci ve ödeme şartlarını incele
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 text-red-400 transition-transform group-hover:translate-x-0.5" />
                     </Link>
 
                     <div className="mt-3 space-y-1">

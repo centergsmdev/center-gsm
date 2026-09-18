@@ -9,6 +9,11 @@ const page = read("../../app/elden-taksit/page.tsx");
 const landing = read("../../components/installment/installment-landing.tsx");
 const metaBrowser = read("../meta/browser.ts");
 const adminSettings = read("../../components/admin/admin-settings-form.tsx");
+const desktopNavigation = read(
+  "../../components/layout/desktop-category-navigation.tsx",
+);
+const mobileNavigation = read("../../components/layout/mobile-navigation.tsx");
+const footerNavigation = read("../footer/navigation.ts");
 const migration = read(
   "../../../supabase/migrations/20260918171309_add_installment_landing_video_url.sql",
 );
@@ -48,6 +53,17 @@ test("sayfa müşteriyi gerçek ürün ve güvenli başvuru akışına yönlendi
   assert.match(landing, /kesin onay/);
   assert.doesNotMatch(page + landing, /buildWhatsAppHref/);
   assert.doesNotMatch(landing, /wa\.me/);
+});
+
+test("elden taksit sayfasına masaüstü, mobil ve alt menüden ulaşılır", () => {
+  for (const navigation of [
+    desktopNavigation,
+    mobileNavigation,
+    footerNavigation,
+  ]) {
+    assert.match(navigation, /href:?[= ]+"\/elden-taksit"/);
+    assert.match(navigation, /Elden Taksit/);
+  }
 });
 
 test("hassas belgeler tanıtım sayfasında veya WhatsApp'ta toplanmaz", () => {
