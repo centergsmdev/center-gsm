@@ -28,7 +28,6 @@ test("elden taksit bilgilendirme sayfası mevcut site kabuğunu ve SEO bilgisini
 
 test("ödeme koşulları sabit metinden değil aktif ödeme planından hesaplanır", () => {
   assert.match(page, /getActivePaymentPlanConfig/);
-  assert.match(page, /calculatePaymentPlan/);
   assert.match(page, /formatBasisPoints/);
   assert.match(landing, /paymentInfo\.aboveThresholdRate/);
   assert.match(landing, /paymentInfo\.belowThresholdRate/);
@@ -66,14 +65,11 @@ test("elden taksit sayfasına masaüstü, mobil ve alt menüden ulaşılır", ()
   }
 });
 
-test("hassas belgeler tanıtım sayfasında veya WhatsApp'ta toplanmaz", () => {
+test("kaldırılması istenen kalabalık bilgi blokları sayfada gösterilmez", () => {
   assert.doesNotMatch(landing, /type="file"/);
-  assert.match(landing, /Kimlik ön yüzü/);
-  assert.match(landing, /Kimlik arka yüzü/);
-  assert.match(landing, /Güncel ikametgâh/);
-  assert.match(landing, /Dijital imza/);
-  assert.match(landing, /WhatsApp'ta toplanmaz/);
-  assert.match(landing, /güvenli başvuru ekranına yüklenir/);
+  assert.doesNotMatch(landing, /Başvurmadan önce bilmeniz gerekenler/);
+  assert.doesNotMatch(landing, /Canlı ayarlardan örnek/);
+  assert.doesNotMatch(landing, /Belgelerinizi önceden hazırlayın/);
 });
 
 test("video URL'si yönetim panelinden değiştirilebilir ve boşken yer tutucu gösterilir", () => {

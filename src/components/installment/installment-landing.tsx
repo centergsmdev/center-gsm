@@ -1,23 +1,16 @@
 "use client";
 
 import {
-  AlertTriangle,
   ArrowDown,
   ArrowRight,
-  Banknote,
-  CalendarDays,
-  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   FileSignature,
-  FileText,
-  IdCard,
   PackageCheck,
   Play,
   Search,
   ShieldCheck,
   ShoppingBag,
-  UploadCloud,
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,18 +25,6 @@ type PaymentInfo = {
   belowThresholdRate: string;
   financeChargeRate: string;
   installmentCounts: number[];
-  timingOptions: string[];
-  example: {
-    productPrice: string;
-    downPaymentRate: string;
-    downPayment: string;
-    remainingPrincipal: string;
-    financeCharge: string;
-    financedTotal: string;
-    installmentCount: number;
-    monthlyInstallment: string;
-    totalPayable: string;
-  };
 };
 
 type InstallmentLandingProps = {
@@ -87,30 +68,6 @@ const applicationSteps = [
     description:
       "Onaylanırsa size özel takip ekranından peşinatı yatırın, dekontu yükleyin ve teslimat durumunu takip edin.",
     icon: PackageCheck,
-  },
-] as const;
-
-const documents = [
-  {
-    title: "Kimlik ön yüzü",
-    description: "Geçerli kimlik belgenizin okunaklı ön yüzü.",
-    icon: IdCard,
-  },
-  {
-    title: "Kimlik arka yüzü",
-    description: "Geçerli kimlik belgenizin okunaklı arka yüzü.",
-    icon: IdCard,
-  },
-  {
-    title: "Güncel ikametgâh",
-    description: "e-Devlet üzerinden alınmış güncel ikametgâh belgesi.",
-    icon: FileText,
-  },
-  {
-    title: "Dijital imza",
-    description:
-      "Sözleşmeyi okuduktan sonra başvuru ekranında atacağınız imza.",
-    icon: FileSignature,
   },
 ] as const;
 
@@ -421,200 +378,6 @@ export function InstallmentLanding({
               );
             })}
           </ol>
-        </Container>
-      </section>
-
-      <section className="py-14 sm:py-20">
-        <Container>
-          <SectionHeading
-            eyebrow="Güncel ödeme koşulları"
-            title="Başvurmadan önce bilmeniz gerekenler"
-            description="Aşağıdaki oran ve vadeler yönetim panelindeki aktif elden taksit ayarlarından alınır; böylece burada gördüğünüz bilgi ürün sayfasındaki hesaplamayla aynı kalır."
-          />
-          {paymentInfo ? (
-            <>
-              <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-                  <Banknote
-                    className="size-6 text-red-600"
-                    aria-hidden="true"
-                  />
-                  <h3 className="mt-4 font-black">Peşinat oranı</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">
-                    {paymentInfo.threshold} ve üzerindeki ürünlerde{" "}
-                    <strong>%{paymentInfo.aboveThresholdRate}</strong>,
-                    altındaki ürünlerde{" "}
-                    <strong>%{paymentInfo.belowThresholdRate}</strong>.
-                  </p>
-                </article>
-                <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-                  <WalletCards
-                    className="size-6 text-red-600"
-                    aria-hidden="true"
-                  />
-                  <h3 className="mt-4 font-black">Vade farkı</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">
-                    Peşinat düştükten sonra kalan tutara bir defaya mahsus{" "}
-                    <strong>%{paymentInfo.financeChargeRate}</strong> uygulanır.
-                  </p>
-                </article>
-                <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-                  <CalendarDays
-                    className="size-6 text-red-600"
-                    aria-hidden="true"
-                  />
-                  <h3 className="mt-4 font-black">Vade seçenekleri</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">
-                    Güncel seçenekler:{" "}
-                    <strong>
-                      {paymentInfo.installmentCounts.join(", ")} ay
-                    </strong>
-                    .
-                  </p>
-                </article>
-                <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-                  <CheckCircle2
-                    className="size-6 text-red-600"
-                    aria-hidden="true"
-                  />
-                  <h3 className="mt-4 font-black">Ödeme hazırlığı</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">
-                    Başlangıçta ödeme zamanınızı seçersiniz:{" "}
-                    <strong>{paymentInfo.timingOptions.join(", ")}</strong>.
-                  </p>
-                </article>
-              </div>
-              <div className="mt-5 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-                <AlertTriangle
-                  className="mt-0.5 size-5 shrink-0"
-                  aria-hidden="true"
-                />
-                <p>
-                  Peşinatı seçtiğiniz zamanda ödemeye hazır değilseniz başvuruya
-                  devam etmeyin. Başvurular ayrıca değerlendirilir; bu şartları
-                  karşılamak kesin onay garantisi vermez.
-                </p>
-              </div>
-            </>
-          ) : (
-            <div
-              className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-semibold leading-6 text-red-800"
-              role="alert"
-            >
-              Güncel ödeme koşulları şu anda görüntülenemiyor. Hatalı bilgi
-              vermemek için ürün seçimine geçmeden önce lütfen daha sonra
-              yeniden deneyin.
-            </div>
-          )}
-        </Container>
-      </section>
-
-      {paymentInfo ? (
-        <section className="bg-zinc-950 py-14 text-white sm:py-20">
-          <Container>
-            <div className="grid overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="p-6 sm:p-9 lg:p-12">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-red-400">
-                  Canlı ayarlardan örnek
-                </p>
-                <h2 className="mt-3 text-2xl font-black tracking-[-0.04em] sm:text-4xl">
-                  {paymentInfo.example.productPrice} ürün için ödeme planı
-                </h2>
-                <p className="mt-4 text-sm leading-6 text-zinc-400 sm:text-base">
-                  Bu örnek şu an aktif oranlarla otomatik hesaplanır. Seçtiğiniz
-                  ürünün kesin planı ürün sayfasında ayrıca gösterilir.
-                </p>
-                <div className="mt-7 rounded-2xl border border-red-500/25 bg-red-500/10 p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
-                    {paymentInfo.example.installmentCount} ay örnek ödeme
-                  </p>
-                  <p className="mt-2 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
-                    {paymentInfo.example.monthlyInstallment}
-                    <span className="text-base text-zinc-400">/ay</span>
-                  </p>
-                </div>
-              </div>
-              <dl className="border-t border-white/10 p-6 sm:p-9 lg:border-l lg:border-t-0 lg:p-12">
-                {[
-                  ["Ürün fiyatı", paymentInfo.example.productPrice],
-                  [
-                    `%${paymentInfo.example.downPaymentRate} peşinat`,
-                    paymentInfo.example.downPayment,
-                  ],
-                  [
-                    "Peşinat sonrası kalan",
-                    paymentInfo.example.remainingPrincipal,
-                  ],
-                  [
-                    `%${paymentInfo.financeChargeRate} vade farkı`,
-                    paymentInfo.example.financeCharge,
-                  ],
-                  [
-                    "Taksitlere bölünen toplam",
-                    paymentInfo.example.financedTotal,
-                  ],
-                  [
-                    "Peşinat dahil toplam ödeme",
-                    paymentInfo.example.totalPayable,
-                  ],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between gap-4 border-b border-white/10 py-4 first:pt-0 last:border-0 last:pb-0"
-                  >
-                    <dt className="text-sm text-zinc-400">{label}</dt>
-                    <dd className="text-right text-sm font-black text-white sm:text-base">
-                      {value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-              Örnek hesaplama teklif veya onay değildir. Ürün fiyatı ve aktif
-              ayarlar değişirse tutarlar da değişir.
-            </p>
-          </Container>
-        </section>
-      ) : null}
-
-      <section className="border-b border-zinc-200 bg-zinc-50 py-14 sm:py-20">
-        <Container>
-          <SectionHeading
-            eyebrow="Başvuruda gerekenler"
-            title="Belgelerinizi önceden hazırlayın"
-            description="Belgeler bu tanıtım sayfasında veya WhatsApp'ta toplanmaz. Ürünü seçtikten sonra yalnızca güvenli başvuru ekranına yüklenir."
-          />
-          <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {documents.map((document) => {
-              const Icon = document.icon;
-              return (
-                <article
-                  key={document.title}
-                  className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
-                >
-                  <span className="grid size-11 place-items-center rounded-xl bg-zinc-950 text-white">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 font-black">{document.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">
-                    {document.description}
-                  </p>
-                </article>
-              );
-            })}
-          </div>
-          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
-            <UploadCloud
-              className="mt-0.5 size-5 shrink-0"
-              aria-hidden="true"
-            />
-            <p>
-              Kimlik ve ikametgâh belgelerinizi WhatsApp, sosyal medya veya bu
-              sayfadaki herhangi bir alandan göndermeyin. Güvenli yükleme alanı
-              yalnızca ürün seçimi sonrası açılan başvuru formundadır.
-            </p>
-          </div>
         </Container>
       </section>
 

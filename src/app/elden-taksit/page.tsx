@@ -3,7 +3,6 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { getInstallmentServiceClient } from "@/lib/installment/server";
 import {
-  calculatePaymentPlan,
   formatBasisPoints,
   formatMinorCurrency,
 } from "@/lib/payment-plan/engine";
@@ -37,57 +36,21 @@ export default async function InstallmentLandingPage() {
     service ? getActivePaymentPlanConfig(service) : Promise.resolve(null),
   ]);
 
-  const examplePriceMinor = 60_000_00;
-  const exampleInstallmentCount = config
-    ? Math.max(...config.installmentCounts)
-    : 12;
-  const examplePlan = config
-    ? calculatePaymentPlan({
-        paymentType: "installment_application",
-        productPriceMinor: examplePriceMinor,
-        installmentCount: exampleInstallmentCount,
-        config,
-      })
+  const paymentInfo = config
+    ? {
+        threshold: formatMinorCurrency(config.thresholdMinor),
+        aboveThresholdRate: formatBasisPoints(
+          config.aboveThresholdDownPaymentBps,
+        ),
+        belowThresholdRate: formatBasisPoints(
+          config.belowThresholdDownPaymentBps,
+        ),
+        financeChargeRate: formatBasisPoints(
+          config.installmentFinanceChargeBps,
+        ),
+        installmentCounts: config.installmentCounts,
+      }
     : null;
-
-  const paymentInfo =
-    config && examplePlan
-      ? {
-          threshold: formatMinorCurrency(config.thresholdMinor),
-          aboveThresholdRate: formatBasisPoints(
-            config.aboveThresholdDownPaymentBps,
-          ),
-          belowThresholdRate: formatBasisPoints(
-            config.belowThresholdDownPaymentBps,
-          ),
-          financeChargeRate: formatBasisPoints(
-            config.installmentFinanceChargeBps,
-          ),
-          installmentCounts: config.installmentCounts,
-          timingOptions: config.downPaymentTimingOptions.map(
-            (option) => option.label,
-          ),
-          example: {
-            productPrice: formatMinorCurrency(examplePlan.productPriceMinor),
-            downPaymentRate: formatBasisPoints(examplePlan.downPaymentRateBps),
-            downPayment: formatMinorCurrency(
-              examplePlan.downPaymentAmountMinor,
-            ),
-            remainingPrincipal: formatMinorCurrency(
-              examplePlan.remainingPrincipalMinor,
-            ),
-            financeCharge: formatMinorCurrency(
-              examplePlan.financeChargeAmountMinor,
-            ),
-            financedTotal: formatMinorCurrency(examplePlan.financedTotalMinor),
-            installmentCount: examplePlan.installmentCount,
-            monthlyInstallment: formatMinorCurrency(
-              examplePlan.monthlyInstallmentMinor,
-            ),
-            totalPayable: formatMinorCurrency(examplePlan.totalPayableMinor),
-          },
-        }
-      : null;
 
   return (
     <div className="min-h-screen bg-white text-zinc-950">
