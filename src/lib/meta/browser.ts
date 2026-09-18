@@ -20,6 +20,12 @@ export type MetaCustomData = {
   search_string?: string;
 };
 
+export type LandingAnalyticsEventName =
+  | "elden_taksit_page_view"
+  | "elden_taksit_video_start"
+  | "elden_taksit_terms_confirmed"
+  | "elden_taksit_products_click";
+
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
@@ -48,6 +54,19 @@ export function trackMetaEvent(
     }).catch(() => undefined);
   }
   return eventId;
+}
+
+export function trackLandingEvent(
+  eventName: LandingAnalyticsEventName,
+  data: Record<string, string | number | boolean> = {},
+) {
+  if (typeof window === "undefined") return;
+  window.fbq?.("trackCustom", eventName, data);
+  window.dispatchEvent(
+    new CustomEvent("center-gsm:analytics", {
+      detail: { eventName, data },
+    }),
+  );
 }
 
 export function trackMetaPurchase(input: {

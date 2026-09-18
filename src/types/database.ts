@@ -295,6 +295,7 @@ export type SiteSettings = {
   instagram_url: string | null;
   youtube_url: string | null;
   twitter_url: string | null;
+  installment_landing_video_url: string | null;
   free_shipping_limit: number;
   same_day_shipping_enabled: boolean;
   phone_approval_enabled: boolean;

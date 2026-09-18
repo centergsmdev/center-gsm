@@ -72,6 +72,8 @@ export function AdminSettingsForm() {
         instagram_url: settings.instagram_url?.trim() || null,
         youtube_url: settings.youtube_url?.trim() || null,
         twitter_url: settings.twitter_url?.trim() || null,
+        installment_landing_video_url:
+          settings.installment_landing_video_url?.trim() || null,
         free_shipping_limit: settings.free_shipping_limit,
         same_day_shipping_enabled: settings.same_day_shipping_enabled,
         phone_approval_enabled: settings.phone_approval_enabled,
@@ -178,6 +180,25 @@ export function AdminSettingsForm() {
             />
           </AdminField>
         </div>
+      </AdminFormSection>
+      <AdminFormSection title="Elden taksit tanıtım sayfası">
+        <AdminField
+          label="Tanıtım videosu URL'si"
+          htmlFor="installment-landing-video"
+        >
+          <input
+            id="installment-landing-video"
+            type="url"
+            className={adminControlClass}
+            placeholder="https://youtube.com/watch?v=... veya https://.../video.mp4"
+            {...text("installment_landing_video_url")}
+          />
+        </AdminField>
+        <p className="mt-3 text-xs leading-5 text-zinc-500">
+          Alan boş bırakılırsa elden taksit sayfasında hafif bir video yer
+          tutucusu gösterilir. YouTube veya doğrudan video dosyası bağlantısı
+          kullanabilirsiniz.
+        </p>
       </AdminFormSection>
       <div className="grid gap-6 lg:grid-cols-2">
         <AdminFormSection title="Kargo ayarları">

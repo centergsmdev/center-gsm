@@ -15,6 +15,7 @@ export const defaultSiteSettings: SiteSettings = {
   instagram_url: null,
   youtube_url: null,
   twitter_url: null,
+  installment_landing_video_url: null,
   free_shipping_limit: 2500,
   same_day_shipping_enabled: true,
   phone_approval_enabled: true,
@@ -23,16 +24,20 @@ export const defaultSiteSettings: SiteSettings = {
   updated_by: null,
 };
 
-const getCachedSiteSettings = unstable_cache(async () => {
-  const client = createPublicClient();
-  if (!client) return defaultSiteSettings;
-  const { data } = await client
-    .from("site_settings")
-    .select("*")
-    .eq("id", true)
-    .maybeSingle();
-  return data ?? defaultSiteSettings;
-}, ["public-site-settings"], { revalidate: 300, tags: [CACHE_TAGS.settings] });
+const getCachedSiteSettings = unstable_cache(
+  async () => {
+    const client = createPublicClient();
+    if (!client) return defaultSiteSettings;
+    const { data } = await client
+      .from("site_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    return data ?? defaultSiteSettings;
+  },
+  ["public-site-settings"],
+  { revalidate: 300, tags: [CACHE_TAGS.settings] },
+);
 
 export async function getSiteSettings() {
   return getCachedSiteSettings();
